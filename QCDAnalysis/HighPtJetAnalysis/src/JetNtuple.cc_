@@ -1,0 +1,62 @@
+#include <iostream>
+#include <sstream>
+#include <istream>
+#include <fstream>
+#include <iomanip>
+#include <string>
+#include <cmath>
+#include <functional>     
+  
+#include "QCDAnalysis/HighPtJetAnalysis/interface/InclusiveJetTreeProducer.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/Common/interface/TriggerNames.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+#include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/JetReco/interface/CaloJet.h"
+#include "DataFormats/JetReco/interface/CaloJetCollection.h"           
+#include "DataFormats/JetReco/interface/GenJet.h"
+#include "DataFormats/JetReco/interface/GenJetCollection.h"            
+#include "DataFormats/JetReco/interface/JetExtendedAssociation.h"
+#include "DataFormats/JetReco/interface/JetID.h"
+#include "DataFormats/METReco/interface/CaloMET.h"
+#include "DataFormats/METReco/interface/CaloMETCollection.h"
+#include "DataFormats/Math/interface/LorentzVector.h"
+#include "DataFormats/Math/interface/deltaR.h"
+#include "DataFormats/JetReco/interface/PFJet.h"
+#include "DataFormats/JetReco/interface/PFJetCollection.h"
+#include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
+#include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
+  
+using namespace edm;
+using namespace reco;
+using namespace std;
+
+JetNtuple::JetTree()
+{
+
+}
+
+void JetNtuple::beginJob()
+{
+  
+}
+
+void JetNtuple::endJob()
+{
+
+}
+
+void JetNtuple::beginRun()
+{
+
+}
+
+void JetNtuple::analyze()
+{
+
+}
+
+
