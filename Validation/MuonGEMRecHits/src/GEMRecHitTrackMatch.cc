@@ -23,9 +23,11 @@ GEMRecHitTrackMatch::GEMRecHitTrackMatch(const edm::ParameterSet& ps) : GEMTrack
 }
 
 void GEMRecHitTrackMatch::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const& run, edm::EventSetup const & iSetup){
+  edm::LogInfo("GEMRecHitTrackMatch")<<"GEM RecHitTrackMatch :: bookHistograms"<<std::endl;
   edm::ESHandle<GEMGeometry> hGeom;
   iSetup.get<MuonGeometryRecord>().get(hGeom);
   const GEMGeometry& geom = *hGeom;
+  edm::LogInfo("GEMRecHitTrackMatch")<<"GEM RecHitTrackMatch :: about to set the geometry"<<std::endl;
   setGeometry(geom);
     
   ibooker.setCurrentFolder("MuonGEMRecHitsV/GEMRecHitsTask");
@@ -79,6 +81,7 @@ GEMRecHitTrackMatch::~GEMRecHitTrackMatch() {  }
 
 void GEMRecHitTrackMatch::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+  edm::LogInfo("GEMRecHitTrackMatch")<<"GEM RecHitTrackMatch :: analyze"<<std::endl;
   edm::ESHandle<GEMGeometry> hGeom;
   iSetup.get<MuonGeometryRecord>().get(hGeom);
   const GEMGeometry& geom = *hGeom;
@@ -127,7 +130,7 @@ void GEMRecHitTrackMatch::analyze(const edm::Event& iEvent, const edm::EventSetu
       const GEMDetId id(d);
       if ( id.chamber() %2 ==0 ) track_.hitEven[id.station()-1] = true;
       else if ( id.chamber() %2 ==1 ) track_.hitOdd[id.station()-1] = true;
-      else { std::cout<<"Error to get chamber id"<<std::endl;}
+      else { edm::LogInfo("GEMRecHitTrackMatch")<<"Error to get chamber id"<<std::endl; }
 
       track_.gem_sh[ id.station()-1][ (id.layer()-1)] = true;
 
