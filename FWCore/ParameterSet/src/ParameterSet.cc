@@ -16,6 +16,8 @@
 #include "FWCore/Utilities/interface/Digest.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 
+#include "DataFormats/Provenance/interface/ModuleDescription.h"
+
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -139,11 +141,11 @@ namespace edm {
     return *this;
   }
 
-  std::auto_ptr<ParameterSet> ParameterSet::popParameterSet(std::string const& name) {
+  std::unique_ptr<ParameterSet> ParameterSet::popParameterSet(std::string const& name) {
     assert(!isRegistered());
     psettable::iterator it = psetTable_.find(name);
     assert(it != psetTable_.end());
-    std::auto_ptr<ParameterSet> pset(new ParameterSet);
+    auto pset = std::make_unique<ParameterSet>();
     std::swap(*pset, it->second.psetForUpdate());
     psetTable_.erase(it);
     return pset;
@@ -168,12 +170,12 @@ namespace edm {
     }
   }
 
-  std::auto_ptr<std::vector<ParameterSet> > ParameterSet::popVParameterSet(std::string const& name) {
+  std::vector<ParameterSet> ParameterSet::popVParameterSet(std::string const& name) {
     assert(!isRegistered());
     vpsettable::iterator it = vpsetTable_.find(name);
     assert(it != vpsetTable_.end());
-    std::auto_ptr<std::vector<ParameterSet> > vpset(new std::vector<ParameterSet>);
-    std::swap(*vpset, it->second.vpsetForUpdate());
+    std::vector<ParameterSet> vpset;
+    std::swap(vpset, it->second.vpsetForUpdate());
     vpsetTable_.erase(it);
     return vpset;
   }
@@ -951,12 +953,17 @@ namespace edm {
   // Free function to return a parameterSet given its ID.
   ParameterSet const&
   getParameterSet(ParameterSetID const& id) {
-    ParameterSet const* result = 0;
-    if(0 == (result = pset::Registry::instance()->getMapped(id))) {
-      throw Exception(errors::Configuration, "MissingParameterSet:")
+    ParameterSet const* result = nullptr;
+    if(nullptr == (result = pset::Registry::instance()->getMapped(id))) {
+      throw Exception(errors::LogicError, "MissingParameterSet:")
         << "Parameter Set ID '" << id << "' not found.";
     }
     return *result;
+  }
+
+  ParameterSet const&
+  getProcessParameterSetContainingModule(ModuleDescription const& moduleDescription) {
+    return getParameterSet(moduleDescription.mainParameterSetID());
   }
 
   void ParameterSet::deprecatedInputTagWarning(std::string const& name,

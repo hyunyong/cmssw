@@ -1,3 +1,4 @@
+
 ///
 /// \class l1t::Stage2Layer2EtSumAlgorithmFirmwareImp1
 ///
@@ -7,89 +8,175 @@
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "L1Trigger/L1TCalorimeter/interface/Stage2Layer2EtSumAlgorithmFirmware.h"
+#include "L1Trigger/L1TCalorimeter/interface/CaloTools.h"
+#include <math.h>
 
 
-
-l1t::Stage2Layer2EtSumAlgorithmFirmwareImp1::Stage2Layer2EtSumAlgorithmFirmwareImp1(CaloParams* params) :
-   params_(params)
+l1t::Stage2Layer2EtSumAlgorithmFirmwareImp1::Stage2Layer2EtSumAlgorithmFirmwareImp1(CaloParamsHelper* params) :
+  params_(params)
 {
-etSumEtThresholdHwEt_ = params_->etSumEtThresholdHw(1);
-etSumEtThresholdHwMet_ = params_->etSumEtThresholdHw(3);
 
-etSumEtaMinEt_ = params_->etSumEtaMin(1);
-etSumEtaMaxEt_ = params_->etSumEtaMax(1);
+  // Add some LogDebug for these settings
+  metEtaMax_ = params_->etSumEtaMax(0);
+  metEtaMaxHF_ = CaloTools::kHFEnd;
+  ettEtaMax_ = params_->etSumEtaMax(2);
+  ettEtaMaxHF_ = CaloTools::kHFEnd;
 
-etSumEtaMinMet_ = params_->etSumEtaMin(3);
-etSumEtaMaxMet_ = params_->etSumEtaMax(3);
+  nTowThresholdHw_ = floor(params_->etSumEtThreshold(4)/params_->towerLsbSum());
+  nTowEtaMax_ = params_->etSumEtaMax(4);
 }
 
 
-l1t::Stage2Layer2EtSumAlgorithmFirmwareImp1::~Stage2Layer2EtSumAlgorithmFirmwareImp1() {
-
-
-}
+l1t::Stage2Layer2EtSumAlgorithmFirmwareImp1::~Stage2Layer2EtSumAlgorithmFirmwareImp1() {}
 
 void l1t::Stage2Layer2EtSumAlgorithmFirmwareImp1::processEvent(const std::vector<l1t::CaloTower> & towers,
-      std::vector<l1t::EtSum> & etsums) {
+                                                               std::vector<l1t::EtSum> & etsums) {
 
-   math::XYZTLorentzVector p4;
-   int32_t totalEt(0);
-   float phiMissingEt;
-   int32_t missingEt;
-   int32_t coefficientX;
-   int32_t coefficientY;
-   int32_t ptTower;
-   double etXComponent(0.);
-   double etYComponent(0.);
-   int32_t intPhiMissingEt(0);
-   const float pi = acos(-1.); 
-   float towerPhi;
+  uint32_t ntowers(0);
+  math::XYZTLorentzVector p4;
+  
+  int nTT4 = CaloTools::calNrTowers(-1*params_->egPUSParam(1),
+					params_->egPUSParam(1),
+					1,72,towers,1,999,CaloTools::CALO);
+  uint compNTT4 = params_->egCompressShapesLUT()->data((0x1<<7)+(0x1<<8)+(0x1<<5)+nTT4);
 
-   for(size_t towerNr=0;towerNr<towers.size();towerNr++)
-   {
-	 ptTower = (towers[towerNr]).hwPt();
-      if ((towers[towerNr]).hwEta() > etSumEtaMinMet_ && (towers[towerNr]).hwEta() < etSumEtaMaxMet_ && (towers[towerNr]).hwPt() > etSumEtThresholdHwMet_ )
-      {
-	 towerPhi=((towers[towerNr]).hwPhi()*5.0-2.5)*pi/180.;
-	 coefficientX = int32_t(511.*cos(towerPhi));
-	 coefficientY = int32_t(511.*sin(towerPhi));
 
-	 etXComponent += coefficientX*ptTower;  
-	 etYComponent += coefficientY*ptTower;  
+  // etaSide=1 is positive eta, etaSide=-1 is negative eta
+  for (int etaSide=1; etaSide>=-1; etaSide-=2) {
+
+    int32_t ex(0), ey(0), et(0);
+    int32_t exHF(0), eyHF(0), etHF(0);
+    int32_t etem(0);
+    uint32_t mb0(0), mb1(0);
+
+    for (unsigned absieta=1; absieta<=(uint)CaloTools::mpEta(CaloTools::kHFEnd); absieta++) {
+
+      int ieta = etaSide * absieta;
+
+      towEtThresh_ = 0;
+      if(abs(ieta)>12){
+	if(!params_->etSumBypassPUS()){
+	  if(params_->etSumPUSType() == "LUT"){
+	    uint towEtLUTAddr = (compNTT4<<6) | (abs(ieta)-1);
+	    if(towEtLUTAddr > 2047) towEtThresh_ = 16;
+	    else towEtThresh_ = params_->etSumPUSLUT()->data(towEtLUTAddr);
+	    //std::cout << "addr = " << towEtLUTAddr  << ", ntow = " << nTT4 << ", comp ntt4 = " << compNTT4 << ", ieta = " << ieta << ", towEtThresh = " << towEtThresh_ << std::endl;
+	  } else {
+	    if(params_->etSumPUSType() != "None" && params_->etSumPUSType() != "none") {
+	      edm::LogError("l1t|stage 2") << "Invalid PUS type in calo params. Not applying PUS to Stage 2 ETT & MET" << std::endl;
+	      return;
+	    }
+	  }
+	}
       }
-      if ((towers[towerNr]).hwEta() > etSumEtaMinEt_ && (towers[towerNr]).hwEta() < etSumEtaMaxEt_&& (towers[towerNr]).hwPt() > etSumEtThresholdHwEt_ )
-      {
-	 totalEt += ptTower;
-      } 
-   }
-   etYComponent /= 511.;
-   etXComponent /= 511.;  
 
-   phiMissingEt = atan2(etYComponent,etXComponent)+pi;
-   if (phiMissingEt > pi) phiMissingEt = phiMissingEt - 2*pi;
+      int32_t ringEx(0), ringEy(0), ringEt(0);
+      int32_t ringExHF(0), ringEyHF(0), ringEtHF(0);
+      int32_t ringEtEm(0);
+      uint32_t ringMB0(0), ringMB1(0);
+      uint32_t ringNtowers(0);
 
-   double phi_degrees = phiMissingEt *  180.0 /pi;
+      for (int iphi=1; iphi<=CaloTools::kHBHENrPhi; iphi++) {
 
-   if(phi_degrees < 0) {
-      intPhiMissingEt= 72 - (int32_t)(fabs(phi_degrees) / 5.0);
-   } else {
-      intPhiMissingEt= 1 + (int32_t)(phi_degrees / 5.0);
-   } 
+        l1t::CaloTower tower = l1t::CaloTools::getTower(towers, CaloTools::caloEta(ieta), iphi);
 
-   double doubmissingEt = etXComponent*etXComponent+etYComponent*etYComponent;
-   missingEt = int32_t(sqrt(doubmissingEt));
+	
+	// MET without HF
 
-   missingEt = missingEt & 0xfff;
-   totalEt = totalEt & 0xfff;
+	if (tower.hwPt()>towEtThresh_ && CaloTools::mpEta(abs(tower.hwEta()))<=CaloTools::mpEta(metEtaMax_)) {
 
-   l1t::EtSum::EtSumType typeTotalEt = l1t::EtSum::EtSumType::kTotalEt;
-   l1t::EtSum::EtSumType typeMissingEt = l1t::EtSum::EtSumType::kMissingEt;
+	  // x- and -y coefficients are truncated by after multiplication of Et by trig coefficient.
+	  // The trig coefficients themselves take values [-1023,1023] and so were scaled by
+	  // 2^10 = 1024, which requires bitwise shift to the right of the final value by 10 bits.
+	  // This is accounted for at ouput of demux (see Stage2Layer2DemuxSumsAlgoFirmwareImp1.cc)
+	  ringEx += (int32_t) (tower.hwPt() * CaloTools::cos_coeff[iphi - 1] );
+	  ringEy += (int32_t) (tower.hwPt() * CaloTools::sin_coeff[iphi - 1] );	    
+	}
 
-   l1t::EtSum etSumTotalEt(p4,typeTotalEt,totalEt,0,0,0);
-   l1t::EtSum etSumMissingEt(p4,typeMissingEt,missingEt,0,intPhiMissingEt,0);
+	// MET *with* HF
+	if (tower.hwPt()>towEtThresh_ && CaloTools::mpEta(abs(tower.hwEta()))<=CaloTools::mpEta(metEtaMaxHF_)) {
+	  ringExHF += (int32_t) (tower.hwPt() * CaloTools::cos_coeff[iphi - 1] );
+	  ringEyHF += (int32_t) (tower.hwPt() * CaloTools::sin_coeff[iphi - 1] );	    
+	}
 
-   etsums.push_back(etSumTotalEt);
-   etsums.push_back(etSumMissingEt);
+	// scalar sum
+	if (tower.hwPt()>towEtThresh_ && CaloTools::mpEta(abs(tower.hwEta()))<=CaloTools::mpEta(ettEtaMax_)) 
+	  ringEt += tower.hwPt();
+  
+	// scalar sum including HF
+	if (tower.hwPt()>towEtThresh_ && CaloTools::mpEta(abs(tower.hwEta()))<=CaloTools::mpEta(ettEtaMaxHF_)) 
+	  ringEtHF += tower.hwPt();
+		
+        // scalar sum (EM)
+        if (tower.hwPt()>towEtThresh_ && CaloTools::mpEta(abs(tower.hwEta()))<=ettEtaMax_)
+          ringEtEm += tower.hwEtEm();
+
+	// count HF tower HCAL flags
+	if (CaloTools::mpEta(abs(tower.hwEta()))>=CaloTools::mpEta(CaloTools::kHFBegin) &&
+	    CaloTools::mpEta(abs(tower.hwEta()))<=CaloTools::mpEta(CaloTools::kHFEnd) &&
+	    (tower.hwQual() & 0x4) > 0) 
+	  ringMB0 += 1;
+	  
+        // tower counting 
+	if (tower.hwPt()>nTowThresholdHw_ && CaloTools::mpEta(abs(tower.hwEta()))<=nTowEtaMax_) 
+	  ringNtowers += 1;
+      }    
+      
+      ex += ringEx;
+      ey += ringEy;
+      et += ringEt;
+      etHF += ringEtHF;
+      exHF += ringExHF;
+      eyHF += ringEyHF;
+
+      etem  += ringEtEm;
+
+      mb0 += ringMB0;
+      mb1 += ringMB1;
+
+      ntowers += ringNtowers;
+    }
+
+    if (mb0>0xf) mb0 = 0xf;
+    if (mb1>0xf) mb1 = 0xf;
+
+
+    l1t::EtSum etSumTotalEt(p4,l1t::EtSum::EtSumType::kTotalEt,et,0,0,0);
+    l1t::EtSum etSumEx(p4,l1t::EtSum::EtSumType::kTotalEtx,ex,0,0,0);
+    l1t::EtSum etSumEy(p4,l1t::EtSum::EtSumType::kTotalEty,ey,0,0,0);
+
+    l1t::EtSum etSumTotalEtHF(p4,l1t::EtSum::EtSumType::kTotalEtHF,etHF,0,0,0);
+    l1t::EtSum etSumExHF(p4,l1t::EtSum::EtSumType::kTotalEtxHF,exHF,0,0,0);
+    l1t::EtSum etSumEyHF(p4,l1t::EtSum::EtSumType::kTotalEtyHF,eyHF,0,0,0);
+
+    l1t::EtSum etSumTotalEtEm(p4,l1t::EtSum::EtSumType::kTotalEtEm,etem,0,0,0);
+
+    l1t::EtSum::EtSumType type0 = l1t::EtSum::EtSumType::kMinBiasHFP0;
+    l1t::EtSum::EtSumType type1 = l1t::EtSum::EtSumType::kMinBiasHFP1;
+    if (etaSide<0) {
+      type0 = l1t::EtSum::EtSumType::kMinBiasHFM0;
+      type1 = l1t::EtSum::EtSumType::kMinBiasHFM1;
+    } 
+    l1t::EtSum etSumMinBias0(p4,type0,mb0,0,0,0);
+    l1t::EtSum etSumMinBias1(p4,type1,mb1,0,0,0);
+
+    etsums.push_back(etSumTotalEt);
+    etsums.push_back(etSumEx);
+    etsums.push_back(etSumEy);
+
+    etsums.push_back(etSumTotalEtHF);
+    etsums.push_back(etSumExHF);
+    etsums.push_back(etSumEyHF);
+
+    etsums.push_back(etSumTotalEtEm);
+
+    etsums.push_back(etSumMinBias0);
+    etsums.push_back(etSumMinBias1);
+
+  }
+
+  //tower count is in aux: only on eta- side!!
+  l1t::EtSum etSumNtowers(p4,l1t::EtSum::EtSumType::kTowerCount,ntowers,0,0,0);
+  etsums.push_back(etSumNtowers);
 
 }
-

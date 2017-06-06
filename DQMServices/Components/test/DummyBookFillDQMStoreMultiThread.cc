@@ -21,6 +21,7 @@
 namespace {
 class FillerBase {
  public:
+  virtual ~FillerBase() = default;
   virtual void fill() = 0;
   virtual void reset() = 0;
 };
@@ -147,14 +148,14 @@ class DummyBookFillDQMStoreMultiThread :  public DQMEDAnalyzer {
 
  private:
   virtual void beginJob();
-  virtual void analyze(const edm::Event&, const edm::EventSetup&);
+  virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
   virtual void endJob();
 
-  virtual void endRun(edm::Run const&, edm::EventSetup const&);
+  virtual void endRun(edm::Run const&, edm::EventSetup const&) override;
   virtual void beginLuminosityBlock(edm::LuminosityBlock const&,
-                                    edm::EventSetup const&);
+                                    edm::EventSetup const&) override;
   virtual void endLuminosityBlock(edm::LuminosityBlock const&,
-                                  edm::EventSetup const&);
+                                  edm::EventSetup const&) override;
 
   void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
   void fillerDispose();
@@ -270,8 +271,8 @@ DummyBookFillDQMStoreMultiThread::analyze(edm::Event const& iEvent,
 
   //Use the ExampleData to create an ExampleData2 which
   // is put into the Event
-  std::auto_ptr<ExampleData2> pOut(new ExampleData2(*pIn));
-  iEvent.put(pOut);
+  std::unique_ptr<ExampleData2> pOut(new ExampleData2(*pIn));
+  iEvent.put(std::move(pOut));
   */
 
   /* this is an EventSetup example

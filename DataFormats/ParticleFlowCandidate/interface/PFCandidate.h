@@ -81,7 +81,8 @@ namespace reco {
       kTrkMuonVertex=4,
       kGSFVertex=5,
       kTPFMSMuonVertex=6,
-      kPickyMuonVertex=7
+      kPickyMuonVertex=7,
+      kDYTMuonVertex=8
     };
 
 
@@ -165,6 +166,10 @@ namespace reco {
       else
         return nullptr;
     }
+    /// uncertainty on dz 
+    virtual float dzError() const { const Track * tr=bestTrack(); if(tr!=nullptr) return tr->dzError(); else return 0; }
+    /// uncertainty on dxy
+    virtual float dxyError() const { const Track * tr=bestTrack(); if(tr!=nullptr) return tr->dxyError(); else return 0; }
 
     /// set gsftrack reference 
     void setGsfTrackRef(const reco::GsfTrackRef& ref);   
@@ -365,7 +370,7 @@ namespace reco {
     
     /// particle identification code
     /// \todo use Particle::pdgId_ and remove this data member
-    virtual  ParticleType particleId() const { return translatePdgIdToType(pdgId_);}
+    virtual  ParticleType particleId() const { return translatePdgIdToType(pdgId());}
 
     
     /// return indices of elements used in the block
@@ -398,16 +403,25 @@ namespace reco {
     //PFCandidate, use the setVertex method. If you find that you are using frequently two store a 
     // vertex that is the same as one of the refs in this class, you should just extend the enum
     // and modify the vertex() method accordingly.
-    void setVertexSource( PFVertexType vt) { vertexType_=vt; if (vertexType_!=kCandVertex) vertex_=Point(0.,0.,0.);}
+    void setVertexSource( PFVertexType vt) { vertexType_=vt; if (vertexType_!=kCandVertex) LeafCandidate::setVertex(Point(0.,0.,0.));}
 
     virtual void setVertex( const math::XYZPoint& p) {
-      vertex_=p; vertexType_ = kCandVertex;
+      LeafCandidate::setVertex(p); vertexType_ = kCandVertex;
     }
 
     virtual const Point & vertex() const;
     virtual double vx() const {return vertex().x();}
     virtual double vy() const {return vertex().y();}
     virtual double vz() const {return vertex().z();}
+
+    /// do we have a valid time information
+    bool isTimeValid() const { return timeError_ >= 0.f; }
+    /// \return the timing
+    float time() const { return time_; }
+    /// \return the timing uncertainty
+    float timeError() const { return timeError_; }
+    /// \set the timing information
+    void setTime(float time, float timeError = 0.f) { time_ = time; timeError_ = timeError; }
 
   private:
     /// Polymorphic overlap
@@ -504,6 +518,11 @@ namespace reco {
     unsigned short storedRefsBitPattern_;
     std::vector<unsigned long long> refsInfo_;
     std::vector<const void *> refsCollectionCache_;
+
+    /// timing information (valid if timeError_ >= 0)
+    float time_;
+    /// timing information uncertainty (<0 if timing not available)
+    float timeError_;
 
   };
 

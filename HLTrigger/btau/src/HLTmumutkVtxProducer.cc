@@ -50,7 +50,7 @@ HLTmumutkVtxProducer::HLTmumutkVtxProducer(const edm::ParameterSet& iConfig):
 }
 
 // ----------------------------------------------------------------------
-HLTmumutkVtxProducer::~HLTmumutkVtxProducer() {}
+HLTmumutkVtxProducer::~HLTmumutkVtxProducer() = default;
 
 void
 HLTmumutkVtxProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -99,7 +99,7 @@ void HLTmumutkVtxProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
   Handle<RecoChargedCandidateCollection> trkcands;
   iEvent.getByToken(trkCandToken_,trkcands);
 
-  auto_ptr<VertexCollection> vertexCollection(new VertexCollection());
+  unique_ptr<VertexCollection> vertexCollection(new VertexCollection());
 
   // Ref to Candidate object to be recorded in filter object
   RecoChargedCandidateRef refMu1;
@@ -203,7 +203,7 @@ void HLTmumutkVtxProducer::produce(edm::Event& iEvent, const edm::EventSetup& iS
       }
     }
   }
-  iEvent.put(vertexCollection);
+  iEvent.put(std::move(vertexCollection));
 }
 
 FreeTrajectoryState HLTmumutkVtxProducer::initialFreeState( const reco::Track& tk, const MagneticField* field)
@@ -224,8 +224,8 @@ bool HLTmumutkVtxProducer::overlap(const TrackRef& trackref1, const TrackRef& tr
 
 bool HLTmumutkVtxProducer::checkPreviousCand(const TrackRef& trackref, vector<RecoChargedCandidateRef> & refVect){
   bool ok=false;
-  for (unsigned int i=0; i<refVect.size(); i++) {
-    if ( refVect[i]->get<TrackRef>() == trackref ) {
+  for (auto & i : refVect) {
+    if ( i->get<TrackRef>() == trackref ) {
       ok=true;
       break;
     }

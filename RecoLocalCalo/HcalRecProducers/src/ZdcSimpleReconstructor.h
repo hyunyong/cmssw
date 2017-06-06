@@ -8,6 +8,7 @@
 #include "CondFormats/HcalObjects/interface/HcalLongRecoParam.h" 
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include "RecoLocalCalo/HcalRecAlgos/interface/ZdcSimpleRecAlgo.h"
 
@@ -25,13 +26,14 @@
       virtual ~ZdcSimpleReconstructor();
       virtual void beginRun(edm::Run const&r, edm::EventSetup const & es) override final;
       virtual void endRun(edm::Run const&r, edm::EventSetup const & es) override final;
-      virtual void produce(edm::Event& e, const edm::EventSetup& c);
+      virtual void produce(edm::Event& e, const edm::EventSetup& c) override;
     private:      
       ZdcSimpleRecAlgo reco_;
       DetId::Detector det_;
       int subdet_;
       HcalOtherSubdetector subdetOther_;
-      edm::EDGetTokenT<ZDCDigiCollection> tok_input_;
+      edm::EDGetTokenT<ZDCDigiCollection> tok_input_hcal;
+      edm::EDGetTokenT<ZDCDigiCollection> tok_input_castor;
 
       bool dropZSmarkedPassed_; // turn on/off dropping of zero suppression marked and passed digis
       

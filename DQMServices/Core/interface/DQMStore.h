@@ -170,6 +170,7 @@ class DQMStore
     void goUp(void);
     const std::string & pwd(void);
     void tag(MonitorElement *, unsigned int);
+    void tagContents(const std::string &, unsigned int);
 
    private:
     explicit IBooker(DQMStore * store):owner_(0) {
@@ -202,7 +203,14 @@ class DQMStore
       return owner_->removeElement(std::forward<Args>(args)...);
     }
 
+    std::vector<MonitorElement*>  getAllContents(const std::string &path,
+						 uint32_t runNumber = 0,
+						 uint32_t lumi = 0);
     MonitorElement * get(const std::string &path);
+
+    // same as get, throws an exception if histogram not found
+    MonitorElement * getElement(const std::string &path);
+
     std::vector<std::string> getSubdirs(void);
     std::vector<std::string> getMEs(void);
     bool containsAnyMonitorable(const std::string &path);
@@ -317,10 +325,10 @@ class DQMStore
                                               int nchX, double lowX, double highX);
   MonitorElement *              book1D       (const char *name,
                                               const char *title,
-                                              int nchX, float *xbinsize);
+                                              int nchX, const float *xbinsize);
   MonitorElement *              book1D       (const std::string &name,
                                               const std::string &title,
-                                              int nchX, float *xbinsize);
+                                              int nchX, const float *xbinsize);
   MonitorElement *              book1D       (const char *name, TH1F *h);
   MonitorElement *              book1D       (const std::string &name, TH1F *h);
 
@@ -332,10 +340,10 @@ class DQMStore
                                               int nchX, double lowX, double highX);
   MonitorElement *              book1S       (const char *name,
                                               const char *title,
-                                              int nchX, float *xbinsize);
+                                              int nchX, const float *xbinsize);
   MonitorElement *              book1S       (const std::string &name,
                                               const std::string &title,
-                                              int nchX, float *xbinsize);
+                                              int nchX, const float *xbinsize);
   MonitorElement *              book1S       (const char *name, TH1S *h);
   MonitorElement *              book1S       (const std::string &name, TH1S *h);
 
@@ -347,10 +355,10 @@ class DQMStore
                                                int nchX, double lowX, double highX);
   MonitorElement *              book1DD       (const char *name,
                                                const char *title,
-                                               int nchX, float *xbinsize);
+                                               int nchX, const float *xbinsize);
   MonitorElement *              book1DD       (const std::string &name,
                                                const std::string &title,
-                                               int nchX, float *xbinsize);
+                                               int nchX, const float *xbinsize);
   MonitorElement *              book1DD       (const char *name, TH1D *h);
   MonitorElement *              book1DD       (const std::string &name, TH1D *h);
 
@@ -364,12 +372,12 @@ class DQMStore
                                               int nchY, double lowY, double highY);
   MonitorElement *              book2D       (const char *name,
                                               const char *title,
-                                              int nchX, float *xbinsize,
-                                              int nchY, float *ybinsize);
+                                              int nchX, const float *xbinsize,
+                                              int nchY, const float *ybinsize);
   MonitorElement *              book2D       (const std::string &name,
                                               const std::string &title,
-                                              int nchX, float *xbinsize,
-                                              int nchY, float *ybinsize);
+                                              int nchX, const float *xbinsize,
+                                              int nchY, const float *ybinsize);
   MonitorElement *              book2D       (const char *name, TH2F *h);
   MonitorElement *              book2D       (const std::string &name, TH2F *h);
 
@@ -383,12 +391,12 @@ class DQMStore
                                               int nchY, double lowY, double highY);
   MonitorElement *              book2S       (const char *name,
                                               const char *title,
-                                              int nchX, float *xbinsize,
-                                              int nchY, float *ybinsize);
+                                              int nchX, const float *xbinsize,
+                                              int nchY, const float *ybinsize);
   MonitorElement *              book2S       (const std::string &name,
                                               const std::string &title,
-                                              int nchX, float *xbinsize,
-                                              int nchY, float *ybinsize);
+                                              int nchX, const float *xbinsize,
+                                              int nchY, const float *ybinsize);
   MonitorElement *              book2S       (const char *name, TH2S *h);
   MonitorElement *              book2S       (const std::string &name, TH2S *h);
 
@@ -402,12 +410,12 @@ class DQMStore
                                                int nchY, double lowY, double highY);
   MonitorElement *              book2DD       (const char *name,
                                                const char *title,
-                                               int nchX, float *xbinsize,
-                                               int nchY, float *ybinsize);
+                                               int nchX, const float *xbinsize,
+                                               int nchY, const float *ybinsize);
   MonitorElement *              book2DD       (const std::string &name,
                                                const std::string &title,
-                                               int nchX, float *xbinsize,
-                                               int nchY, float *ybinsize);
+                                               int nchX, const float *xbinsize,
+                                               int nchY, const float *ybinsize);
   MonitorElement *              book2DD       (const char *name, TH2D *h);
   MonitorElement *              book2DD       (const std::string &name, TH2D *h);
 
@@ -446,22 +454,22 @@ class DQMStore
                                               const char *option = "s");
   MonitorElement *              bookProfile  (const char *name,
                                               const char *title,
-                                              int nchX, double *xbinsize,
+                                              int nchX, const double *xbinsize,
                                               int nchY, double lowY, double highY,
                                               const char *option = "s");
   MonitorElement *              bookProfile  (const std::string &name,
                                               const std::string &title,
-                                              int nchX, double *xbinsize,
+                                              int nchX, const double *xbinsize,
                                               int nchY, double lowY, double highY,
                                               const char *option = "s");
   MonitorElement *              bookProfile  (const char *name,
                                               const char *title,
-                                              int nchX, double *xbinsize,
+                                              int nchX, const double *xbinsize,
                                               double lowY, double highY,
                                               const char *option = "s");
   MonitorElement *              bookProfile  (const std::string &name,
                                               const std::string &title,
-                                              int nchX, double *xbinsize,
+                                              int nchX, const double *xbinsize,
                                               double lowY, double highY,
                                               const char *option = "s");
   MonitorElement *              bookProfile  (const char *name, TProfile *h);
@@ -550,6 +558,7 @@ class DQMStore
   bool                          load(const std::string &filename,
                                      OpenRunDirs stripdirs = StripRunDirs,
                                      bool fileMustExist = true);
+  bool                          mtEnabled() { return enableMultiThread_; };
 
   //-------------------------------------------------------------------------
   // ---------------------- Public print methods -----------------------------
@@ -623,13 +632,15 @@ class DQMStore
 					      uint32_t lumi,
 					      uint32_t streamId,
 					      uint32_t moduleId);
+
+  void deleteUnusedLumiHistograms(uint32_t run, uint32_t lumi);
  private:
 
   // ---------------- Miscellaneous -----------------------------
   void        initializeFrom(const edm::ParameterSet&);
   void        reset(void);
   void        forceReset(void);
-
+  
   bool        extract(TObject *obj, const std::string &dir, bool overwrite, bool collateHistograms);
   TObject *   extractNextObject(TBufferFile&) const;
 

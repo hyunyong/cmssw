@@ -35,9 +35,9 @@ class TrackBuildingAnalyzer
 {
     public:
         TrackBuildingAnalyzer(const edm::ParameterSet&);
-        virtual ~TrackBuildingAnalyzer();
-        virtual void initHisto(DQMStore::IBooker & ibooker);
-        virtual void analyze
+        ~TrackBuildingAnalyzer();
+        void initHisto(DQMStore::IBooker & ibooker, const edm::ParameterSet&);
+        void analyze
         (
             const edm::Event& iEvent, 
             const edm::EventSetup& iSetup, 
@@ -46,7 +46,7 @@ class TrackBuildingAnalyzer
             const edm::ESHandle<MagneticField>& theMF,
             const edm::ESHandle<TransientTrackingRecHitBuilder>& theTTRHBuilder
         );
-        virtual void analyze
+        void analyze
         (
             const edm::Event& iEvent, 
             const edm::EventSetup& iSetup, 
@@ -62,8 +62,6 @@ class TrackBuildingAnalyzer
         void bookHistos(std::string sname, DQMStore::IBooker & ibooker);
 
         // ----------member data ---------------------------
-
-        edm::ParameterSet conf_;
 
         // Track Seeds
         MonitorElement* SeedPt;
@@ -82,7 +80,8 @@ class TrackBuildingAnalyzer
         MonitorElement* TrackCandPt;
         MonitorElement* TrackCandEta;
         MonitorElement* TrackCandPhi;
-        MonitorElement* TrackCandTheta;
+        MonitorElement* TrackCandPhiVsEta;
+	MonitorElement* TrackCandTheta;
         MonitorElement* TrackCandQ;
         MonitorElement* TrackCandDxy;
         MonitorElement* TrackCandDz;
@@ -90,12 +89,17 @@ class TrackBuildingAnalyzer
         MonitorElement* NumberOfRecHitsPerTrackCandVsPhiProfile;
         MonitorElement* NumberOfRecHitsPerTrackCandVsEtaProfile;
 
+	MonitorElement* stoppingSource;
+	MonitorElement* stoppingSourceVSeta;
+	MonitorElement* stoppingSourceVSphi;
+	
         std::string histname;  //for naming the histograms according to algorithm used
 
 	//to disable some plots
 	bool doAllPlots;
 	bool doAllSeedPlots;
 	bool doTCPlots;
+	bool doAllTCPlots;
        	bool doPT;
 	bool doETA;
 	bool doPHI;
@@ -107,5 +111,6 @@ class TrackBuildingAnalyzer
 	bool doNRecHits;
 	bool doProfPHI;
 	bool doProfETA;
+	bool doStopSource;
 };
 #endif

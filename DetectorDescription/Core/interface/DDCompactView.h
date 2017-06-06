@@ -1,19 +1,32 @@
 #ifndef DDCompactView_h
 #define DDCompactView_h
 
-#include <vector>
+#include <stddef.h>
+#include <memory>
+#include <string>
+#include <utility>
+# include <vector>
 
-#include "DetectorDescription/Core/interface/DDAlgo.h"
-#include "DetectorDescription/Core/interface/DDCompactViewImpl.h"
-#include "DetectorDescription/Core/interface/graphwalker.h"
+#include "DetectorDescription/Base/interface/DDRotationMatrix.h"
+#include "DetectorDescription/Base/interface/DDTranslation.h"
+#include "DetectorDescription/Base/interface/Store.h"
+# include "DetectorDescription/Core/interface/DDLogicalPart.h"
+# include "DetectorDescription/Core/interface/DDPosData.h"
+#include "DetectorDescription/Core/interface/DDTransform.h"
+#include "DetectorDescription/Core/interface/adjgraph.h"
+# include "DetectorDescription/Core/interface/graphwalker.h"
 
-
+class DDCompactViewImpl;
+class DDDivision;
+class DDName;
 class DDPartSelector;
 class DDPhysicalPart;
+struct DDPosData;
+
 namespace DDI {
+  class LogicalPart;
   class Material;
   class Solid;
-  class LogicalPart;
   class Specific;
 }
 
@@ -87,12 +100,7 @@ public:
   //! pair ...
   typedef std::pair<DDLogicalPart,DDPosData*> pos_type;
   
-  //! not used
-  //:typedef GraphWalker<DDLogicalPart,DDPosData*> walker_type;
   typedef graphwalker<DDLogicalPart,DDPosData*> walker_type;
-  
-  //! not used
-  //:typedef walker_type::value_type value_type;
   
   //! type of representation of the compact-view (acyclic directed multigraph)
   /** Nodes are instances of DDLogicalPart, edges are pointers to instances of DDPosData */
@@ -118,12 +126,6 @@ public:
   //! Prototype version of calculating the weight of a detector component
   double weight(const DDLogicalPart & p) const;
 
-  //! positioning...
-  void algoPosPart(const DDLogicalPart & self,
-		   const DDLogicalPart & parent,
-		   DDAlgo & algo
-		   );
-  
   void position (const DDLogicalPart & self,
 		 const DDLogicalPart & parent,
 		 std::string copyno,

@@ -1,4 +1,3 @@
-#include "FWCore/ServiceRegistry/interface/SystemBounds.h"
 #include "DQMServices/Core/interface/Standalone.h"
 #include "DQMServices/Core/interface/DQMStore.h"
 #include "DQMServices/Core/interface/QReport.h"
@@ -20,7 +19,10 @@
 #include <iterator>
 #include <cerrno>
 #include <boost/algorithm/string.hpp>
+
 #include <fstream>
+#include <sstream>
+#include <exception>
 
 /** @var DQMStore::verbose_
     Universal verbose flag for DQM. */
@@ -59,6 +61,7 @@ static const lat::Regexp s_rxmeval ("^<(.*)>(i|f|s|e|t|qr)=(.*)</\\1>$");
 static const lat::Regexp s_rxmeqr1 ("^st:(\\d+):([-+e.\\d]+):([^:]*):(.*)$");
 static const lat::Regexp s_rxmeqr2 ("^st\\.(\\d+)\\.(.*)$");
 static const lat::Regexp s_rxtrace ("(.*)\\((.*)\\+0x.*\\).*");
+static const lat::Regexp s_rxself  ("^[^()]*DQMStore::.*");
 static const lat::Regexp s_rxpbfile (".*\\.pb$");
 
 //////////////////////////////////////////////////////////////////////
@@ -273,7 +276,7 @@ void DQMStore::IBooker::cd(const std::string &dir) {
 
 void DQMStore::IBooker::setCurrentFolder(const std::string &fullpath) {
   owner_->setCurrentFolder(fullpath);
-}
+} 
 
 void DQMStore::IBooker::goUp(void) {
   owner_->goUp();
@@ -281,15 +284,40 @@ void DQMStore::IBooker::goUp(void) {
 
 const std::string & DQMStore::IBooker::pwd(void) {
   return owner_->pwd();
-}
+} 
 
 void DQMStore::IBooker::tag(MonitorElement *me, unsigned int tag) {
   owner_->tag(me, tag);
 }
 
+void DQMStore::IBooker::tagContents(const std::string &path, unsigned int myTag) {
+  owner_->tagContents(path, myTag);
+}
+
 //IGetter methods
+std::vector<MonitorElement*>
+DQMStore::IGetter::getAllContents(const std::string &path,
+				  uint32_t runNumber /* = 0 */,
+				  uint32_t lumi      /* = 0 */) {
+  return owner_->getAllContents(path, runNumber, lumi);
+}
+
 MonitorElement * DQMStore::IGetter::get(const std::string &path) {
   return owner_->get(path);
+}
+
+MonitorElement * DQMStore::IGetter::getElement(const std::string &path) {
+    MonitorElement *ptr = this->get(path);
+    if (ptr == nullptr) {
+      std::stringstream msg;
+      msg << "DQM object not found";
+        
+      msg << ": " << path;
+
+      // can't use cms::Exception inside DQMStore
+      throw std::out_of_range(msg.str());
+    }
+    return ptr;
 }
 
 std::vector<std::string> DQMStore::IGetter::getSubdirs(void) {
@@ -344,6 +372,10 @@ void DQMStore::mergeAndResetMEsRunSummaryCache(uint32_t run,
 
   std::string null_str("");
   MonitorElement proto(&null_str, null_str, run, streamId, moduleId);
+  // Since this accesses the data, the operation must be
+  // be locked.
+  std::lock_guard<std::mutex> guard(book_mutex_);
+
   std::set<MonitorElement>::const_iterator e = data_.end();
   std::set<MonitorElement>::const_iterator i = data_.lower_bound(proto);
   while (i != e) {
@@ -358,11 +390,11 @@ void DQMStore::mergeAndResetMEsRunSummaryCache(uint32_t run,
       continue;
     }
 
-    MonitorElement global_me(*i);
+    // don't call the copy constructor
+    // we are just searching for a global histogram - a copy is not necessary
+    MonitorElement global_me(*i, MonitorElementNoCloneTag());
     global_me.globalize();
-    // Since this accesses the data, the operation must be
-    // be locked.
-    std::lock_guard<std::mutex> guard(book_mutex_);
+
     std::set<MonitorElement>::const_iterator me = data_.find(global_me);
     if (me != data_.end()) {
       if (verbose_ > 1)
@@ -370,13 +402,28 @@ void DQMStore::mergeAndResetMEsRunSummaryCache(uint32_t run,
 
       //don't take any action if the ME is an INT || FLOAT || STRING
       if(me->kind() >= MonitorElement::DQM_KIND_TH1F)
-        me->getTH1()->Add(i->getTH1());
-
+	{
+	  if(me->getTH1()->CanExtendAllAxes() && i->getTH1()->CanExtendAllAxes()) {
+	    TList list;
+	    list.Add(i->getTH1());
+	    if( -1 == me->getTH1()->Merge(&list)) {
+	      std::cout << "mergeAndResetMEsRunSummaryCache: Failed to merge DQM element "<<me->getFullname();
+	    }
+	  }
+	  else {
+            if (i->getTH1()->GetEntries())
+	      me->getTH1()->Add(i->getTH1());
+          }
+	}
     } else {
       if (verbose_ > 1)
         std::cout << "No global Object found. " << std::endl;
       std::pair<std::set<MonitorElement>::const_iterator, bool> gme;
-      gme = data_.insert(global_me);
+
+      // this makes an actual and a single copy with Clone()'ed th1
+      MonitorElement actual_global_me(*i);
+      actual_global_me.globalize();
+      gme = data_.insert(std::move(actual_global_me));
       assert(gme.second);
     }
     // TODO(rovere): eventually reset the local object and mark it as reusable??
@@ -395,6 +442,11 @@ void DQMStore::mergeAndResetMEsLuminositySummaryCache(uint32_t run,
               << " module: " << moduleId << std::endl;
   std::string null_str("");
   MonitorElement proto(&null_str, null_str, run, streamId, moduleId);
+
+  // Since this accesses the data, the operation must be
+  // be locked.
+  std::lock_guard<std::mutex> guard(book_mutex_);
+
   std::set<MonitorElement>::const_iterator e = data_.end();
   std::set<MonitorElement>::const_iterator i = data_.lower_bound(proto);
 
@@ -410,29 +462,43 @@ void DQMStore::mergeAndResetMEsLuminositySummaryCache(uint32_t run,
       continue;
     }
 
-    MonitorElement global_me(*i);
+    MonitorElement global_me(*i, MonitorElementNoCloneTag());
     global_me.globalize();
     global_me.setLumi(lumi);
-    // Since this accesses the data, the operation must be
-    // be locked.
-    std::lock_guard<std::mutex> guard(book_mutex_);
     std::set<MonitorElement>::const_iterator me = data_.find(global_me);
     if (me != data_.end()) {
       if (verbose_ > 1)
 	      std::cout << "Found global Object, using it --> " << me->getFullname() << std::endl;
 
       //don't take any action if the ME is an INT || FLOAT || STRING
-      if (me->kind() >= MonitorElement::DQM_KIND_TH1F)
-        me->getTH1()->Add(i->getTH1());
+      if(me->kind() >= MonitorElement::DQM_KIND_TH1F)
+	{
+	  if(me->getTH1()->CanExtendAllAxes() && i->getTH1()->CanExtendAllAxes()) {
+	    TList list;
+	    list.Add(i->getTH1());
+	    if( -1 == me->getTH1()->Merge(&list)) {
+	      std::cout << "mergeAndResetMEsLuminositySummaryCache: Failed to merge DQM element "<<me->getFullname();
+	    }
+	  }
+	  else {
+            if (i->getTH1()->GetEntries())
+	      me->getTH1()->Add(i->getTH1());
+          }
+	}
     } else {
       if (verbose_ > 1)
         std::cout << "No global Object found. " << std::endl;
       std::pair<std::set<MonitorElement>::const_iterator, bool> gme;
-      gme = data_.insert(global_me);
+
+      // this makes an actual and a single copy with Clone()'ed th1
+      MonitorElement actual_global_me(*i);
+      actual_global_me.globalize();
+      actual_global_me.setLumi(lumi);
+      gme = data_.insert(std::move(actual_global_me));
       assert(gme.second);
     }
+    // make the ME reusable for the next LS
     const_cast<MonitorElement*>(&*i)->Reset();
-    // TODO(rovere): eventually reset the local object and mark it as reusable??
     ++i;
   }
 }
@@ -543,6 +609,7 @@ DQMStore::initializeFrom(const edm::ParameterSet& pset) {
   }
 
   initQCriterion<Comp2RefChi2>(qalgos_);
+  initQCriterion<Comp2Ref2DChi2>(qalgos_);
   initQCriterion<Comp2RefKolmogorov>(qalgos_);
   initQCriterion<ContentsXRange>(qalgos_);
   initQCriterion<ContentsYRange>(qalgos_);
@@ -576,7 +643,7 @@ DQMStore::print_trace (const std::string &dir, const std::string &name)
   // concurrency problems because the print_trace method is always called behind
   // a lock (see bookTransaction).
   if (!stream_)
-    stream_ = new ofstream("histogramBookingBT.log");
+    stream_ = new std::ofstream("histogramBookingBT.log");
   
   void *array[10];
   size_t size;
@@ -588,22 +655,31 @@ DQMStore::print_trace (const std::string &dir, const std::string &name)
   size = backtrace (array, 10);
   strings = backtrace_symbols (array, size);
 
-  if ((size > 4)
-      &&s_rxtrace.match(strings[4], 0, 0, &m))
-  {
-    char * demangled = abi::__cxa_demangle(m.matchString(strings[4], 2).c_str(), 0, 0, &r);
+  size_t level = 1;
+  char * demangled = nullptr; 
+  for (; level < size; level++) {
+    if (!s_rxtrace.match(strings[level], 0, 0, &m)) continue;
+    demangled = abi::__cxa_demangle(m.matchString(strings[level], 2).c_str(), 0, 0, &r);
+    if (!demangled) continue;
+    if (!s_rxself.match(demangled, 0, 0)) break;
+    free(demangled);
+    demangled = nullptr;
+  }
+
+  if (demangled != nullptr) {
     *stream_ << "\"" << dir << "/"
            << name << "\" "
-           << (r ? m.matchString(strings[4], 2) : demangled) << " "
-           << m.matchString(strings[4], 1) << "\n";
+           << (r ? m.matchString(strings[level], 2) : demangled) << " "
+           << m.matchString(strings[level], 1) << "\n";
     free(demangled);
-  }
-  else
+  } else {
     *stream_ << "Skipping "<< dir << "/" << name
            << " with stack size " << size << "\n";
+  }
+
   /* In this case print the full stack trace, up to main or to the
    * maximum stack size, i.e. 10. */
-  if (verbose_ > 4)
+  if (verbose_ > 4 || demangled == nullptr)
   {
     size_t i;
     m.reset();
@@ -775,7 +851,7 @@ DQMStore::book(const std::string &dir, const std::string &name,
     // Create and initialise core object.
     assert(dirs_.count(dir));
     MonitorElement proto(&*dirs_.find(dir), name, run_, streamId_, moduleId_);
-    me = const_cast<MonitorElement &>(*data_.insert(proto).first)
+    me = const_cast<MonitorElement &>(*data_.insert(std::move(proto)).first)
       .initialise((MonitorElement::Kind)kind, h);
 
     // Initialise quality test information.
@@ -787,17 +863,24 @@ DQMStore::book(const std::string &dir, const std::string &name,
                 me->addQReport(qi->second);
     }
 
-    // Assign reference if we have one.
+    // If we just booked a (plain) MonitorElement, and there is a reference
+    // MonitorElement with the same name, link the two together.
+    // The other direction is handled by the extract method.
     std::string refdir;
-    refdir.reserve(s_referenceDirName.size() + dir.size() + 2);
+    refdir.reserve(s_referenceDirName.size() + dir.size() + 1);
     refdir += s_referenceDirName;
     refdir += '/';
     refdir += dir;
-
-    if (findObject(refdir, name))
-    {
+    MonitorElement* referenceME = findObject(refdir, name); 
+    if (referenceME) {
+      // We have booked a new MonitorElement with a specific dir and name.
+      // Then, if we can find the corresponding MonitorElement in the reference
+      // dir we assign the object_ of the reference MonitorElement to the 
+      // reference_ property of our new MonitorElement.
       me->data_.flags |= DQMNet::DQM_PROP_HAS_REFERENCE;
+      me->reference_ = referenceME->object_;
     }
+
     // Return the monitor element.
     return me;
   }
@@ -832,7 +915,7 @@ DQMStore::book(const std::string &dir,
     // Create it and return for initialisation.
     assert(dirs_.count(dir));
     MonitorElement proto(&*dirs_.find(dir), name, run_, streamId_, moduleId_);
-    return &const_cast<MonitorElement &>(*data_.insert(proto).first);
+    return &const_cast<MonitorElement &>(*data_.insert(std::move(proto)).first);
   }
 }
 
@@ -998,7 +1081,7 @@ DQMStore::book1DD(const std::string &name, const std::string &title,
 /// Book 1D variable bin histogram.
 MonitorElement *
 DQMStore::book1D(const char *name, const char *title,
-                 int nchX, float *xbinsize)
+                 int nchX, const float *xbinsize)
 {
   return book1D(pwd_, name, new TH1F(name, title, nchX, xbinsize));
 }
@@ -1006,7 +1089,7 @@ DQMStore::book1D(const char *name, const char *title,
 /// Book 1D variable bin histogram.
 MonitorElement *
 DQMStore::book1D(const std::string &name, const std::string &title,
-                 int nchX, float *xbinsize)
+                 int nchX, const float *xbinsize)
 {
   return book1D(pwd_, name, new TH1F(name.c_str(), title.c_str(), nchX, xbinsize));
 }
@@ -1144,7 +1227,7 @@ DQMStore::book2DD(const std::string &name, const std::string &title,
 /// Book 2D variable bin histogram.
 MonitorElement *
 DQMStore::book2D(const char *name, const char *title,
-                 int nchX, float *xbinsize, int nchY, float *ybinsize)
+                 int nchX, const float *xbinsize, int nchY, const float *ybinsize)
 {
   return book2D(pwd_, name, new TH2F(name, title,
                                      nchX, xbinsize, nchY, ybinsize));
@@ -1153,7 +1236,7 @@ DQMStore::book2D(const char *name, const char *title,
 /// Book 2D variable bin histogram.
 MonitorElement *
 DQMStore::book2D(const std::string &name, const std::string &title,
-                 int nchX, float *xbinsize, int nchY, float *ybinsize)
+                 int nchX, const float *xbinsize, int nchY, const float *ybinsize)
 {
   return book2D(pwd_, name, new TH2F(name.c_str(), title.c_str(),
                                      nchX, xbinsize, nchY, ybinsize));
@@ -1324,7 +1407,7 @@ DQMStore::bookProfile(const std::string &name, const std::string &title,
 /// disregarded in a profile plot.
 MonitorElement *
 DQMStore::bookProfile(const char *name, const char *title,
-                      int nchX, double *xbinsize,
+                      int nchX, const double *xbinsize,
                       int /* nchY */, double lowY, double highY,
                       const char *option /* = "s" */)
 {
@@ -1339,7 +1422,7 @@ DQMStore::bookProfile(const char *name, const char *title,
 /// disregarded in a profile plot.
 MonitorElement *
 DQMStore::bookProfile(const std::string &name, const std::string &title,
-                      int nchX, double *xbinsize,
+                      int nchX, const double *xbinsize,
                       int /* nchY */, double lowY, double highY,
                       const char *option /* = "s" */)
 {
@@ -1354,7 +1437,7 @@ DQMStore::bookProfile(const std::string &name, const std::string &title,
 /// disregarded in a profile plot.
 MonitorElement *
 DQMStore::bookProfile(const char *name, const char *title,
-                      int nchX, double *xbinsize,
+                      int nchX, const double *xbinsize,
                       double lowY, double highY,
                       const char *option /* = "s" */)
 {
@@ -1369,7 +1452,7 @@ DQMStore::bookProfile(const char *name, const char *title,
 /// disregarded in a profile plot.
 MonitorElement *
 DQMStore::bookProfile(const std::string &name, const std::string &title,
-                      int nchX, double *xbinsize,
+                      int nchX, const double *xbinsize,
                       double lowY, double highY,
                       const char *option /* = "s" */)
 {
@@ -1948,6 +2031,17 @@ DQMStore::getAllContents(const std::string &path,
     }
     result.push_back(const_cast<MonitorElement *>(&*i));
   }
+
+  if (enableMultiThread_)
+    {
+      //save legacy modules when running MT
+      i = data_.begin();
+      for ( ; i != e && isSubdirectory(*cleaned, *i->data_.dirname); ++i) {
+        if (i->data_.run != 0 || i->data_.streamId != 0 || i->data_.moduleId != 0) break;
+        result.push_back(const_cast<MonitorElement *>(&*i));
+      }
+    }
+
   return result;
 }
 
@@ -2028,6 +2122,50 @@ DQMStore::forceReset(void)
   }
 
   reset_ = true;
+}
+
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+/** Delete *global* histograms which are no longer in used.
+ * Such histograms are created at the end of each lumi and should be
+ * deleted after last globalEndLuminosityBlock.
+ */
+void
+DQMStore::deleteUnusedLumiHistograms(uint32_t run, uint32_t lumi)
+{
+  if (!enableMultiThread_)
+    return;
+  
+  std::lock_guard<std::mutex> guard(book_mutex_);
+
+  std::string null_str("");
+  MonitorElement proto(&null_str, null_str, run, 0, 0);  
+  proto.setLumi(lumi);
+
+  std::set<MonitorElement>::const_iterator e = data_.end();
+  std::set<MonitorElement>::const_iterator i = data_.lower_bound(proto);
+  
+  while (i != e) {
+    if (i->data_.streamId != 0 ||
+        i->data_.moduleId != 0)
+      break;
+    if (i->data_.lumi != lumi)
+      break;
+    if (i->data_.run != run)
+      break;
+    
+    auto temp = i;
+    ++i;
+
+    if (verbose_ > 1) {
+      std::cout << "DQMStore::deleteUnusedLumiHistograms: deleted monitor element '"
+                << *i->data_.dirname << "/" << i->data_.objname << "'"
+                << "flags " << i->data_.flags << "\n";
+    } 
+
+    data_.erase(temp);
+  }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -2312,14 +2450,19 @@ DQMStore::extract(TObject *obj, const std::string &dir,
     return false;
   }
 
-  // If we just read in a reference monitor element, and there is a
-  // monitor element with the same name, link the two together. The
-  // other direction is handled by the initialise() method.
+  // If we just read in a reference MonitorElement, and there is a
+  // MonitorElement with the same name, link the two together.
+  // The other direction is handled by the book() method.
   if (refcheck && isSubdirectory(s_referenceDirName, dir))
   {
     std::string mdir(dir, s_referenceDirName.size()+1, std::string::npos);
     if (MonitorElement *master = findObject(mdir, obj->GetName()))
     {
+      // We have extracted a MonitorElement, and it's located in the reference
+      // dir. Then we find the corresponding MonitorElement in the
+      // non-reference dir and assign the object_ of the reference
+      // MonitorElement to the reference_ property of the corresponding
+      // non-reference MonitorElement.
       master->data_.flags |= DQMNet::DQM_PROP_HAS_REFERENCE;
       master->reference_ = refcheck->object_;
     }
@@ -2383,6 +2526,8 @@ void DQMStore::savePB(const std::string &filename,
   using google::protobuf::io::FileOutputStream;
   using google::protobuf::io::GzipOutputStream;
   using google::protobuf::io::StringOutputStream;
+
+  std::lock_guard<std::mutex> guard(book_mutex_);
 
   std::set<std::string>::iterator di, de;
   MEMap::iterator mi, me = data_.end();
@@ -2467,20 +2612,27 @@ void DQMStore::savePB(const std::string &filename,
 
       //reset the ME just written to make it available for the next LS (online)
       if (resetMEsAfterWriting)
-        const_cast<MonitorElement*>(&*mi)->Reset();
+	const_cast<MonitorElement*>(&*mi)->Reset();
     }
   }
 
   int filedescriptor = ::open(filename.c_str(),
-			      O_WRONLY | O_CREAT | O_TRUNC,
-			      S_IRUSR | S_IWUSR);
+                              O_WRONLY | O_CREAT | O_TRUNC,
+                              S_IRUSR | S_IWUSR |
+                              S_IRGRP | S_IWGRP |
+                              S_IROTH);
   FileOutputStream file_stream(filedescriptor);
   GzipOutputStream::Options options;
   options.format = GzipOutputStream::GZIP;
-  options.compression_level = 6;
+  options.compression_level = 1;
   GzipOutputStream gzip_stream(&file_stream,
                                options);
   dqmstore_message.SerializeToZeroCopyStream(&gzip_stream);
+
+  // we need to flush it before we close the fd
+  gzip_stream.Close();
+  file_stream.Close();
+  ::close(filedescriptor);
 
   // Maybe make some noise.
   if (verbose_)
@@ -2506,6 +2658,8 @@ DQMStore::save(const std::string &filename,
                const std::string &fileupdate /* = RECREATE */,
 	       const bool resetMEsAfterWriting /* = false */)
 {
+  std::lock_guard<std::mutex> guard(book_mutex_);
+
   std::set<std::string>::iterator di, de;
   MEMap::iterator mi, me = data_.end();
   DQMNet::QReports::const_iterator qi, qe;
@@ -2678,7 +2832,7 @@ DQMStore::save(const std::string &filename,
         TObjString(mi->tagLabelString().c_str()).Write();
 
       //reset the ME just written to make it available for the next LS (online)
-      if(resetMEsAfterWriting)
+      if (resetMEsAfterWriting)
 	const_cast<MonitorElement*>(&*mi)->Reset();
     }
   }
@@ -3012,6 +3166,7 @@ DQMStore::readFilePB(const std::string &filename,
     raiseDQMError("DQMStore", "Fatal parsing file '%s'", filename.c_str());
     return false;
   }
+  ::close(filedescriptor);
 
   for (int i = 0; i < dqmstore_message.histo_size(); i++) {
     std::string path;
@@ -3110,11 +3265,11 @@ DQMStore::removeElement(const std::string &dir, const std::string &name, bool wa
 {
   MonitorElement proto(&dir, name);
   MEMap::iterator pos = data_.find(proto);
-  if (pos == data_.end() && warning)
+  if (pos != data_.end())
+    data_.erase(pos);
+  else if (warning)
     std::cout << "DQMStore: WARNING: attempt to remove non-existent"
               << " monitor element '" << name << "' in '" << dir << "'\n";
-  else
-    data_.erase(pos);
 }
 
 //////////////////////////////////////////////////////////////////////

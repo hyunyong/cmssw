@@ -1,7 +1,7 @@
 ## import skeleton process
 from PhysicsTools.PatAlgos.patTemplate_cfg import *
 # verbose flags for the PF2PAT modules
-process.options.allowUnscheduled = cms.untracked.bool(True)
+
 #process.Tracer = cms.Service("Tracer")
 
 # Configure PAT to use PF2PAT instead of AOD sources
@@ -51,9 +51,6 @@ getattr(process,"pfNoMuonJME"+postfix).verbose = False
 
 # enable delta beta correction for muon selection in PF2PAT?
 getattr(process,"pfIsolatedMuons"+postfix).doDeltaBetaCorrection = cms.bool(False)
-
-# Temporary fix to have AK5 payloads until the AK4 payloads are ready
-process.patJetCorrFactorsPFlow.payload = 'AK5PFchs' 
 
 ## ------------------------------------------------------
 #  In addition you usually want to change the following

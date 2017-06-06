@@ -26,15 +26,15 @@
 class ThroughputServiceClient : public DQMEDHarvester {
 public:
   explicit ThroughputServiceClient(edm::ParameterSet const &);
-  ~ThroughputServiceClient();
+  ~ThroughputServiceClient() override = default;
 
   static void fillDescriptions(edm::ConfigurationDescriptions & descriptions);
 
 private:
   std::string m_dqm_path;
 
-  void dqmEndLuminosityBlock(DQMStore::IGetter & getter, edm::LuminosityBlock const & lumi, edm::EventSetup const & setup);
-  void dqmEndJob(DQMStore::IBooker & booker, DQMStore::IGetter & getter);
+  void dqmEndLuminosityBlock(DQMStore::IBooker & booker, DQMStore::IGetter & getter, edm::LuminosityBlock const &, edm::EventSetup const&) override;
+  void dqmEndJob(DQMStore::IBooker & booker, DQMStore::IGetter & getter) override;
 
 private:
   void fillSummaryPlots(        DQMStore::IBooker & booker, DQMStore::IGetter & getter);
@@ -46,10 +46,6 @@ ThroughputServiceClient::ThroughputServiceClient(edm::ParameterSet const & confi
 {
 }
 
-ThroughputServiceClient::~ThroughputServiceClient()
-{
-}
-
 void
 ThroughputServiceClient::dqmEndJob(DQMStore::IBooker & booker, DQMStore::IGetter & getter)
 {
@@ -57,9 +53,9 @@ ThroughputServiceClient::dqmEndJob(DQMStore::IBooker & booker, DQMStore::IGetter
 }
 
 void
-ThroughputServiceClient::dqmEndLuminosityBlock(DQMStore::IGetter & getter, edm::LuminosityBlock const & lumi, edm::EventSetup const & setup)
+ThroughputServiceClient::dqmEndLuminosityBlock(DQMStore::IBooker & booker, DQMStore::IGetter & getter, edm::LuminosityBlock const &, edm::EventSetup const&)
 {
-  // fillSummaryPlots(getter);
+  fillSummaryPlots(booker, getter);
 }
 
 void
@@ -88,13 +84,51 @@ ThroughputServiceClient::fillSummaryPlots(DQMStore::IBooker & booker, DQMStore::
     booker.setCurrentFolder(folder);
     unsigned int nbins = sourced->GetXaxis()->GetNbins();
     double       range = sourced->GetXaxis()->GetXmax();
-    TH1F * concurrent = booker.book1D("concurrent", "Concurrent events being processed", nbins, 0., range)->getTH1F();
+
+    // drop .../concurrent, if it exists
+    if (getter.get(folder + "/concurrent"))
+      getter.removeElement(folder, "concurrent", true);
+    // (re)book and fill .../concurrent
+    TH1F* concurrent = booker.book1D("concurrent", "Concurrent events being processed", nbins, 0., range)->getTH1F();
     double sum = 0;
     // from bin=0 (underflow) to bin=nbins+1 (overflow)
     for (unsigned int i = 0; i <= nbins+1; ++i) {
       sum += sourced->GetBinContent(i) - retired->GetBinContent(i);
       concurrent->Fill( concurrent->GetXaxis()->GetBinCenter(i), sum );
     }
+
+    TH1F* average = nullptr;    
+    double avg_min = std::min(sourced->GetMinimum(0.), retired->GetMinimum(0.));
+    double avg_max = std::max(sourced->GetMaximum(),   retired->GetMaximum());
+    double width   = avg_max - avg_min;
+    avg_min = std::floor( avg_min - width * 0.2 );
+    if (avg_min < 0.) avg_min = 0.;
+    avg_max = std::ceil( avg_max + width * 0.2 );
+    width = avg_max - avg_min;
+
+    // drop .../average_sourced, if it exists
+    if (getter.get(folder + "/average_sourced"))
+      getter.removeElement(folder, "average_sourced", true);
+    // define the range for .../average_sourced
+    uint64_t first = sourced->FindFirstBinAbove(0.);
+    uint64_t last  = sourced->FindLastBinAbove(0.);
+    booker.setCurrentFolder(folder);
+    // (re)book and fill .../average_sourced
+    average = booker.book1D("average_sourced", "Throughput (sourced events)", (int) width, avg_min, avg_max)->getTH1F();
+    for (unsigned int i = first; i <= last; ++i)
+      average->Fill(sourced->GetBinContent(i));
+
+    // drop .../average_retired, if it exists
+    if (getter.get(folder + "/average_retired"))
+      getter.removeElement(folder, "average_retired", true);
+    // define the range for .../average_retired
+    first = retired->FindFirstBinAbove(0.);
+    last  = retired->FindLastBinAbove(0.);
+    booker.setCurrentFolder(folder);
+    // (re)book and fill .../average_retired
+    average = booker.book1D("average_retired", "Throughput (retired events)", (int) width, avg_min, avg_max)->getTH1F();
+    for (unsigned int i = first; i <= last; ++i)
+      average->Fill(retired->GetBinContent(i));
   }
 }
 

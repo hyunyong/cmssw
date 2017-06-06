@@ -260,18 +260,6 @@ class VarSplitter : public Splitter{
   std::vector<double> slots_;
 };
 
-template <typename Object> class sortByStringFunction  {
- public:
-  sortByStringFunction(StringObjectFunction<Object> * f) : f_(f){}
-  ~sortByStringFunction(){}
-
-  bool operator() (const Object * o1, const Object * o2) {
-    return (*f_)(*o1) > (*f_)(*o2);
-  }
- private:
-  StringObjectFunction<Object> * f_;
-};
-
 template <typename Object, const char * label>
 class ExpressionVariable : public CachingVariable {
  public:
@@ -394,7 +382,7 @@ class ExpressionVariable : public CachingVariable {
     edm::Handle<edm::View<Object> > oH;
     iEvent.getByToken(src_,oH);
     if (index_>=oH->size()){
-      LogDebug(method())<<"fail to get object at index: "<<index_<<" in collection: "<<src_;
+      LogDebug(method())<<"fail to get object at index: "<<index_<<" in collection: "<<srcTag_;
       return std::make_pair(false,0);
     }
 

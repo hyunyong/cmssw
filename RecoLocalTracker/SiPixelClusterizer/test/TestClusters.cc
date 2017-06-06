@@ -87,11 +87,13 @@
 #define NEW_ID
 #ifdef NEW_ID
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
-#include "Geometry/Records/interface/IdealGeometryRecord.h"
+#include "Geometry/Records/interface/TrackerTopologyRcd.h"
 #else 
 #include "DataFormats/SiPixelDetId/interface/PXBDetId.h" 
 #include "DataFormats/SiPixelDetId/interface/PXFDetId.h" 
 #endif 
+
+#include "DataFormats/Provenance/interface/RunLumiEventNumber.h"
 
 using namespace std;
 
@@ -798,10 +800,10 @@ class TestClusters : public edm::EDAnalyzer {
   
   explicit TestClusters(const edm::ParameterSet& conf);  
   virtual ~TestClusters();
-  virtual void analyze(const edm::Event& e, const edm::EventSetup& c);
-  virtual void beginRun(const edm::EventSetup& iSetup);
-  virtual void beginJob();
-  virtual void endJob();
+  virtual void analyze(const edm::Event& e, const edm::EventSetup& c) override;
+  virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
+  virtual void beginJob() override;
+  virtual void endJob() override;
   
  private:
   edm::ParameterSet conf_;
@@ -979,7 +981,7 @@ TestClusters::TestClusters(edm::ParameterSet const& conf)
 TestClusters::~TestClusters() { }  
 
 // ------------ method called at the begining   ------------
-void TestClusters::beginRun(const edm::EventSetup& iSetup) {
+void TestClusters::beginRun(edm::Run const&, const edm::EventSetup& iSetup) {
   cout << "beginRun -  PixelClusterTest " <<endl;
 }
 
@@ -1915,7 +1917,7 @@ void TestClusters::analyze(const edm::Event& e,
   //const int MAX_CUT = 1000000; unused
   const int selectEvent = -1;
   //bool select = false; unused
-  static int runNumberOld=-1;
+  static RunNumber_t runNumberOld=-1;
   static int countRuns=0;
   //static double pixsum = 0., clussum=0.;
   //static int nsum = 0, lsold=-999, lumiold=0.;
@@ -1927,10 +1929,10 @@ void TestClusters::analyze(const edm::Event& e,
   const TrackerGeometry& theTracker(*geom);
 
   countAllEvents++;
-  int run       = e.id().run();
-  int event     = e.id().event();
+  RunNumber_t const run       = e.id().run();
+  EventNumber_t const event     = e.id().event();
+  LuminosityBlockNumber_t const lumiBlock = e.luminosityBlock();
 
-  int lumiBlock = e.luminosityBlock();
   int bx        = e.bunchCrossing();
   int orbit     = e.orbitNumber();
 
@@ -2286,7 +2288,7 @@ void TestClusters::analyze(const edm::Event& e,
 #ifdef NEW_ID
   //Retrieve tracker topology from geometry
   edm::ESHandle<TrackerTopology> tTopo;
-  es.get<IdealGeometryRecord>().get(tTopo);
+  es.get<TrackerTopologyRcd>().get(tTopo);
 #endif
 
   //---------------------------------------

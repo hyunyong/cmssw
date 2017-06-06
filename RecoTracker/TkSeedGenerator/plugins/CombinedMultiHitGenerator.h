@@ -33,11 +33,12 @@ public:
 
   /// from base class
   virtual void hitSets( const TrackingRegion& reg, OrderedMultiHits & result,
-      const edm::Event & ev,  const edm::EventSetup& es);
+      const edm::Event & ev,  const edm::EventSetup& es) override;
 
-   virtual void clear() override {
-      theGenerator->clear(); 
-   }
+  virtual void clear() override {
+    MultiHitGenerator::clear();
+    theGenerator->clear();
+  }
 
 private:
   edm::EDGetTokenT<SeedingLayerSetsHits> theSeedingLayerToken;

@@ -124,9 +124,9 @@ HcalTB04Analysis::~HcalTB04Analysis() {
 
 void HcalTB04Analysis::produce(edm::Event& e, const edm::EventSetup&) {
 
-  std::auto_ptr<PHcalTB04Info> product(new PHcalTB04Info);
+  std::unique_ptr<PHcalTB04Info> product(new PHcalTB04Info);
   fillEvent(*product);
-  e.put(product);
+  e.put(std::move(product));
 }
 
 void HcalTB04Analysis::init() {
@@ -412,7 +412,7 @@ void HcalTB04Analysis::fillBuffer(const EndOfEvent * evt) {
   LogDebug("HcalTBSim") << "HcalTB04Analysis:: Hit Collection for " << sdName
 			<< " of ID " << idHC << " is obtained at " << theHC;
 
-  if (idHC >= 0 && theHC > 0) {
+  if (idHC >= 0 && theHC != nullptr) {
     hhits.reserve(theHC->entries());
     hhitl.reserve(theHC->entries());
     for (j = 0; j < theHC->entries(); j++) {
@@ -536,7 +536,7 @@ void HcalTB04Analysis::fillBuffer(const EndOfEvent * evt) {
   etot1 = etot2 = 0;
   LogDebug("HcalTBSim") << "HcalTB04Analysis:: Hit Collection for " << sdName
 			<< " of ID " << idHC << " is obtained at " << theHC;
-  if (idHC >= 0 && theHC > 0) {
+  if (idHC >= 0 && theHC != nullptr) {
     ehits.reserve(theHC->entries());
     for (j = 0; j < theHC->entries(); j++) {
       CaloG4Hit* aHit = (*theHC)[j]; 

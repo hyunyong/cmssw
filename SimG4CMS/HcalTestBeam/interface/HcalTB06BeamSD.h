@@ -10,12 +10,12 @@
 
 #include "G4String.hh"
 
-#include <boost/cstdint.hpp>
 #include <string>
 
 class DDCompactView;
 class DDFilteredView;
 class G4Step;
+class G4Material;
 
 class HcalTB06BeamSD : public CaloSD {
 
@@ -26,9 +26,6 @@ public:
   virtual ~HcalTB06BeamSD();
   virtual double getEnergyDeposit(G4Step* );
   virtual uint32_t setDetUnitId(G4Step* step);
-  static uint32_t  packIndex(int det, int lay, int x, int y);
-  static void      unpackIndex(const uint32_t & idx, int& det, int& lay,
-			       int& x, int& y);
 
 private:    
 
@@ -39,7 +36,6 @@ private:
   double                birk1, birk2, birk3;
   std::vector<G4String> wcNames;
   G4String              matName;
-
 };
 
 #endif // HcalTB06BeamSD_h

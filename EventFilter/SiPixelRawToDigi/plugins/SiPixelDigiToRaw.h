@@ -31,7 +31,7 @@ public:
 
 
   /// dummy end of job 
-  virtual void endJob() {}
+  virtual void endJob() override {}
 
   /// get data, convert to raw event, attach again to Event
   virtual void produce( edm::Event&, const edm::EventSetup& ) override;
@@ -51,5 +51,7 @@ private:
   edm::ESWatcher<SiPixelFedCablingMapRcd> recordWatcher;
   bool debug;
   edm::EDGetTokenT<edm::DetSetVector<PixelDigi>> tPixelDigi; 
+  bool usePilotBlade;
+  bool usePhase1;
 };
 #endif

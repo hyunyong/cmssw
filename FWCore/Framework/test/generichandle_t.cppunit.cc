@@ -11,6 +11,7 @@ Test of GenericHandle class.
 #include "DataFormats/Provenance/interface/ProcessHistoryRegistry.h"
 #include "DataFormats/Provenance/interface/ProductRegistry.h"
 #include "DataFormats/Provenance/interface/RunAuxiliary.h"
+#include "DataFormats/Provenance/interface/ThinnedAssociationsHelper.h"
 #include "DataFormats/Provenance/interface/Timestamp.h"
 #include "DataFormats/TestObjects/interface/ToyProducts.h"
 
@@ -21,7 +22,6 @@ Test of GenericHandle class.
 #include "FWCore/Framework/interface/LuminosityBlockPrincipal.h"
 #include "FWCore/Framework/interface/RunPrincipal.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "FWCore/RootAutoLibraryLoader/interface/RootAutoLibraryLoader.h"
 #include "FWCore/Utilities/interface/GetPassID.h"
 #include "FWCore/Utilities/interface/GlobalIdentifier.h"
 #include "FWCore/Utilities/interface/TypeWithDict.h"
@@ -37,7 +37,7 @@ Test of GenericHandle class.
 namespace edm {
    class ProducerBase {
       public:
-         static void commitEvent(Event& e) { e.commit_(); }
+         static void commitEvent(Event& e) { e.commit_(std::vector<ProductResolverIndex>()); }
    };
 }
 
@@ -49,7 +49,6 @@ CPPUNIT_TEST(failWrongType);
 CPPUNIT_TEST_SUITE_END();
 public:
   void setUp(){
-    edm::RootAutoLibraryLoader::enable();
   }
   void tearDown(){}
   void failgetbyLabelTest();
@@ -90,8 +89,9 @@ void testGenericHandle::failgetbyLabelTest() {
   lbp->setRunPrincipal(rp);
   auto branchIDListHelper = std::make_shared<edm::BranchIDListHelper>();
   branchIDListHelper->updateFromRegistry(*preg);
+  auto thinnedAssociationsHelper = std::make_shared<edm::ThinnedAssociationsHelper>();
   edm::EventAuxiliary eventAux(id, uuid, time, true);
-  edm::EventPrincipal ep(preg, branchIDListHelper, pc, &historyAppender_,edm::StreamID::invalidStreamID());
+  edm::EventPrincipal ep(preg, branchIDListHelper, thinnedAssociationsHelper, pc, &historyAppender_,edm::StreamID::invalidStreamID());
   edm::ProcessHistoryRegistry phr; 
   ep.fillEventPrincipal(eventAux, phr);
   ep.setLuminosityBlockPrincipal(lbp);
@@ -130,8 +130,8 @@ void testGenericHandle::getbyLabelTest() {
   typedef edmtest::DummyProduct DP;
   typedef edm::Wrapper<DP> WDP;
 
-  std::auto_ptr<DP> pr(new DP);
-  std::unique_ptr<edm::WrapperBase> pprod(new WDP(pr));
+  auto pr = std::make_unique<DP>();
+  std::unique_ptr<edm::WrapperBase> pprod = std::make_unique<WDP>(std::move(pr));
   std::string label("fred");
   std::string productInstanceName("Rick");
 
@@ -159,11 +159,12 @@ void testGenericHandle::getbyLabelTest() {
 
   product.init();
 
-  std::unique_ptr<edm::ProductRegistry> preg(new edm::ProductRegistry);
+  auto preg = std::make_unique<edm::ProductRegistry>();
   preg->addProduct(product);
   preg->setFrozen();
   auto branchIDListHelper = std::make_shared<edm::BranchIDListHelper>();
   branchIDListHelper->updateFromRegistry(*preg);
+  auto thinnedAssociationsHelper = std::make_shared<edm::ThinnedAssociationsHelper>();
 
   edm::ProductRegistry::ProductList const& pl = preg->productList();
   edm::BranchKey const bk(product);
@@ -180,13 +181,13 @@ void testGenericHandle::getbyLabelTest() {
   auto lbp = std::make_shared<edm::LuminosityBlockPrincipal>(lumiAux, pregc, pc, &historyAppender_,0);
   lbp->setRunPrincipal(rp);
   edm::EventAuxiliary eventAux(col, uuid, fakeTime, true);
-  edm::EventPrincipal ep(pregc, branchIDListHelper, pc, &historyAppender_,edm::StreamID::invalidStreamID());
+  edm::EventPrincipal ep(pregc, branchIDListHelper, thinnedAssociationsHelper, pc, &historyAppender_,edm::StreamID::invalidStreamID());
   edm::ProcessHistoryRegistry phr; 
   ep.fillEventPrincipal(eventAux, phr);
   ep.setLuminosityBlockPrincipal(lbp);
   edm::BranchDescription const& branchFromRegistry = it->second;
-  auto entryDescriptionPtr = std::make_shared<edm::Parentage>();
-  edm::ProductProvenance prov(branchFromRegistry.branchID(), entryDescriptionPtr);
+  std::vector<edm::BranchID> const ids;
+  edm::ProductProvenance prov(branchFromRegistry.branchID(), ids);
   edm::BranchDescription const desc(branchFromRegistry);
   ep.put(desc, std::move(pprod), prov);
 

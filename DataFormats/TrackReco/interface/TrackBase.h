@@ -48,13 +48,14 @@
  *
  */
 
+#include "DataFormats/TrackReco/interface/HitPattern.h"
+#include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "DataFormats/Math/interface/Vector.h"
 #include "DataFormats/Math/interface/Error.h"
 #include "DataFormats/Math/interface/Vector3D.h"
 #include "DataFormats/Math/interface/Point3D.h"
 #include "DataFormats/Math/interface/Error.h"
-#include "DataFormats/TrackReco/interface/HitPattern.h"
-#include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include <bitset>
 
 namespace reco
 {
@@ -93,19 +94,56 @@ public:
     /// index type
     typedef unsigned int index;
 
+
     /// track algorithm
     enum TrackAlgorithm {
-        undefAlgorithm = 0, ctf = 1, rs = 2, cosmics = 3, iter0 = 4,
-        iter1 = 5, iter2 = 6, iter3 = 7, iter4 = 8, iter5 = 9, iter6 = 10, iter7 = 11, iter8 = 12, iter9 = 13, iter10 = 14,
+        undefAlgorithm = 0, ctf = 1, 
+        duplicateMerge = 2, cosmics = 3,
+        initialStep = 4,
+        lowPtTripletStep = 5,
+        pixelPairStep = 6,
+        detachedTripletStep = 7,
+        mixedTripletStep = 8,
+        pixelLessStep = 9,
+        tobTecStep = 10,
+        jetCoreRegionalStep = 11,
+        conversionStep = 12,
+        muonSeededStepInOut = 13,
+        muonSeededStepOutIn = 14,
         outInEcalSeededConv = 15, inOutEcalSeededConv = 16,
         nuclInter = 17,
         standAloneMuon = 18, globalMuon = 19, cosmicStandAloneMuon = 20, cosmicGlobalMuon = 21,
-        iter1LargeD0 = 22, iter2LargeD0 = 23, iter3LargeD0 = 24, iter4LargeD0 = 25, iter5LargeD0 = 26,
+        // Phase1
+        highPtTripletStep = 22, lowPtQuadStep = 23, detachedQuadStep = 24,
+        reservedForUpgrades1 = 25, reservedForUpgrades2 = 26,
         bTagGhostTracks = 27,
         beamhalo = 28,
         gsf = 29,
-        algoSize = 30
+	// HLT algo name
+	hltPixel = 30,
+	// steps used by PF
+	hltIter0 = 31,
+	hltIter1 = 32,
+	hltIter2 = 33,
+	hltIter3 = 34,
+	hltIter4 = 35,
+	// steps used by all other objects @HLT
+	hltIterX = 36,
+   // steps used by HI muon regional iterative tracking
+   hiRegitMuInitialStep = 37,
+   hiRegitMuLowPtTripletStep = 38,
+   hiRegitMuPixelPairStep = 39,
+   hiRegitMuDetachedTripletStep = 40,
+   hiRegitMuMixedTripletStep = 41,
+   hiRegitMuPixelLessStep = 42,
+   hiRegitMuTobTecStep = 43,
+   hiRegitMuMuonSeededStepInOut = 44,
+   hiRegitMuMuonSeededStepOutIn = 45,
+   algoSize = 46
     };
+
+    /// algo mask
+    typedef std::bitset<algoSize> AlgoMask;
 
     static const std::string algoNames[];
 
@@ -115,11 +153,12 @@ public:
         loose = 0,
         tight = 1,
         highPurity = 2,
-        confirmed = 3,
-        goodIterative = 4,
+        confirmed = 3,  // means found by more than one iteration
+        goodIterative = 4,  // meaningless
         looseSetWithPV = 5,
         highPuritySetWithPV = 6,
-        qualitySize = 7
+        discarded = 7, // because a better track found. kept in the collection for reference....
+        qualitySize = 8
     };
 
     static const std::string qualityNames[];
@@ -131,7 +170,7 @@ public:
     TrackBase(double chi2, double ndof, const Point &vertex,
               const Vector &momentum, int charge, const CovarianceMatrix &cov,
               TrackAlgorithm = undefAlgorithm, TrackQuality quality = undefQuality,
-              signed char nloops = 0);
+              signed char nloops = 0, uint8_t stopReason = 0);
 
     /// virtual destructor
     virtual ~TrackBase();
@@ -286,22 +325,49 @@ public:
 
     /// append hit patterns from vector of hit references
     template<typename C>
-    bool appendHits(const C &c);
+    bool appendHits(const C &c, const TrackerTopology& ttopo);
 
     template<typename I>
-    bool appendHits(const I &begin, const I &end);
+    bool appendHits(const I &begin, const I &end, const TrackerTopology& ttopo);
 
     /// append a single hit to the HitPattern
-    bool appendHitPattern(const TrackingRecHit &hit);
-    bool appendHitPattern(const DetId &id, TrackingRecHit::Type hitType);
+    bool appendHitPattern(const TrackingRecHit &hit, const TrackerTopology& ttopo);
+    bool appendHitPattern(const DetId &id, TrackingRecHit::Type hitType, const TrackerTopology& ttopo);
+
+    /**
+     * This is meant to be used only in cases where the an
+     * already-packed hit information is re-interpreted in terms of
+     * HitPattern (i.e. MiniAOD PackedCandidate, and the IO rule for
+     * reading old versions of HitPattern)
+     */
+    bool appendTrackerHitPattern(uint16_t subdet, uint16_t layer, uint16_t stereo, TrackingRecHit::Type hitType);
+
+    /**
+     * This is meant to be used only in cases where the an
+     * already-packed hit information is re-interpreted in terms of
+     * HitPattern (i.e. the IO rule for reading old versions of
+     * HitPattern)
+     */
+    bool appendMuonHitPattern(const DetId& id, TrackingRecHit::Type hitType);
 
     /// Sets HitPattern as empty
     void resetHitPattern();
 
     ///Track algorithm
-    void setAlgorithm(const TrackAlgorithm a, bool set = true);
+    void setAlgorithm(const TrackAlgorithm a);
+   
+    void setOriginalAlgorithm(const TrackAlgorithm a);
+
+    void setAlgoMask(AlgoMask a) { algoMask_ = a;}
+
+    AlgoMask algoMask() const { return algoMask_;}
+    unsigned long long algoMaskUL() const { return algoMask().to_ullong();}
+    bool isAlgoInMask(TrackAlgorithm a) const {return algoMask()[a];}
+
 
     TrackAlgorithm algo() const ;
+    TrackAlgorithm originalAlgo() const ;
+
 
     std::string algoName() const;
 
@@ -312,7 +378,7 @@ public:
     ///Track quality
     bool quality(const TrackQuality) const;
 
-    void setQuality(const TrackQuality, bool set = true);
+    void setQuality(const TrackQuality);
 
     static std::string qualityName(TrackQuality);
 
@@ -327,6 +393,11 @@ public:
     bool isLooper() const;
 
     signed char nLoops() const;
+
+    void setStopReason(uint8_t value) { stopReason_ = value; }
+
+    uint8_t stopReason() const { return stopReason_; }
+
 
 private:
     /// hit pattern
@@ -344,6 +415,9 @@ private:
     /// momentum vector at innermost point
     Vector momentum_;
 
+    /// algo mask, bit set for the algo where it was reconstructed + each algo a track was found overlapping by the listmerger
+    std::bitset<algoSize> algoMask_;
+
     /// number of degrees of freedom
     float ndof_;
 
@@ -353,11 +427,18 @@ private:
     /// track algorithm
     uint8_t algorithm_;
 
+    /// track algorithm
+    uint8_t originalAlgorithm_;
+
+
     /// track quality
     uint8_t quality_;
 
     /// number of loops made during the building of the trajectory of a looper particle
     signed char nLoops_; // I use signed char because I don't expect more than 128 loops and I could use a negative value for a special purpose.
+
+    /// Stop Reason
+    uint8_t stopReason_;
 };
 
 //  Access the hit pattern, indicating in which Tracker layers the track has hits.
@@ -366,14 +447,22 @@ inline const HitPattern & TrackBase::hitPattern() const
     return hitPattern_;
 }
 
-inline bool TrackBase::appendHitPattern(const DetId &id, TrackingRecHit::Type hitType)
+inline bool TrackBase::appendHitPattern(const DetId &id, TrackingRecHit::Type hitType, const TrackerTopology& ttopo)
 {
-    return hitPattern_.appendHit(id, hitType);
+    return hitPattern_.appendHit(id, hitType, ttopo);
 }
 
-inline bool TrackBase::appendHitPattern(const TrackingRecHit &hit)
+inline bool TrackBase::appendHitPattern(const TrackingRecHit &hit, const TrackerTopology& ttopo)
 {
-    return hitPattern_.appendHit(hit);
+    return hitPattern_.appendHit(hit, ttopo);
+}
+
+inline bool TrackBase::appendTrackerHitPattern(uint16_t subdet, uint16_t layer, uint16_t stereo, TrackingRecHit::Type hitType) {
+    return hitPattern_.appendTrackerHit(subdet, layer, stereo, hitType);
+}
+
+inline bool TrackBase::appendMuonHitPattern(const DetId& id, TrackingRecHit::Type hitType) {
+    return hitPattern_.appendMuonHit(id, hitType);
 }
 
 inline void TrackBase::resetHitPattern()
@@ -382,15 +471,15 @@ inline void TrackBase::resetHitPattern()
 }
 
 template<typename I>
-bool TrackBase::appendHits(const I &begin, const I &end)
+bool TrackBase::appendHits(const I &begin, const I &end, const TrackerTopology& ttopo)
 {
-    return hitPattern_.appendHits(begin, end);
+    return hitPattern_.appendHits(begin, end, ttopo);
 }
 
 template<typename C>
-bool TrackBase::appendHits(const C &c)
+bool TrackBase::appendHits(const C &c, const TrackerTopology& ttopo)
 {
-    return setHitPattern(c.begin(), c.end());
+    return hitPattern_.appendHits(c.begin(), c.end(), ttopo);
 }
 
 inline TrackBase::index TrackBase::covIndex(index i, index j)
@@ -402,106 +491,36 @@ inline TrackBase::index TrackBase::covIndex(index i, index j)
 
 inline TrackBase::TrackAlgorithm TrackBase::algo() const
 {
-    return (TrackAlgorithm) algorithm_;
+    return (TrackAlgorithm) (algorithm_);
 }
-
-inline std::string TrackBase::algoName() const
+inline TrackBase::TrackAlgorithm TrackBase::originalAlgo() const
 {
-    // I'd like to do:
-    // return TrackBase::algoName(algorithm_);
-    // but I cannot define a const static function. Why???
-
-    switch (algorithm_) {
-    case undefAlgorithm:
-        return "undefAlgorithm";
-    case ctf:
-        return "ctf";
-    case rs:
-        return "rs";
-    case cosmics:
-        return "cosmics";
-    case beamhalo:
-        return "beamhalo";
-    case iter0:
-        return "iter0";
-    case iter1:
-        return "iter1";
-    case iter2:
-        return "iter2";
-    case iter3:
-        return "iter3";
-    case iter4:
-        return "iter4";
-    case iter5:
-        return "iter5";
-    case iter6:
-        return "iter6";
-    case iter7:
-        return "iter7";
-    case iter8:
-        return "iter8";
-    case iter9:
-        return "iter9";
-    case iter10:
-        return "iter10";
-    case outInEcalSeededConv:
-        return "outInEcalSeededConv";
-    case inOutEcalSeededConv:
-        return "inOutEcalSeededConv";
-    case nuclInter:
-        return "nuclInter";
-    case standAloneMuon:
-        return "standAloneMuon";
-    case globalMuon:
-        return "globalMuon";
-    case cosmicStandAloneMuon:
-        return "cosmicStandAloneMuon";
-    case cosmicGlobalMuon:
-        return "cosmicGlobalMuon";
-    case iter1LargeD0:
-        return "iter1LargeD0";
-    case iter2LargeD0:
-        return "iter2LargeD0";
-    case iter3LargeD0:
-        return "iter3LargeD0";
-    case iter4LargeD0:
-        return "iter4LargeD0";
-    case iter5LargeD0:
-        return "iter5LargeD0";
-    case bTagGhostTracks:
-        return "bTagGhostTracks";
-    case gsf:
-        return "gsf";
-    }
-    return "undefAlgorithm";
+  return (TrackAlgorithm) (originalAlgorithm_);
 }
+
+
+
+inline std::string TrackBase::algoName() const { return TrackBase::algoName(algo()); }
 
 inline bool TrackBase::quality(const TrackBase::TrackQuality q) const
 {
     switch (q) {
     case undefQuality:
-        return (quality_ == 0);
+        return quality_ == 0;
     case goodIterative:
-        return (((quality_ & (1 << TrackBase::confirmed))  >> TrackBase::confirmed) ||
-                ((quality_ & (1 << TrackBase::highPurity)) >> TrackBase::highPurity));
+        return (quality_ & (1 << TrackBase::highPurity)) >> TrackBase::highPurity;
     default:
         return (quality_ & (1 << q)) >> q;
     }
     return false;
 }
 
-inline void TrackBase::setQuality(const TrackBase::TrackQuality q, bool set)
+inline void TrackBase::setQuality(const TrackBase::TrackQuality q)
 {
     if (q == undefQuality) {
         quality_ = 0;
     } else {
-        //regular OR if setting value to true
-        if (set) {
-            quality_ |= (1 << q);
-        } else {
-            // doing "half-XOR" if unsetting value
-            quality_ &= (~(1 << q));
-        }
+        quality_ |= (1 << q);
     }
 }
 
@@ -820,14 +839,20 @@ inline double TrackBase::validFraction() const
 }
 
 //Track algorithm
-inline void TrackBase::setAlgorithm(const TrackBase::TrackAlgorithm a, bool set)
+inline void TrackBase::setAlgorithm(const TrackBase::TrackAlgorithm a)
 {
-    if (set) {
-        algorithm_ = a;
-    } else {
-        algorithm_ = TrackBase::undefAlgorithm;
-    }
+    algorithm_  = a;
+    algoMask_.reset();
+    setOriginalAlgorithm(a);
 }
+
+inline void TrackBase::setOriginalAlgorithm(const TrackBase::TrackAlgorithm a)
+{
+   originalAlgorithm_  = a;
+   algoMask_.set(a);
+}
+
+
 
 inline int TrackBase::qualityMask() const
 {

@@ -65,7 +65,7 @@ public:
   std::unique_ptr<SiStripMatchedRecHit2D> match(const SiStripRecHit2D *monoRH,
 				 const SiStripRecHit2D *stereoRH,
 				 const GluedGeomDet* gluedDet,
-				 LocalVector trackdirection, bool force=false) const;
+				 LocalVector trackdirection, bool force) const;
 
   
 // this is the one used by the RecHitConverter
@@ -135,10 +135,13 @@ public:
 #ifdef DOUBLE_MATCH
 
 #if defined(USE_SSEVECT)
-#include "SSEMatcher.h"
-#else // ext vect version
+  using  mathSSE::Vec3F;
+  using  mathSSE::Vec2D;
+  using  mathSSE::Vec3D;
+  using  mathSSE::Rot3F;
+#endif 
  
-#include "Geometry/TrackerGeometryBuilder/interface/GluedGeomDet.h"
+#include "Geometry/CommonDetUnit/interface/GluedGeomDet.h"
 #include "TrackingTools/TransientTrackingRecHit/interface/HelpertRecHit2DLocalPos.h"
 
 namespace matcherDetails {  
@@ -182,7 +185,7 @@ void SiStripRecHitMatcher::doubleMatch(MonoIterator monoRHiter, MonoIterator mon
   
   
   
-  StereoInfo cache[std::distance(seconditer,seconditerend)];
+  std::vector<StereoInfo> cache(std::distance(seconditer,seconditerend));
   //iterate on stereo rechits
   // fill cache with relevant info
   int  cacheSize=0;
@@ -346,7 +349,6 @@ void SiStripRecHitMatcher::doubleMatch(MonoIterator monoRHiter, MonoIterator mon
   } // loop on mono hit
   
 }
-#endif // SSE or EXT
 
 #endif //DOUBLE_MATCH
 

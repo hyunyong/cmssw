@@ -1,8 +1,24 @@
 import FWCore.ParameterSet.Config as cms
 
+dedxHitInfo = cms.EDProducer("DeDxHitInfoProducer",
+    tracks                     = cms.InputTag("generalTracks"),
+
+    minTrackHits       = cms.uint32(0),
+    minTrackPt         = cms.double(10),
+    maxTrackEta        = cms.double(5.0),
+
+    useStrip           = cms.bool(True),
+    usePixel           = cms.bool(True),
+    MeVperADCStrip     = cms.double(3.61e-06*265),
+    MeVperADCPixel     = cms.double(3.61e-06),
+
+    useCalibration     = cms.bool(False),
+    calibrationPath    = cms.string("file:Gains.root"),
+    shapeTest          = cms.bool(True),
+)
+
 dedxHarmonic2 = cms.EDProducer("DeDxEstimatorProducer",
     tracks                     = cms.InputTag("generalTracks"),
-    trajectoryTrackAssociation = cms.InputTag("generalTracks"),
  
     estimator      = cms.string('generic'),
     fraction       = cms.double(0.4),        #Used only if estimator='truncated'
@@ -10,7 +26,6 @@ dedxHarmonic2 = cms.EDProducer("DeDxEstimatorProducer",
  
     UseStrip       = cms.bool(True),
     UsePixel       = cms.bool(False),
-    UseTrajectory  = cms.bool(True),
     ShapeTest      = cms.bool(True),
     MeVperADCStrip = cms.double(3.61e-06*265),
     MeVperADCPixel = cms.double(3.61e-06),
@@ -21,6 +36,8 @@ dedxHarmonic2 = cms.EDProducer("DeDxEstimatorProducer",
     UseCalibration  = cms.bool(False),
     calibrationPath = cms.string(""),
 )
+
+dedxPixelHarmonic2 = dedxHarmonic2.clone(UseStrip = False, UsePixel = True)
 
 dedxTruncated40 = dedxHarmonic2.clone()
 dedxTruncated40.estimator =  cms.string('truncated')
@@ -43,4 +60,4 @@ dedxDiscrimSmi.estimator = cms.string('smirnovDiscrim')
 dedxDiscrimASmi         = dedxHarmonic2.clone()
 dedxDiscrimASmi.estimator = cms.string('asmirnovDiscrim')
 
-doAlldEdXEstimators = cms.Sequence(dedxTruncated40 + dedxHarmonic2 + dedxDiscrimASmi)
+doAlldEdXEstimators = cms.Sequence(dedxTruncated40 + dedxHarmonic2 + dedxPixelHarmonic2 + dedxHitInfo)

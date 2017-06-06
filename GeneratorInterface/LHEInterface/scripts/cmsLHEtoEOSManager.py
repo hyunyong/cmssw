@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 
-__version__ = "$Revision: 1.12 $"
+print 'Starting cmsLHEtoEOSManager.py'
+
+__version__ = "$Revision: 1.13 $"
 
 import os
 import subprocess
@@ -83,13 +85,15 @@ def fileUpload(uploadPath,lheList, checkSumList, reallyDoIt):
                 exeEosCheckSum = subprocess.Popen(eosCheckSumCommand ,shell=True, stdout=subprocess.PIPE)
                 EosCheckSum = exeEosCheckSum.stdout.read()
                 assert exeEosCheckSum.wait() == 0
-                print 'checksum: eos = ' + EosCheckSum + 'orig file = ' + checkSumList[index] + '\n'
+               # print 'checksum: eos = ' + EosCheckSum + 'orig file = ' + checkSumList[index] + '\n'
                 if checkSumList[index] not in EosCheckSum:
                     print 'WARNING! The checksum for file ' + str(realFileName) + ' in EOS\n'
                     print EosCheckSum + '\n'
                     print 'does not match the checksum of the original one\n'
                     print checkSumList[index] + '\n'
                     print 'please try to re-upload file ' + str(realFileName) + ' to EOS.\n'
+                else:
+                    print 'Checksum OK for file ' + str(realFileName)
         index = index+1            
  
 # launch the upload shell script        
@@ -201,12 +205,6 @@ if __name__ == '__main__':
                 print "Important! Input file "+f+" is already zipped: please make sure you verified its integrity with xmllint before zipping it. You can do it with:\n"
                 print "xmllint file.lhe\n"
                 print "Otherwise it is best to pass the unzipped file to this script and let it check its integrity and compress the file with the --compress option\n"
-                exeCheckSum = subprocess.Popen(["/afs/cern.ch/cms/caf/bin/cms_adler32",f], stdout=subprocess.PIPE) 
-                getCheckSum = subprocess.Popen(["awk", "{print $1}"], stdin=exeCheckSum.stdout, stdout=subprocess.PIPE)
-                exeCheckSum.stdout.close()
-                output,err = getCheckSum.communicate()
-                print 'orig file checksum = ' + output + '\n'
-                theCheckSumList.append(output)
             # Check the local file existence
             if not os.path.exists(f):
                 raise Exception('Input file '+f+' does not exists')
@@ -223,15 +221,15 @@ if __name__ == '__main__':
               theCompressionCommand = 'xz '+f
               exeCompression = subprocess.Popen(["/bin/sh","-c",theCompressionCommand])
               exeCompression.communicate()
-              exeCheckSum = subprocess.Popen(["/afs/cern.ch/cms/caf/bin/cms_adler32",f+".xz"], stdout=subprocess.PIPE) 
-              getCheckSum = subprocess.Popen(["awk", "{print $1}"], stdin=exeCheckSum.stdout, stdout=subprocess.PIPE)
-              exeCheckSum.stdout.close()
-              output,err = getCheckSum.communicate()
-              print 'orig file checksum = ' + output + '\n'
-              theCheckSumList.append(output)
               theCompressedFilesList.append(f+'.xz')
         if reallyDoIt and options.compress:
           theList = theCompressedFilesList
+        for f in theList:
+            exeCheckSum = subprocess.Popen(["/afs/cern.ch/cms/caf/bin/cms_adler32",f], stdout=subprocess.PIPE) 
+            getCheckSum = subprocess.Popen(["awk", "{print $1}"], stdin=exeCheckSum.stdout, stdout=subprocess.PIPE)
+            exeCheckSum.stdout.close()
+            output,err = getCheckSum.communicate()
+            theCheckSumList.append(output)
 
     newArt = 0
     uploadPath = ''

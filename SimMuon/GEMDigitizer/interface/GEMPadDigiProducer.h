@@ -1,8 +1,8 @@
-#ifndef GEMPadDigiProducer_h
-#define GEMPadDigiProducer_h
+#ifndef SimMuon_GEMDigitizer_GEMPadDigiProducer_h
+#define SimMuon_GEMDigitizer_GEMPadDigiProducer_h
 
 #include <FWCore/Framework/interface/ConsumesCollector.h>
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -16,7 +16,7 @@ class GEMGeometry;
 /// \class GEMPadDigiProducer 
 /// producer for GEM-CSC trigger pads
 
-class GEMPadDigiProducer : public edm::EDProducer
+class GEMPadDigiProducer : public edm::stream::EDProducer<>
 {
 public:
 
@@ -32,7 +32,7 @@ public:
 
 private:
   
-  void buildPads(const GEMDigiCollection &digis, GEMPadDigiCollection &out_pads);
+  void buildPads(const GEMDigiCollection &digis, GEMPadDigiCollection &out_pads) const;
 
   /// Name of input digi Collection
   edm::EDGetTokenT<GEMDigiCollection> digi_token_;

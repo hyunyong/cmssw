@@ -1,5 +1,6 @@
 // C++ headers
 #include <algorithm>
+#include <chrono>
 
 // boost headers
 #include <boost/format.hpp>
@@ -33,18 +34,16 @@ ThroughputService::ThroughputService(const edm::ParameterSet & config, edm::Acti
   registry.watchPostEvent(          this, & ThroughputService::postEvent );
 }
 
-ThroughputService::~ThroughputService()
-{
-}
+ThroughputService::~ThroughputService() = default;
 
 void
 ThroughputService::preallocate(edm::service::SystemBounds const & bounds)
 {
-  m_startup = clock_gettime_monotonic::now();
+  m_startup = std::chrono::steady_clock::now();
 
   m_stream_histograms.resize( bounds.maxNumberOfStreams() );
 
-  // assign a pseudo module id to the FastTimerService
+  // assign a pseudo module id to the ThroughputService
   m_module_id = edm::ModuleDescription::getUniqueID();
 }
 
@@ -93,7 +92,7 @@ ThroughputService::postStreamEndRun(edm::StreamContext const & sc)
 void
 ThroughputService::preSourceEvent(edm::StreamID sid)
 {
-  auto timestamp = clock_gettime_monotonic::now();
+  auto timestamp = std::chrono::steady_clock::now();
   m_stream_histograms[sid].sourced_events->Fill( std::chrono::duration_cast<std::chrono::duration<double>>(timestamp - m_startup).count() );
 }
 
@@ -101,7 +100,7 @@ void
 ThroughputService::postEvent(edm::StreamContext const & sc)
 {
   unsigned int sid = sc.streamID().value();
-  auto timestamp = clock_gettime_monotonic::now();
+  auto timestamp = std::chrono::steady_clock::now();
   m_stream_histograms[sid].retired_events->Fill( std::chrono::duration_cast<std::chrono::duration<double>>(timestamp - m_startup).count() );
 }
 

@@ -33,17 +33,30 @@ class DQMGenericClient : public DQMEDHarvester
 
   void dqmEndJob(DQMStore::IBooker &, DQMStore::IGetter &) override;
 
+  enum class EfficType {
+    none = 0,
+    efficiency,
+    fakerate,
+    simpleratio
+  };
+
   struct EfficOption
   {
     std::string name, title;
     std::string numerator, denominator;
-    int type;
+    EfficType type;
     bool isProfile;
   };
 
   struct ResolOption
   {
     std::string namePrefix, titlePrefix;
+    std::string srcName;
+  };
+
+  struct ProfileOption
+  {
+    std::string name, title;
     std::string srcName;
   };
 
@@ -55,6 +68,7 @@ class DQMGenericClient : public DQMEDHarvester
   struct CDOption
   {
     std::string name;
+    bool ascending;
   };
 
   void computeEfficiency(DQMStore::IBooker& ibooker,
@@ -64,13 +78,18 @@ class DQMGenericClient : public DQMEDHarvester
                          const std::string& efficMETitle,
                          const std::string& recoMEName, 
                          const std::string& simMEName, 
-                         const int type=1,
+                         const EfficType type=EfficType::efficiency,
                          const bool makeProfile = false);
   void computeResolution(DQMStore::IBooker& ibooker,
 			 DQMStore::IGetter& igetter,
 			 const std::string& startDir, 
                          const std::string& fitMEPrefix, const std::string& fitMETitlePrefix, 
                          const std::string& srcMEName);
+  void computeProfile(DQMStore::IBooker& ibooker,
+                      DQMStore::IGetter& igetter,
+                      const std::string& startDir,
+                      const std::string& profileMEName, const std::string& profileMETitle,
+                      const std::string& srcMEName);
 
   void normalizeToEntries(DQMStore::IBooker& ibooker,
 			  DQMStore::IGetter& igetter,
@@ -80,7 +99,8 @@ class DQMGenericClient : public DQMEDHarvester
   void makeCumulativeDist(DQMStore::IBooker& ibooker,
 			  DQMStore::IGetter& igetter,
 			  const std::string& startDir,
-			  const std::string& cdName);
+			  const std::string& cdName,
+                          bool ascending=true);
 
   void limitedFit(MonitorElement * srcME, MonitorElement * meanME, MonitorElement * sigmaME);
 
@@ -95,10 +115,11 @@ class DQMGenericClient : public DQMEDHarvester
 
   std::vector<EfficOption> efficOptions_;
   std::vector<ResolOption> resolOptions_;
+  std::vector<ProfileOption> profileOptions_;
   std::vector<NormOption> normOptions_;
   std::vector<CDOption> cdOptions_;
 
-  void generic_eff (TH1 * denom, TH1 * numer, MonitorElement * efficiencyHist, const int type=1);
+  void generic_eff (TH1 * denom, TH1 * numer, MonitorElement * efficiencyHist, const EfficType type=EfficType::efficiency);
 
   void findAllSubdirectories (DQMStore::IBooker& ibooker,
 			      DQMStore::IGetter& igetter,

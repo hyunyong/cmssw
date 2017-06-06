@@ -5,6 +5,7 @@
 #include "RecoParticleFlow/PFProducer/interface/PFElectronAlgo.h"  
 #include "RecoParticleFlow/PFProducer/interface/PFPhotonAlgo.h"    
 #include "RecoParticleFlow/PFProducer/interface/PFElectronExtraEqual.h"
+#include "RecoParticleFlow/PFTracking/interface/PFTrackAlgoTools.h"
 
 #include "RecoParticleFlow/PFClusterTools/interface/PFEnergyCalibration.h"
 #include "RecoParticleFlow/PFClusterTools/interface/PFEnergyCalibrationHF.h"
@@ -443,7 +444,7 @@ void PFAlgo::reconstructParticles( const reco::PFBlockCollection& blocks ) {
   else
     pfCleanedCandidates_.reset( new reco::PFCandidateCollection );
   
-  // not a auto_ptr; shout not be deleted after transfer
+  // not a unique_ptr; should not be deleted after transfer
   pfElectronExtra_.clear();
   pfPhotonExtra_.clear();
   
@@ -798,7 +799,7 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
 	PFBlockElement::Type type = elements[iEle].type();
 	if(type==PFBlockElement::TRACK)
 	  {
-	    if(elements[iEle].trackRef()->algo() == 12)
+	    if(elements[iEle].trackRef()->algo() == reco::TrackBase::conversionStep)
 	      active[iEle]=false;	
 	    if(elements[iEle].trackRef()->quality(reco::TrackBase::highPurity))continue;
 	    const reco::PFBlockElementTrack * trackRef = dynamic_cast<const reco::PFBlockElementTrack*>((&elements[iEle]));
@@ -1136,11 +1137,8 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
 
       if ( rejectTracks_Step45_ && ecalElems.empty() && 
 	   trackMomentum > 30. && Dpt > 0.5 && 
-	   ( trackRef->algo() == TrackBase::iter4 || 
-	     trackRef->algo() == TrackBase::iter5 || 
-	     trackRef->algo() == TrackBase::iter6 ) ) {
+	   ( PFTrackAlgoTools::step45(trackRef->algo())) ) {  
 
-	//
 	double dptRel = Dpt/trackRef->pt()*100;
 	bool isPrimaryOrSecondary = isFromSecInt(elements[iTrack], "all");
 
@@ -1334,16 +1332,16 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
 	}
 	*/ 
 
-	// Check the presence of preshower clusters in the vicinity
-	// Preshower cluster closer to another ECAL cluster are ignored.
-	vector<double> ps1Ene(1,static_cast<double>(0.));
-	associatePSClusters(index, reco::PFBlockElement::PS1, block, elements, linkData, active, ps1Ene);
-	vector<double> ps2Ene(1,static_cast<double>(0.));
-	associatePSClusters(index, reco::PFBlockElement::PS2, block, elements, linkData, active, ps2Ene);
-	
-	// Get the energy calibrated (for photons)
-	bool crackCorrection = false;
-	double ecalEnergy = calibration_->energyEm(*clusterRef,ps1Ene,ps2Ene,crackCorrection);
+        // Check the presence of preshower clusters in the vicinity
+        // Preshower cluster closer to another ECAL cluster are ignored.
+        //JOSH: This should use the association map already produced by the cluster corrector for consistency,
+        //but should be ok for now
+        vector<double> ps1Ene(1,static_cast<double>(0.));
+        associatePSClusters(index, reco::PFBlockElement::PS1, block, elements, linkData, active, ps1Ene);
+        vector<double> ps2Ene(1,static_cast<double>(0.));
+        associatePSClusters(index, reco::PFBlockElement::PS2, block, elements, linkData, active, ps2Ene);        
+        
+	double ecalEnergy = clusterRef->correctedEnergy();
 	if ( debug_ )
 	  std::cout << "Corrected ECAL(+PS) energy = " << ecalEnergy << std::endl;
 
@@ -1476,7 +1474,7 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
 	  // Skip muons
 	  if ( (*pfCandidates_)[tmpi[ic]].particleId() == reco::PFCandidate::mu ) continue; 
 
-	  double fraction = (*pfCandidates_)[tmpi[ic]].trackRef()->p()/trackMomentum;
+	  double fraction = trackMomentum > 0 ? (*pfCandidates_)[tmpi[ic]].trackRef()->p()/trackMomentum : 0;
 	  double ecalCal = bNeutralProduced ? 
 	    (calibEcal-neutralEnergy*slopeEcal)*fraction : calibEcal*fraction;
 	  double ecalRaw = totalEcal*fraction;
@@ -1934,29 +1932,7 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
       // ... blow up errors of 5th anf 4th iteration, to reject those
       // ... tracks first (in case it's needed)
       double Dpt = trackRef->ptError();
-      double blowError = 1.;
-      switch (trackRef->algo()) {
-      case TrackBase::ctf:
-      case TrackBase::iter0:
-      case TrackBase::iter1:
-      case TrackBase::iter2:
-      case TrackBase::iter3:
-      case TrackBase::iter4:
-      case TrackBase::iter7:
-      case TrackBase::iter9:
-      case TrackBase::iter10:
-	blowError = 1.;
-	break;
-      case TrackBase::iter5:
-	blowError = factors45_[0];
-	break;
-      case TrackBase::iter6:
-	blowError = factors45_[1];
-	break;
-      default:
-	blowError = 1E9;
-	break;
-      }
+      double blowError = PFTrackAlgoTools::errorScale(trackRef->algo(),factors45_);
       // except if it is from an interaction
       bool isPrimaryOrSecondary = isFromSecInt(elements[iTrack], "all");
 
@@ -2009,23 +1985,8 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
 	    // totalEcal += eclusterref->energy();
 	    // float ecalEnergyUnCalibrated = eclusterref->energy();
 	    //std::cout << "Ecal Uncalibrated " << ecalEnergyUnCalibrated << std::endl;
-	    
-	    // check the presence of preshower clusters in the vicinity
-	    vector<double> ps1Ene(1,static_cast<double>(0.));
-	    associatePSClusters(iEcal, reco::PFBlockElement::PS1, 
-				block, elements, linkData, active, 
-				ps1Ene);
-	    vector<double> ps2Ene(1,static_cast<double>(0.));
-	    associatePSClusters(iEcal, reco::PFBlockElement::PS2, 
-				block, elements, linkData, active, 
-				ps2Ene); 
-	    std::pair<double,double> psEnes = make_pair(ps1Ene[0],
-							ps2Ene[0]);
-	    associatedPSs.insert(make_pair(iEcal,psEnes));
-	      
-	    // Calibrate the ECAL energy for photons
-	    bool crackCorrection = false;
-	    float ecalEnergyCalibrated = calibration_->energyEm(*eclusterref,ps1Ene,ps2Ene,crackCorrection);
+
+	    float ecalEnergyCalibrated = eclusterref->correctedEnergy();
 	    ::math::XYZVector photonDirection(eclusterref->position().X(),
 					    eclusterref->position().Y(),
 					    eclusterref->position().Z());
@@ -2198,7 +2159,6 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
     //double Caloresolution = neutralHadronEnergyResolution( totalChargedMomentum, hclusterref->positionREP().Eta());
     //Caloresolution *= totalChargedMomentum;
     // that of the charged particles linked to the cluster!
-    double TotalError = sqrt(sumpError2 + Caloresolution*Caloresolution);
 
     /* */
     ////////////////////// TRACKER MUCH LARGER THAN CALO /////////////////////////
@@ -2258,7 +2218,7 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
 	    PFClusterRef hoclusterref = elements[iHO].clusterRef();
 	    (*pfCandidates_)[tmpi].addElementInBlock( blockref, iHO);
 	    muonHO = std::min(muonHO_[0]+muonHO_[1],hoclusterref->energy());
-	    (*pfCandidates_)[tmpi].setHcalEnergy(totalHcal-totalHO,muonHcal);
+	    (*pfCandidates_)[tmpi].setHcalEnergy(max(totalHcal-totalHO,0.0),muonHcal);
 	    (*pfCandidates_)[tmpi].setHoEnergy(hoclusterref->energy(),muonHO);
 	  }
 	  // Remove it from the block
@@ -2399,20 +2359,8 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
 
 
 	if (isPrimaryOrSecondary && dptRel < dptRel_DispVtx_) continue;
-	//
-	switch (trackref->algo()) {
-	case TrackBase::ctf:
-	case TrackBase::iter0:
-	case TrackBase::iter1:
-	case TrackBase::iter2:
-	case TrackBase::iter3:
-	case TrackBase::iter4:
-	case TrackBase::iter7:
-	case TrackBase::iter9:
-	case TrackBase::iter10:
-	  break;
-	case TrackBase::iter5:
-	case TrackBase::iter6:
+
+	if (PFTrackAlgoTools::step5(trackref->algo())) {
 	  active[iTrack] = false;	
 	  totalChargedMomentum -= trackref->p();
 	  
@@ -2420,13 +2368,12 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
 	    std::cout << "\tElement  " << elements[iTrack] 
 		      << " rejected (Dpt = " << -it->first 
 		      << " GeV/c, algo = " << trackref->algo() << ")" << std::endl;
-	  break;
-	default:
-	  break;
+
 	}
       }
-    }
 
+    }
+  
     // New determination of the calo and track resolution avec track deletion/rescaling.
     Caloresolution = neutralHadronEnergyResolution( totalChargedMomentum, hclusterref->positionREP().Eta());    
     Caloresolution *= totalChargedMomentum;
@@ -2475,7 +2422,7 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
     }
 
     // The total uncertainty of the difference Calo-Track
-    TotalError = sqrt(sumpError2 + Caloresolution*Caloresolution);
+    double TotalError = sqrt(sumpError2 + Caloresolution*Caloresolution);
 
     if ( debug_ ) {
       cout<<"\tCompare Calo Energy to total charged momentum "<<endl;
@@ -2740,7 +2687,7 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
 	  (*pfCandidates_)[tmpi].setHcalEnergy( rawhcalEnergy[iPivot],hcalEnergy[iPivot] );
 	  (*pfCandidates_)[tmpi].setHoEnergy(0., 0.);
 	} else { 
-	  (*pfCandidates_)[tmpi].setHcalEnergy( rawhcalEnergy[iPivot]-totalHO,hcalEnergy[iPivot]*(1.-totalHO/rawhcalEnergy[iPivot]));
+	  (*pfCandidates_)[tmpi].setHcalEnergy( max(rawhcalEnergy[iPivot]-totalHO,0.0),hcalEnergy[iPivot]*(1.-totalHO/rawhcalEnergy[iPivot]));
 	  (*pfCandidates_)[tmpi].setHoEnergy(totalHO, totalHO * hcalEnergy[iPivot]/rawhcalEnergy[iPivot]);
 	} 
 	(*pfCandidates_)[tmpi].setPs1Energy( 0. );
@@ -2812,7 +2759,7 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
 	chargedHadron.setHcalEnergy(  fraction * totalHcal, fraction * totalHcalEnergyCalibrated );          
 	chargedHadron.setHoEnergy(  0., 0. ); 
       } else { 
-	chargedHadron.setHcalEnergy(  fraction * (totalHcal-totalHO), fraction * totalHcalEnergyCalibrated * (1.-totalHO/totalHcal) );          
+	chargedHadron.setHcalEnergy(  fraction * max(totalHcal-totalHO,0.0), fraction * totalHcalEnergyCalibrated * (1.-totalHO/totalHcal) );          
 	chargedHadron.setHoEnergy( fraction * totalHO, fraction * totalHO * totalHcalEnergyCalibrated / totalHcal ); 
       }
       //JB: fixing up (previously omitted) setting of ECAL energy gouzevit
@@ -2959,13 +2906,7 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
       reco::PFClusterRef eclusterRef = elements[iEcal].clusterRef();
       assert( !eclusterRef.isNull() );
 
-      // Check the presence of ps clusters in the vicinity
-      vector<double> ps1Ene(1,static_cast<double>(0.));
-      associatePSClusters(iEcal, reco::PFBlockElement::PS1, block, elements, linkData, active, ps1Ene);
-      vector<double> ps2Ene(1,static_cast<double>(0.));
-      associatePSClusters(iEcal, reco::PFBlockElement::PS2, block, elements, linkData, active, ps2Ene);
-      bool crackCorrection = false;
-      double ecalEnergy = calibration_->energyEm(*eclusterRef,ps1Ene,ps2Ene,crackCorrection);
+      double ecalEnergy = eclusterRef->correctedEnergy();
       
       //std::cout << "EcalEnergy, ps1, ps2 = " << ecalEnergy 
       //          << ", " << ps1Ene[0] << ", " << ps2Ene[0] << std::endl;
@@ -3102,7 +3043,7 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
       (*pfCandidates_)[tmpi].setHcalEnergy( totalHcal, calibHcal );
       (*pfCandidates_)[tmpi].setHoEnergy(0.,0.);
     } else { 
-      (*pfCandidates_)[tmpi].setHcalEnergy( totalHcal-totalHO, calibHcal*(1.-totalHO/totalHcal));
+      (*pfCandidates_)[tmpi].setHcalEnergy( max(totalHcal-totalHO,0.0), calibHcal*(1.-totalHO/totalHcal));
       (*pfCandidates_)[tmpi].setHoEnergy(totalHO,totalHO*calibHcal/totalHcal);
     }
     (*pfCandidates_)[tmpi].setPs1Energy( 0. );
@@ -3145,13 +3086,7 @@ void PFAlgo::processBlock( const reco::PFBlockRef& blockref,
 
     active[iEcal] = false;
 
-    // Check the presence of ps clusters in the vicinity
-    vector<double> ps1Ene(1,static_cast<double>(0.));
-    associatePSClusters(iEcal, reco::PFBlockElement::PS1, block, elements, linkData, active, ps1Ene);
-    vector<double> ps2Ene(1,static_cast<double>(0.));
-    associatePSClusters(iEcal, reco::PFBlockElement::PS2, block, elements, linkData, active, ps2Ene);
-    bool crackCorrection = false;
-    float ecalEnergy = calibration_->energyEm(*clusterref,ps1Ene,ps2Ene,crackCorrection);
+    float ecalEnergy = clusterref->correctedEnergy();
     // float ecalEnergy = calibration_->energyEm( clusterref->energy() );
     double particleEnergy = ecalEnergy;
     
@@ -3204,6 +3139,8 @@ unsigned PFAlgo::reconstructTrack( const reco::PFBlockElement& elt, bool allowLo
     pfCandidates_->back().setMuonRef( muonRef );
 
 
+  //Set time
+  if (elt.isTimeValid()) pfCandidates_->back().setTime( elt.time(), elt.timeError() );
 
   //OK Now try to reconstruct the particle as a muon
   bool isMuon=pfmu_->reconstructMuon(pfCandidates_->back(),muonRef,allowLoose);
@@ -3239,6 +3176,7 @@ unsigned PFAlgo::reconstructTrack( const reco::PFBlockElement& elt, bool allowLo
     pfCandidates_->back().setFlag( reco::PFCandidate::T_TO_DISP, true);
     pfCandidates_->back().setDisplacedVertexRef( eltTrack->displacedVertexRef(reco::PFBlockElement::T_TO_DISP)->displacedVertexRef(), reco::PFCandidate::T_TO_DISP);
   }
+
   // returns index to the newly created PFCandidate
   return pfCandidates_->size()-1;
 }
@@ -3345,6 +3283,9 @@ PFAlgo::reconstructCluster(const reco::PFCluster& cluster,
   //Set the cnadidate Vertex
   pfCandidates_->back().setVertex(vertexPos);  
 
+  //Set the time
+  pfCandidates_->back().setTime( cluster.time(), cluster.timeError() );
+
   if(debug_) 
     cout<<"** candidate: "<<pfCandidates_->back()<<endl; 
 
@@ -3394,8 +3335,7 @@ ostream& operator<<(ostream& out, const PFAlgo& algo) {
   out<<endl;
   out<<"reconstructed particles: "<<endl;
    
-  const std::auto_ptr< reco::PFCandidateCollection >& 
-    candidates = algo.pfCandidates(); 
+  const std::unique_ptr<reco::PFCandidateCollection>& candidates = algo.pfCandidates(); 
 
   if(!candidates.get() ) {
     out<<"candidates already transfered"<<endl;
@@ -3656,7 +3596,7 @@ PFAlgo::checkCleaning( const reco::PFRecHitCollection& cleanedHits ) {
     // Loop on the candidates
     for(unsigned i=0; i<cleanedHits.size(); ++i) {
       const PFRecHit& hit = cleanedHits[i];
-      double length = std::sqrt(hit.position().Mag2()); 
+      double length = std::sqrt(hit.position().mag2()); 
       double px = hit.energy() * hit.position().x()/length;
       double py = hit.energy() * hit.position().y()/length;
       double pt = std::sqrt(px*px + py*py);

@@ -40,6 +40,33 @@ photonConvTrajSeedFromSingleLeg  = cms.EDProducer("PhotonConversionTrajectorySee
                                                   SeedCreatorPSet = cms.PSet(
                                                       ComponentName = cms.string('SeedForPhotonConversion1Leg'),
                                                       SeedMomentumForBOFF = cms.double(5.0),
-                                                      propagator = cms.string('PropagatorWithMaterial')
+                                                      propagator = cms.string('PropagatorWithMaterial'),
+                                                      TTRHBuilder = cms.string('WithTrackAngle')
                                                       )
                                                   )
+from Configuration.Eras.Modifier_trackingLowPU_cff import trackingLowPU
+trackingLowPU.toModify(photonConvTrajSeedFromSingleLeg,
+    OrderedHitsFactoryPSet = dict(maxElement = 10000),
+    ClusterCheckPSet = dict(
+        MaxNumberOfCosmicClusters = 150000,
+        MaxNumberOfPixelClusters = 20000,
+        cut = "strip < 150000 && pixel < 20000 && (strip < 20000 + 7* pixel)"
+    )
+)
+
+from Configuration.Eras.Modifier_trackingPhase2PU140_cff import trackingPhase2PU140
+trackingPhase2PU140.toModify(photonConvTrajSeedFromSingleLeg,
+    ClusterCheckPSet = dict(
+        MaxNumberOfCosmicClusters = 1000000,
+        MaxNumberOfPixelClusters = 100000,
+        cut = None
+    ),
+    OrderedHitsFactoryPSet = dict(maxElement = 100000),
+    RegionFactoryPSet = dict(RegionPSet = dict(ptMin = 0.3)),
+)
+
+from Configuration.Eras.Modifier_peripheralPbPb_cff import peripheralPbPb
+peripheralPbPb.toModify(photonConvTrajSeedFromSingleLeg,
+                        ClusterCheckPSet = dict(cut = "strip < 400000 && pixel < 40000 && (strip < 60000 + 7.0*pixel) && (pixel < 8000 + 0.14*strip)")
+                        )
+

@@ -3,6 +3,7 @@
 
 #include "DataFormats/Common/interface/EDProductGetter.h"
 #include "DataFormats/Common/interface/Wrapper.h"
+#include "FWCore/Utilities/interface/propagate_const.h"
 
 #include <map>
 #include <memory>
@@ -10,13 +11,13 @@
 class SimpleEDProductGetter : public edm::EDProductGetter {
 public:
 
-  typedef std::map<edm::ProductID, std::shared_ptr<edm::WrapperBase> > map_t;
+  typedef std::map<edm::ProductID, edm::propagate_const<std::shared_ptr<edm::WrapperBase>>> map_t;
 
   template<typename T>
   void
-  addProduct(edm::ProductID const& id, std::auto_ptr<T> p) {
+  addProduct(edm::ProductID const& id, std::unique_ptr<T> p) {
     typedef edm::Wrapper<T> wrapper_t;
-    std::shared_ptr<wrapper_t> product = std::make_shared<wrapper_t>(p);
+    std::shared_ptr<wrapper_t> product = std::make_shared<wrapper_t>(std::move(p));
     database[id] = product;
   }
 
@@ -35,6 +36,15 @@ public:
     }
     return i->second.get();
   }
+
+  virtual edm::WrapperBase const*
+  getThinnedProduct(edm::ProductID const&, unsigned int&) const override {return nullptr;}
+
+  virtual void
+  getThinnedProducts(edm::ProductID const& pid,
+                     std::vector<edm::WrapperBase const*>& wrappers,
+                     std::vector<unsigned int>& keys) const override { }
+
 
 private:
   virtual unsigned int transitionIndex_() const override {

@@ -98,7 +98,7 @@ RKPropagatorInS::propagateParametersOnPlane( const FreeTrajectoryState& ts,
   }
 
 
-#ifdef EDM_LM_DEBUG
+#ifdef EDM_ML_DEBUG
   if (theVolume != 0) {
     LogDebug("RKPropagatorInS")  << "RKPropagatorInS: starting prop to plane in volume with pos " << theVolume->position()
 	      << " Z axis " << theVolume->toGlobal( LocalVector(0,0,1)) ;
@@ -107,9 +107,9 @@ RKPropagatorInS::propagateParametersOnPlane( const FreeTrajectoryState& ts,
 	      << theVolume->toLocal(ts.position()) << " (local) " ;
   
     FrameChanger changer;
-    FrameChanger::PlanePtr localPlane = changer.transformPlane( plane, *theVolume);
+    auto localPlane = changer.transformPlane( plane, *theVolume);
     LogDebug("RKPropagatorInS")  << "The plane position is " << plane.position() << " (global) "
-	      << localPlane->position() << " (local) " ;
+	      << localPlane.position() << " (local) " ;
 
     LogDebug("RKPropagatorInS")  << "The initial distance to plane is " << plane.localZ( ts.position()) ;
 
@@ -334,8 +334,8 @@ Propagator * RKPropagatorInS::clone() const
     return new RKPropagatorInS(*this);
 }
 
-GlobalTrajectoryParameters RKPropagatorInS::gtpFromLocal( const Basic3DVector<double>& lpos,
-							  const Basic3DVector<double>& lmom,
+GlobalTrajectoryParameters RKPropagatorInS::gtpFromLocal( const Basic3DVector<float>& lpos,
+							  const Basic3DVector<float>& lmom,
 							  TrackCharge ch, const Surface& surf) const
 {
     return GlobalTrajectoryParameters( surf.toGlobal( LocalPoint( lpos)),
@@ -370,13 +370,13 @@ Basic3DVector<double> RKPropagatorInS::rkMomentum( const GlobalVector& mom) cons
   else return mom.basicVector();
 }
 
-GlobalPoint RKPropagatorInS::globalPosition( const Basic3DVector<double>& pos) const
+GlobalPoint RKPropagatorInS::globalPosition( const Basic3DVector<float>& pos) const
 {
   if (theVolume != 0) return theVolume->toGlobal( LocalPoint(pos));
   else return GlobalPoint(pos);
 }
 
-GlobalVector RKPropagatorInS::globalMomentum( const Basic3DVector<double>& mom) const
+GlobalVector RKPropagatorInS::globalMomentum( const Basic3DVector<float>& mom) const
 
 {
   if (theVolume != 0) return theVolume->toGlobal( LocalVector(mom));

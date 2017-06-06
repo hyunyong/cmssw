@@ -23,8 +23,7 @@
 
 // The part of tinyxml used in JobReport was reviewed and
 // determined to be threadsafe.
-#include "FWCore/Utilities/interface/tinyxml.h"
-
+#include "tinyxml.h"
 #include <fstream>
 #include <iomanip>
 #include <ostream>
@@ -99,8 +98,13 @@ namespace edm {
        << rep.runNumber
        << "\">\n";
 
-    for(auto il : rep.lumiSections) {
-      os << "   <LumiSection ID=\"" << il << "\"/>\n";
+    for(auto const& il : rep.lumiSectionsToNEvents) {
+      if(std::numeric_limits<unsigned long>::max() == il.second) {
+        os << "   <LumiSection ID=\"" << il.first << "\"/>\n";
+        
+      } else {
+        os << "   <LumiSection ID=\"" << il.first << "\" NEvents=\""<<il.second<< "\"/>\n";
+      }
     }
     os << "</Run>\n";
     return os;
@@ -273,7 +277,7 @@ namespace edm {
   }
 
   void JobReport::JobReportImpl::associateRun(JobReport::Token token, unsigned int runNumber) {
-    std::map<RunNumber, RunReport>& theMap = outputFiles_.at(token).runReports;
+    auto& theMap = outputFiles_.at(token).runReports;
     std::map<RunNumber, RunReport>::iterator iter(theMap.lower_bound(runNumber));
     if(iter == theMap.end() || runNumber < iter->first) {    // not found
       theMap.emplace_hint(iter, runNumber, JobReport::RunReport{ runNumber, {}});  // insert it
@@ -292,13 +296,13 @@ namespace edm {
     }
   }
 
-  void JobReport::JobReportImpl::associateLumiSection(JobReport::Token token, unsigned int runNumber, unsigned int lumiSect) {
-    std::map<RunNumber, RunReport>& theMap = outputFiles_.at(token).runReports;
+  void JobReport::JobReportImpl::associateLumiSection(JobReport::Token token, unsigned int runNumber, unsigned int lumiSect, unsigned long nEvents) {
+    auto& theMap = outputFiles_.at(token).runReports;
     std::map<RunNumber, RunReport>::iterator iter(theMap.lower_bound(runNumber));
     if(iter == theMap.end() || runNumber < iter->first) {    // not found
-      theMap.emplace_hint(iter, runNumber, JobReport::RunReport{ runNumber, {lumiSect}});  // insert it
+      theMap.emplace_hint(iter, runNumber, JobReport::RunReport{ runNumber, {{{lumiSect,nEvents}}}});  // insert it
     } else {
-      iter->second.lumiSections.insert(lumiSect);
+      iter->second.lumiSectionsToNEvents[lumiSect]+=nEvents;
     }
   }
 
@@ -308,9 +312,9 @@ namespace edm {
         std::map<RunNumber, RunReport>& theMap = inputFile.runReports;
         std::map<RunNumber, RunReport>::iterator iter(theMap.lower_bound(runNumber));
         if(iter == theMap.end() || runNumber < iter->first) {    // not found
-          theMap.emplace_hint(iter, runNumber, JobReport::RunReport{ runNumber, {lumiSect}});  // insert it
+          theMap.emplace_hint(iter, runNumber, JobReport::RunReport{ runNumber, {{lumiSect,std::numeric_limits<unsigned long>::max()}}});  // insert it
         } else {
-          iter->second.lumiSections.insert(lumiSect);
+          iter->second.lumiSectionsToNEvents[lumiSect]=std::numeric_limits<unsigned long>::max();
         }
       }
     }
@@ -368,7 +372,7 @@ namespace edm {
       }
       *(impl_->ost_) << "</ChildProcessFiles>\n";
       *(impl_->ost_) << "</FrameworkJobReport>\n";
-      std::ofstream* p = dynamic_cast<std::ofstream *>(impl_->ost_);
+      std::ofstream* p = dynamic_cast<std::ofstream *>(impl_->ost());
       if(p) {
         p->close();
       }
@@ -381,7 +385,7 @@ namespace edm {
 
   void
   JobReport::childAfterFork(std::string const& jobReportFile, unsigned int childIndex, unsigned int numberOfChildren) {
-    std::ofstream* p = dynamic_cast<std::ofstream*>(impl_->ost_);
+    std::ofstream* p = dynamic_cast<std::ofstream*>(impl_->ost());
     if(!p) return;
     std::ostringstream ofilename;
     toFileName(jobReportFile, childIndex, numberOfChildren, ofilename);
@@ -405,9 +409,9 @@ namespace edm {
 
     if (inputType == "mixingFiles") {
       theInputType = InputType::SecondarySource;
-      impl_->inputFilesSecSource_.push_back(InputFile());
-      newFile = &impl_->inputFilesSecSource_.back();
-      newToken = impl_->inputFilesSecSource_.size() - 1;
+      auto itr = impl_->inputFilesSecSource_.push_back(InputFile());
+      newFile = &(*itr);
+      newToken = itr - impl_->inputFilesSecSource_.begin();
     } else {
       if (inputType == "secondaryFiles") {
         theInputType = InputType::SecondaryFile;
@@ -473,8 +477,8 @@ namespace edm {
                               std::string const& dataType,
                               std::string const& branchHash,
                               std::vector<std::string> const& branchNames) {
-    impl_->outputFiles_.emplace_back();
-    JobReport::OutputFile& r = impl_->outputFiles_.back();
+    auto itr = impl_->outputFiles_.emplace_back();
+    JobReport::OutputFile& r = *itr;
 
     r.logicalFileName       = logicalFileName;
     r.physicalFileName      = physicalFileName;
@@ -500,11 +504,11 @@ namespace edm {
         r.contributingInputsSecSource.push_back(i);
       }
     }
-    return impl_->outputFiles_.size()-1;
+    return itr - impl_->outputFiles_.begin();
   }
 
   void
-  JobReport::eventWrittenToFile(JobReport::Token fileToken, unsigned int /*run*/, unsigned int) {
+  JobReport::eventWrittenToFile(JobReport::Token fileToken, RunNumber_t /*run*/, EventNumber_t) {
     JobReport::OutputFile& f = impl_->getOutputFileForToken(fileToken);
     ++f.numEventsWritten;
   }
@@ -517,7 +521,7 @@ namespace edm {
   }
 
   void
-  JobReport::reportSkippedEvent(unsigned int run, unsigned int event) {
+  JobReport::reportSkippedEvent(RunNumber_t run, EventNumber_t event) {
     if(impl_->ost_) {
       std::ostream& msg = *(impl_->ost_);
       {
@@ -536,8 +540,8 @@ namespace edm {
   }
 
   void
-  JobReport::reportLumiSection(JobReport::Token token, unsigned int run, unsigned int lumiSectId) {
-    impl_->associateLumiSection(token, run, lumiSectId);
+  JobReport::reportLumiSection(JobReport::Token token, unsigned int run, unsigned int lumiSectId, unsigned long nEvents) {
+    impl_->associateLumiSection(token, run, lumiSectId,nEvents);
   }
 
   void
@@ -777,24 +781,21 @@ namespace edm {
   JobReport::dumpFiles(void) {
     std::ostringstream msg;
 
-    typedef std::vector<JobReport::OutputFile>::iterator iterator;
 
-    for(iterator f = impl_->outputFiles_.begin(), fEnd = impl_->outputFiles_.end(); f != fEnd; ++f) {
+    for(auto const& f :impl_->outputFiles_) {
 
       msg << "\n<File>";
-      msg << *f;
+      msg << f;
 
       msg << "\n<LumiSections>";
       msg << "\n<Inputs>";
       typedef std::vector<JobReport::Token>::iterator iterator;
-      for(iterator iInput = f->contributingInputs.begin(),
-          iInputEnd = f->contributingInputs.end();
-          iInput != iInputEnd; ++iInput) {
-        JobReport::InputFile inpFile = impl_->inputFiles_[*iInput];
+      for(auto const& iInput : f.contributingInputs) {
+        auto const& inpFile = impl_->inputFiles_[iInput];
         msg << "\n<Input>";
         msg << "\n  <LFN>" << TiXmlText(inpFile.logicalFileName) << "</LFN>";
         msg << "\n  <PFN>" << TiXmlText(inpFile.physicalFileName) << "</PFN>";
-        msg << "\n  <FastCopying>" << findOrDefault(f->fastCopyingInputs, inpFile.physicalFileName) << "</FastCopying>";
+        msg << "\n  <FastCopying>" << findOrDefault(f.fastCopyingInputs, inpFile.physicalFileName) << "</FastCopying>";
         msg << "\n</Input>";
       }
       msg << "\n</Inputs>";

@@ -40,7 +40,7 @@
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/SiStripDetId/interface/StripSubdetector.h"
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
-#include "Geometry/Records/interface/IdealGeometryRecord.h"
+#include "Geometry/Records/interface/TrackerTopologyRcd.h"
 #include "DataFormats/TrackReco/interface/DeDxHit.h"
 #include "DataFormats/TrackReco/interface/TrackDeDxHits.h"
 
@@ -66,16 +66,13 @@
 #include "TF1.h"
 #include "TROOT.h"
 
-#include <ext/hash_map>
+#include <unordered_map>
 
 
 
 using namespace edm;
 using namespace reco;
 using namespace std;
-using namespace __gnu_cxx;
-using __gnu_cxx::hash_map;
-using __gnu_cxx::hash;
 
 
 struct stAPVGain{unsigned int Index; int DetId; int APVId; int SubDet; float Eta; float R; float Phi; float Thickness; double MPV; double Gain; double PreviousGain; char Side;};
@@ -284,7 +281,7 @@ class SiStripGainFromData : public ConditionDBWriter<SiStripApvGain> {
       };
 
       std::vector<stAPVGain*> APVsCollOrdered;
-      __gnu_cxx::hash_map<unsigned int, stAPVGain*,  __gnu_cxx::hash<unsigned int>, isEqual > APVsColl;
+      std::unordered_map<unsigned int, stAPVGain*> APVsColl;
 };
 
 SiStripGainFromData::SiStripGainFromData(const edm::ParameterSet& iConfig) : ConditionDBWriter<SiStripApvGain>(iConfig)
@@ -337,7 +334,7 @@ SiStripGainFromData::algoBeginJob(const edm::EventSetup& iSetup)
 {
   //Retrieve tracker topology from geometry
   edm::ESHandle<TrackerTopology> tTopoHandle;
-  iSetup.get<IdealGeometryRecord>().get(tTopoHandle);
+  iSetup.get<TrackerTopologyRcd>().get(tTopoHandle);
   const TrackerTopology* const tTopo = tTopoHandle.product();
 
    iSetup_                  = &iSetup;
@@ -620,10 +617,10 @@ SiStripGainFromData::algoEndJob() {
 
          if(SRun==0)SRun = tmp_SRun;
 
-              if(tmp_SRun< SRun){SRun=tmp_SRun; SEvent=tmp_SEvent;}
+         if     (tmp_SRun< SRun){SRun=tmp_SRun; SEvent=tmp_SEvent;}
          else if(tmp_SRun==SRun && tmp_SEvent<SEvent){SEvent=tmp_SEvent;}
 
-              if(tmp_ERun> ERun){ERun=tmp_ERun; EEvent=tmp_EEvent;}
+         if     (tmp_ERun> ERun){ERun=tmp_ERun; EEvent=tmp_EEvent;}
          else if(tmp_ERun==ERun && tmp_EEvent>EEvent){EEvent=tmp_EEvent;}
 
 	 printf("Deleting Current Input File\n");
@@ -643,8 +640,9 @@ SiStripGainFromData::algoEndJob() {
       TH1D* Proj = NULL;
       double* FitResults = new double[5];
       I=0;
-      for(__gnu_cxx::hash_map<unsigned int, stAPVGain*,  __gnu_cxx::hash<unsigned int>, isEqual >::iterator it = APVsColl.begin();it!=APVsColl.end();it++){
-      if( I%3650==0 ) printf("Fitting Histograms \t %6.2f%%\n",(100.0*I)/APVsColl.size());I++;
+      for(auto it = APVsColl.begin();it!=APVsColl.end();it++){
+         if( I%3650==0 ) printf("Fitting Histograms \t %6.2f%%\n",(100.0*I)/APVsColl.size());
+         I++;
          stAPVGain* APV = it->second;
 
          int bin = APV_Charge->GetXaxis()->FindBin(APV->Index);
@@ -669,7 +667,7 @@ SiStripGainFromData::algoEndJob() {
 	    }
          }else if(CalibrationLevel>1){
 //	     printf("%8i %i--> %4.0f + %4.0f\n",APV->DetId, APV->APVId, 0.0, Proj->GetEntries());
-             for(__gnu_cxx::hash_map<unsigned int, stAPVGain*,  __gnu_cxx::hash<unsigned int>, isEqual >::iterator it2 = APVsColl.begin();it2!=APVsColl.end();it2++){
+             for(auto it2 = APVsColl.begin();it2!=APVsColl.end();it2++){
                 stAPVGain* APV2 = it2->second;
              
                 if(APV2->DetId != APV->DetId)continue;
@@ -765,7 +763,7 @@ SiStripGainFromData::algoEndJob() {
       unsigned int BAD  = 0;
       double MPVmean = MPVs->GetMean();
       MPVmean = 300;
-      for(__gnu_cxx::hash_map<unsigned int, stAPVGain*,  __gnu_cxx::hash<unsigned int>, isEqual >::iterator it = APVsColl.begin();it!=APVsColl.end();it++){
+      for(auto it = APVsColl.begin();it!=APVsColl.end();it++){
 
          stAPVGain*   APV = it->second;
          if(APV->MPV>0){
@@ -1038,7 +1036,7 @@ SiStripGainFromData::algoAnalyze(const edm::Event& iEvent, const edm::EventSetup
   
       for(Trajectory::RecHitContainer::const_iterator rechit = transRecHits.begin(); rechit != transRecHits.end(); ++rechit)
          if ((*rechit)->isValid()) ndof += (*rechit)->dimension();  
-         ndof -= 5;
+      ndof -= 5;
       //END TO COMPUTE NDOF FOR TRACKS NO IMPLEMENTED BEFORE 200pre3
 
       HTrackChi2OverNDF->Fill(traj.chiSquared()/ndof);
@@ -1097,9 +1095,7 @@ SiStripGainFromData::ComputeChargeOverPath(const SiStripCluster*   Cluster ,Traj
 {
    LocalVector          trackDirection = trajState.localDirection();
    double                  cosine      = trackDirection.z()/trackDirection.mag();
-//   const SiStripCluster*   Cluster     = (sistripsimplehit->cluster()).get();
-//   const vector<uint16_t>& Ampls       = Cluster->amplitudes();
-   const vector<uint8_t>&  Ampls       = Cluster->amplitudes();
+   auto  const          &  Ampls       = Cluster->amplitudes();
    uint32_t                DetId       = 0; // is 0 since long time Cluster->geographicalId();
    int                     FirstStrip  = Cluster->firstStrip();
    int                     APVId       = FirstStrip/128;

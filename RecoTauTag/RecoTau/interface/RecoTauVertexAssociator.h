@@ -29,6 +29,8 @@
 
 #include "CommonTools/Utils/interface/StringCutObjectSelector.h"
 
+#include "DataFormats/Provenance/interface/RunLumiEventNumber.h"
+
 #include <map>
 
 // Forward declarations
@@ -59,8 +61,11 @@ class RecoTauVertexAssociator {
     /// Returns a null Ref if no vertex is found.
     reco::VertexRef associatedVertex(const PFJet& jet) const;
     /// Convenience function to get the PV associated to the jet that
-    /// seeded this tau.
-    reco::VertexRef associatedVertex(const PFTau& tau) const;
+    /// seeded this tau (useJet=true, old behaviour) 
+    /// or leaging charged hadron if set (useJet=false).
+    reco::VertexRef associatedVertex(const PFTau& tau, bool useJet=false) const;
+    reco::VertexRef associatedVertex(const TrackBaseRef& track) const;
+
     /// Load the vertices from the event.
     void setEvent(const edm::Event& evt);
     reco::TrackBaseRef getLeadTrack(const PFJet& jet) const;
@@ -80,7 +85,7 @@ class RecoTauVertexAssociator {
     edm::EDGetTokenT<reco::VertexCollection> vxToken_;
     // containers for holding vertices associated to jets
     std::map<const reco::PFJet*, reco::VertexRef>* jetToVertexAssociation_;
-    int lastEvent_;    
+    edm::EventNumber_t lastEvent_;    
     int verbosity_;
 };
 

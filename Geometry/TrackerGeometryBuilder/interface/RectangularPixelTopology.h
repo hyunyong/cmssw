@@ -37,7 +37,7 @@
 # include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 
-class RectangularPixelTopology GCC11_FINAL : public PixelTopology
+class RectangularPixelTopology final : public PixelTopology
 {
 public:
 
@@ -185,6 +185,13 @@ public:
   virtual int colsperroc() const { 	 
     return m_COLS_PER_ROC; 	 
   }
+  float xoffset() const {
+    return m_xoffset;
+  }
+  float yoffset() const {
+    return m_yoffset;
+  }
+
 
 private:
 

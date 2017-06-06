@@ -20,10 +20,11 @@
 
 #include "SimGeneral/MixingModule/interface/DigiAccumulatorMixMod.h"
 #include "FWCore/Framework/interface/ESHandle.h"
+#include "DataFormats/Provenance/interface/EventID.h"
 
 namespace edm {
   class ConsumesCollector;
-  namespace one {
+  namespace stream {
     class EDProducerBase;
   }
   class Event;
@@ -48,7 +49,7 @@ namespace cms {
   class SiPixelDigitizer : public DigiAccumulatorMixMod {
   public:
 
-    explicit SiPixelDigitizer(const edm::ParameterSet& conf, edm::one::EDProducerBase& mixMod, edm::ConsumesCollector& iC);
+    explicit SiPixelDigitizer(const edm::ParameterSet& conf, edm::stream::EDProducerBase& mixMod, edm::ConsumesCollector& iC);
 
     virtual ~SiPixelDigitizer();
 
@@ -60,21 +61,24 @@ namespace cms {
     virtual void beginJob() {}
 
     virtual void StorePileupInformation( std::vector<int> &numInteractionList,
-				 std::vector<int> &bunchCrossingList,
-				 std::vector<float> &TrueInteractionList){
-      PileupInfo_ = new PileupMixingContent(numInteractionList, bunchCrossingList, TrueInteractionList);
+					 std::vector<int> &bunchCrossingList,
+					 std::vector<float> &TrueInteractionList, 
+					 std::vector<edm::EventID> &eventInfoList, int bunchSpacing) override{
+      PileupInfo_ = new PileupMixingContent(numInteractionList, bunchCrossingList, TrueInteractionList, eventInfoList, bunchSpacing);
     }
 
-    virtual PileupMixingContent* getEventPileupInfo() { return PileupInfo_; }
+    virtual PileupMixingContent* getEventPileupInfo() override { return PileupInfo_; }
 
   private:
     void accumulatePixelHits(edm::Handle<std::vector<PSimHit> >,
 			     size_t globalSimHitIndex,
 			     const unsigned int tofBin,
-			     CLHEP::HepRandomEngine*);
+			     CLHEP::HepRandomEngine*,
+			     edm::EventSetup const& c);
     CLHEP::HepRandomEngine* randomEngine(edm::StreamID const& streamID);
 
-    bool first;
+    bool firstInitializeEvent_;
+    bool firstFinalizeEvent_;
     std::unique_ptr<SiPixelDigitizerAlgorithm>  _pixeldigialgo;
     /** @brief Offset to add to the index of each sim hit to account for which crossing it's in.
 *

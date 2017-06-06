@@ -28,7 +28,8 @@ SiPixelDigiToRaw::SiPixelDigiToRaw( const edm::ParameterSet& pset ) :
 {
 
   tPixelDigi = consumes<edm::DetSetVector<PixelDigi> >(config_.getParameter<edm::InputTag>("InputLabel")); 
- // Define EDProduct type
+
+  // Define EDProduct type
   produces<FEDRawDataCollection>();
 
   // start the counters
@@ -43,6 +44,15 @@ SiPixelDigiToRaw::SiPixelDigiToRaw( const edm::ParameterSet& pset ) :
     hCPU = new TH1D ("hCPU","hCPU",100,0.,0.050);
     hDigi = new TH1D("hDigi","hDigi",50,0.,15000.);
   }
+
+  // Control the usage of phase1
+  usePhase1 = false;
+  if (config_.exists("UsePhase1")) {
+    usePhase1 = config_.getParameter<bool> ("UsePhase1");
+    if(usePhase1) edm::LogInfo("SiPixelRawToDigi")  << " Use pilot blade data (FED 40)";
+  }
+
+  usePilotBlade=false; // I am not yet sure we need it here?
 }
 
 // -----------------------------------------------------------------------------
@@ -87,18 +97,21 @@ void SiPixelDigiToRaw::produce( edm::Event& ev,
     es.get<SiPixelFedCablingMapRcd>().get( cablingMap );
     fedIds = cablingMap->fedIds();
     cablingTree_= cablingMap->cablingTree();
-    if (frameReverter_) delete frameReverter_; frameReverter_ = new SiPixelFrameReverter( es, cablingMap.product() );
+    if (frameReverter_) delete frameReverter_; 
+    frameReverter_ = new SiPixelFrameReverter( es, cablingMap.product() );
   }
 
   debug = edm::MessageDrop::instance()->debugEnabled;
   if (debug) LogDebug("SiPixelDigiToRaw") << cablingTree_->version();
 
-  PixelDataFormatter formatter(cablingTree_.get());
+  //PixelDataFormatter formatter(cablingTree_.get());
+  PixelDataFormatter formatter(cablingTree_.get(), usePhase1);
+
   formatter.passFrameReverter(frameReverter_);
   if (theTimer) theTimer->start();
 
   // create product (raw data)
-  std::auto_ptr<FEDRawDataCollection> buffers( new FEDRawDataCollection );
+  auto buffers = std::make_unique<FEDRawDataCollection>();
 
   const vector<const PixelFEDCabling *>  fedList = cablingTree_->fedList();
 
@@ -130,7 +143,7 @@ void SiPixelDigiToRaw::produce( edm::Event& ev,
     hDigi->Fill(formatter.nDigis());
   }
   
-  ev.put( buffers );
+  ev.put(std::move(buffers));
   
 }
 

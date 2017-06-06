@@ -13,16 +13,18 @@
 #include "EventFilter/DTRawToDigi/interface/DTROChainCoding.h"
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include <FWCore/Framework/interface/EDAnalyzer.h>
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include <FWCore/Framework/interface/LuminosityBlock.h>
+
+#include <DQMServices/Core/interface/DQMStore.h>
+#include <DQMServices/Core/interface/MonitorElement.h>
+#include <DQMServices/Core/interface/DQMEDAnalyzer.h>
 
 #include "DataFormats/DTDigi/interface/DTControlData.h"
 
 #include "DQMServices/Core/interface/DQMStore.h"
 
-// #include "FWCore/ServiceRegistry/interface/ActivityRegistry.h"
 #include "DQMServices/Core/interface/MonitorElement.h"
 
 #include <fstream>
@@ -35,8 +37,7 @@ class DTROS25Data;
 class DTDDUData;
 class DTTimeEvolutionHisto;
 
-
-class DTDataIntegrityTask : public edm::EDAnalyzer {
+class DTDataIntegrityTask: public DQMEDAnalyzer {
 
 public:
 
@@ -44,7 +45,7 @@ public:
 
   virtual ~DTDataIntegrityTask();
 
-  void TimeHistos(std::string histoType);
+  void TimeHistos(DQMStore::IBooker &, std::string histoType);
 
   void processROS25(DTROS25Data & data, int dduID, int ros);
   void processFED(DTDDUData & dduData, const std::vector<DTROS25Data> & rosData, int dduID);
@@ -57,19 +58,21 @@ public:
   void fedNonFatal(int dduID);
 
   bool eventHasErrors() const;
-  void beginJob() override;
-  void endJob() override;
 
   void beginLuminosityBlock(const edm::LuminosityBlock& ls, const edm::EventSetup& es) override;
   void endLuminosityBlock(const edm::LuminosityBlock& ls, const edm::EventSetup& es) override;
- 
+
   void analyze(const edm::Event& e, const edm::EventSetup& c) override;
-  
+
+protected:
+
+  void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
+
 private:
 
-  void bookHistos(const int fedMin, const int fedMax);
-  void bookHistos(std::string folder, DTROChainCoding code);
-  void bookHistosROS25(DTROChainCoding code);
+  void bookHistos(DQMStore::IBooker &, const int fedMin, const int fedMax);
+  void bookHistos(DQMStore::IBooker &, std::string folder, DTROChainCoding code);
+  void bookHistosROS25(DQMStore::IBooker &, DTROChainCoding code);
 
   void channelsInCEROS(int cerosId, int chMask, std::vector<int>& channels);
   void channelsInROS(int cerosMask, std::vector<int>& channels);
@@ -87,9 +90,6 @@ private:
   bool getSCInfo;
 
   int nevents;
-
-  // back-end interface
-  DQMStore * dbe;
 
   DTROChainCoding coding;
 
@@ -125,6 +125,10 @@ private:
   std::string outputFile;
   double rob_max[25];
 
+  int FEDIDmin;
+  int FEDIDMax;
+
+
   //Event counter for the graphs VS time
   int myPrevEv;
 
@@ -147,9 +151,9 @@ private:
 
   // The label to retrieve the digis
   edm::EDGetTokenT<DTDDUCollection> dduToken;
-  
+
   edm::EDGetTokenT<DTROS25Collection> ros25Token;
-  
+ 
 };
 
 

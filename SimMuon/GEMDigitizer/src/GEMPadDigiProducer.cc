@@ -1,6 +1,5 @@
 #include "SimMuon/GEMDigitizer/interface/GEMPadDigiProducer.h"
 
-#include "FWCore/Framework/interface/EDProducer.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "DataFormats/Common/interface/Handle.h"
@@ -8,9 +7,7 @@
 #include "Geometry/GEMGeometry/interface/GEMGeometry.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
-#include <string>
-#include <map>
-#include <vector>
+#include <set>
 
 
 GEMPadDigiProducer::GEMPadDigiProducer(const edm::ParameterSet& ps)
@@ -43,20 +40,20 @@ void GEMPadDigiProducer::produce(edm::Event& e, const edm::EventSetup& eventSetu
   e.getByToken(digi_token_, hdigis);
 
   // Create empty output
-  std::auto_ptr<GEMPadDigiCollection> pPads(new GEMPadDigiCollection());
+  std::unique_ptr<GEMPadDigiCollection> pPads(new GEMPadDigiCollection());
 
   // build the pads
   buildPads(*(hdigis.product()), *pPads);
 
   // store them in the event
-  e.put(pPads);
+  e.put(std::move(pPads));
 }
 
 
-void GEMPadDigiProducer::buildPads(const GEMDigiCollection &det_digis, GEMPadDigiCollection &out_pads)
+void GEMPadDigiProducer::buildPads(const GEMDigiCollection &det_digis, GEMPadDigiCollection &out_pads) const
 {
   auto etaPartitions = geometry_->etaPartitions();
-  for(auto p: etaPartitions)
+  for(const auto& p: etaPartitions)
   {
     // set of <pad, bx> pairs, sorted first by pad then by bx
     std::set<std::pair<int, int> > proto_pads;

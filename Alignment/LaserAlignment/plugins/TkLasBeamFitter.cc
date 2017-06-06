@@ -190,8 +190,8 @@ TkLasBeamFitter::TkLasBeamFitter(const edm::ParameterSet &iConfig) :
   h_resVsHitTecPlus(0), h_resVsHitTecMinus(0), h_resVsHitAt(0)
 {
   // declare the products to produce
-  this->produces<TkFittedLasBeamCollection, edm::InRun>();
-  this->produces<TsosVectorCollection, edm::InRun>();
+  this->produces<TkFittedLasBeamCollection, edm::Transition::EndRun>();
+  this->produces<TsosVectorCollection, edm::Transition::EndRun>();
   
   //now do what ever other initialization is needed
 }
@@ -263,9 +263,9 @@ void TkLasBeamFitter::endRunProduce(edm::Run &run, const edm::EventSetup &setup)
 
   // Create output collections - they are parallel.
   // (edm::Ref etc. and thus edm::AssociationVector are not supported for edm::Run...)
-  std::auto_ptr<TkFittedLasBeamCollection> fittedBeams(new TkFittedLasBeamCollection);
+  auto fittedBeams = std::make_unique<TkFittedLasBeamCollection>();
   // One std::vector<TSOS> for each TkFittedLasBeam:
-  std::auto_ptr<TsosVectorCollection> tsosesVec(new TsosVectorCollection);
+  auto tsosesVec = std::make_unique<TsosVectorCollection>();
 
   // get TkLasBeams, Tracker geometry, magnetic field
   run.getByLabel( "LaserAlignment", "tkLaserBeams", laserBeams );
@@ -320,8 +320,8 @@ void TkLasBeamFitter::endRunProduce(edm::Run &run, const edm::EventSetup &setup)
   }
   
   // finally, put fitted beams and TSOS vectors into run
-  run.put(fittedBeams);
-  run.put(tsosesVec);
+  run.put(std::move(fittedBeams));
+  run.put(std::move(tsosesVec));
 }
 
 // methods for las data processing

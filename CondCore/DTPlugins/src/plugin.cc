@@ -40,17 +40,21 @@
 #include "CondCore/CondDB/interface/KeyListProxy.h"
 #include "CondFormats/DTObjects/interface/DTRecoUncertainties.h"
 #include "CondFormats/DataRecord/interface/DTRecoUncertaintiesRcd.h"
+#include "CondFormats/DTObjects/interface/DTRecoConditions.h"
+#include "CondFormats/DataRecord/interface/DTRecoConditionsTtrigRcd.h"
+#include "CondFormats/DataRecord/interface/DTRecoConditionsVdriftRcd.h"
+#include "CondFormats/DataRecord/interface/DTRecoConditionsUncertRcd.h"
 
 //
 #include "CondCore/CondDB/interface/Serialization.h"
 #include "CondFormats/External/interface/DetID.h"
 
+#include <memory>
 
 namespace cond {
-  template <> boost::shared_ptr<BaseKeyed> deserialize<BaseKeyed>( const std::string& payloadType,
+  template <> std::shared_ptr<BaseKeyed> deserialize<BaseKeyed>( const std::string& payloadType,
 						 const Binary& payloadData,
-						 const Binary& streamerInfoData,
-						 bool unpackingOnly ){
+						 const Binary& streamerInfoData ){
     DESERIALIZE_BASE_CASE( BaseKeyed );                                                                                                                                                                                                             
     DESERIALIZE_POLIMORPHIC_CASE( BaseKeyed, DTKeyedConfig );
 
@@ -116,6 +120,9 @@ REGISTER_PLUGIN_INIT(DTLVStatusRcd,DTLVStatus,InitDTLVStatus);
 REGISTER_PLUGIN(DTKeyedConfigContainerRcd, cond::BaseKeyed);
 REGISTER_KEYLIST_PLUGIN(DTKeyedConfigListRcd,cond::persistency::KeyList,DTKeyedConfigContainerRcd);
 REGISTER_PLUGIN(DTRecoUncertaintiesRcd, DTRecoUncertainties);
-
+//New flexyble payloads for ttrig, vdrift, uncertainty
+REGISTER_PLUGIN(DTRecoConditionsTtrigRcd, DTRecoConditions);
+REGISTER_PLUGIN(DTRecoConditionsVdriftRcd, DTRecoConditions);
+REGISTER_PLUGIN(DTRecoConditionsUncertRcd, DTRecoConditions);
 
 

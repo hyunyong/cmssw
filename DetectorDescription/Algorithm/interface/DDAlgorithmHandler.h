@@ -2,7 +2,13 @@
 #define DD_DDALGORITHMHANDLER_H
 
 #include <string>
+
 #include "DetectorDescription/Algorithm/interface/DDAlgorithm.h"
+#include "DetectorDescription/Base/interface/DDTypes.h"
+#include "DetectorDescription/Core/interface/DDLogicalPart.h"
+
+class DDAlgorithm;
+class DDCompactView;
 
 //! wrapper around a DDAlgorithm
 /** used from DDParser for setting up, initializing, and executing an DDAlgorithm */
@@ -32,7 +38,7 @@ class DDAlgorithmHandler
 
  
  private:
-  DDAlgorithm * algo_;   //!< the wrapped algorithm object
+  std::unique_ptr<DDAlgorithm> algo_;   //!< the wrapped algorithm object
   std::string algoname_; //!< name of the algorithm object
   DDLogicalPart parent_; //!< parent logical part 
 };

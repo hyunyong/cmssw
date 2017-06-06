@@ -9,6 +9,7 @@
 #include "DataFormats/Common/interface/ValueMap.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "DataFormats/PatCandidates/interface/PFIsolation.h"
 
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
@@ -37,7 +38,11 @@
 #include "Geometry/CaloTopology/interface/CaloTopology.h"
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
 
+#include "FWCore/ParameterSet/interface/EmptyGroupDescription.h"
+
 #include "FWCore/Utilities/interface/transform.h"
+
+#include "PhysicsTools/PatUtils/interface/MiniIsolation.h"
 
 #include <vector>
 #include <memory>
@@ -48,37 +53,52 @@ using namespace std;
 
 
 PATElectronProducer::PATElectronProducer(const edm::ParameterSet & iConfig) :
-  isolator_(iConfig.exists("userIsolation") ? iConfig.getParameter<edm::ParameterSet>("userIsolation") : edm::ParameterSet(), consumesCollector(), false) ,
-  useUserData_(iConfig.exists("userData"))
-{
   // general configurables
-  electronToken_ = consumes<edm::View<reco::GsfElectron> >(iConfig.getParameter<edm::InputTag>( "electronSource" ));
-  hConversionsToken_ = consumes<reco::ConversionCollection>(edm::InputTag("allConversions"));
-  embedGsfElectronCore_ = iConfig.getParameter<bool>( "embedGsfElectronCore" );
-  embedGsfTrack_ = iConfig.getParameter<bool>( "embedGsfTrack" );
-  embedSuperCluster_ = iConfig.getParameter<bool>         ( "embedSuperCluster"    );
-  embedPflowSuperCluster_ = iConfig.getParameter<bool>    ( "embedPflowSuperCluster"    );
-  embedSeedCluster_ = iConfig.getParameter<bool>( "embedSeedCluster" );
-  embedBasicClusters_ = iConfig.getParameter<bool>( "embedBasicClusters" );
-  embedPreshowerClusters_ = iConfig.getParameter<bool>( "embedPreshowerClusters" );
-  embedPflowBasicClusters_ = iConfig.getParameter<bool>( "embedPflowBasicClusters" );
-  embedPflowPreshowerClusters_ = iConfig.getParameter<bool>( "embedPflowPreshowerClusters" );
-  embedTrack_ = iConfig.getParameter<bool>( "embedTrack" );
-  embedRecHits_ = iConfig.getParameter<bool>( "embedRecHits" );
+  electronToken_(consumes<edm::View<reco::GsfElectron> >(iConfig.getParameter<edm::InputTag>( "electronSource" ))),
+  hConversionsToken_(consumes<reco::ConversionCollection>(edm::InputTag("allConversions"))),
+  embedGsfElectronCore_(iConfig.getParameter<bool>( "embedGsfElectronCore" )),
+  embedGsfTrack_(iConfig.getParameter<bool>( "embedGsfTrack" )),
+  embedSuperCluster_(iConfig.getParameter<bool>         ( "embedSuperCluster"    )),
+  embedPflowSuperCluster_(iConfig.getParameter<bool>    ( "embedPflowSuperCluster"    )),
+  embedSeedCluster_(iConfig.getParameter<bool>( "embedSeedCluster" )),
+  embedBasicClusters_(iConfig.getParameter<bool>( "embedBasicClusters" )),
+  embedPreshowerClusters_(iConfig.getParameter<bool>( "embedPreshowerClusters" )),
+  embedPflowBasicClusters_(iConfig.getParameter<bool>( "embedPflowBasicClusters" )),
+  embedPflowPreshowerClusters_(iConfig.getParameter<bool>( "embedPflowPreshowerClusters" )),
+  embedTrack_(iConfig.getParameter<bool>( "embedTrack" )),  
+  addGenMatch_(iConfig.getParameter<bool>( "addGenMatch" )),
+  embedGenMatch_(addGenMatch_ ? iConfig.getParameter<bool>( "embedGenMatch" ) : false),
+  embedRecHits_(iConfig.getParameter<bool>( "embedRecHits" )),
   // pflow configurables
-  pfElecToken_ = consumes<reco::PFCandidateCollection>(iConfig.getParameter<edm::InputTag>( "pfElectronSource" ));
-  pfCandidateMapToken_ = mayConsume<edm::ValueMap<reco::PFCandidatePtr> >(iConfig.getParameter<edm::InputTag>( "pfCandidateMap" ));
-  useParticleFlow_ = iConfig.getParameter<bool>( "useParticleFlow" );
-  embedPFCandidate_ = iConfig.getParameter<bool>( "embedPFCandidate" );
+  useParticleFlow_(iConfig.getParameter<bool>( "useParticleFlow" )),
+  pfElecToken_(consumes<reco::PFCandidateCollection>(iConfig.getParameter<edm::InputTag>( "pfElectronSource" ))),
+  pfCandidateMapToken_(mayConsume<edm::ValueMap<reco::PFCandidatePtr> >(iConfig.getParameter<edm::InputTag>( "pfCandidateMap" ))),
+  embedPFCandidate_(iConfig.getParameter<bool>( "embedPFCandidate" )),
   // mva input variables
-  reducedBarrelRecHitCollection_ = iConfig.getParameter<edm::InputTag>("reducedBarrelRecHitCollection");
-  reducedBarrelRecHitCollectionToken_ = mayConsume<EcalRecHitCollection>(reducedBarrelRecHitCollection_);
-  reducedEndcapRecHitCollection_ = iConfig.getParameter<edm::InputTag>("reducedEndcapRecHitCollection");
-  reducedEndcapRecHitCollectionToken_ = mayConsume<EcalRecHitCollection>(reducedEndcapRecHitCollection_);
+  reducedBarrelRecHitCollection_(iConfig.getParameter<edm::InputTag>("reducedBarrelRecHitCollection")),
+  reducedBarrelRecHitCollectionToken_(mayConsume<EcalRecHitCollection>(reducedBarrelRecHitCollection_)),
+  reducedEndcapRecHitCollection_(iConfig.getParameter<edm::InputTag>("reducedEndcapRecHitCollection")),
+  reducedEndcapRecHitCollectionToken_(mayConsume<EcalRecHitCollection>(reducedEndcapRecHitCollection_)),
+  // PFCluster Isolation maps
+  addPFClusterIso_(iConfig.getParameter<bool>("addPFClusterIso")),
+  addPuppiIsolation_(iConfig.getParameter<bool>("addPuppiIsolation")),
+  ecalPFClusterIsoT_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("ecalPFClusterIsoMap"))),
+  hcalPFClusterIsoT_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("hcalPFClusterIsoMap"))),
+  // embed high level selection variables?
+  embedHighLevelSelection_(iConfig.getParameter<bool>("embedHighLevelSelection")),
+  beamLineToken_(consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("beamLineSrc"))),
+  pvToken_(mayConsume<std::vector<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("pvSrc"))),  
+  addElecID_(iConfig.getParameter<bool>( "addElectronID" )),
+  pTComparator_(),
+  isolator_(iConfig.exists("userIsolation") ? iConfig.getParameter<edm::ParameterSet>("userIsolation") : edm::ParameterSet(), consumesCollector(), false) ,
+  addEfficiencies_(iConfig.getParameter<bool>("addEfficiencies")),
+  addResolutions_(iConfig.getParameter<bool>( "addResolutions" )),
+  useUserData_(iConfig.exists("userData"))
+  
+{ 
   // MC matching configurables (scheduled mode)
-  addGenMatch_ = iConfig.getParameter<bool>( "addGenMatch" );
+  
   if (addGenMatch_) {
-    embedGenMatch_ = iConfig.getParameter<bool>( "embedGenMatch" );
     if (iConfig.existsAs<edm::InputTag>("genParticleMatch")) {
       genMatchTokens_.push_back(consumes<edm::Association<reco::GenParticleCollection> >(iConfig.getParameter<edm::InputTag>( "genParticleMatch" )));
     }
@@ -87,12 +107,20 @@ PATElectronProducer::PATElectronProducer(const edm::ParameterSet & iConfig) :
     }
   }
   // resolution configurables
-  addResolutions_ = iConfig.getParameter<bool>( "addResolutions" );
   if (addResolutions_) {
     resolutionLoader_ = pat::helper::KinResolutionsLoader(iConfig.getParameter<edm::ParameterSet>("resolutions"));
   }
+  if(addPuppiIsolation_){
+    //puppi
+    PUPPIIsolation_charged_hadrons_ = consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("puppiIsolationChargedHadrons"));
+    PUPPIIsolation_neutral_hadrons_ = consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("puppiIsolationNeutralHadrons"));
+    PUPPIIsolation_photons_ = consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("puppiIsolationPhotons"));
+    //puppiNoLeptons
+    PUPPINoLeptonsIsolation_charged_hadrons_ = consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("puppiNoLeptonsIsolationChargedHadrons"));
+    PUPPINoLeptonsIsolation_neutral_hadrons_ = consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("puppiNoLeptonsIsolationNeutralHadrons"));
+    PUPPINoLeptonsIsolation_photons_ = consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("puppiNoLeptonsIsolationPhotons"));
+  }
   // electron ID configurables
-  addElecID_ = iConfig.getParameter<bool>( "addElectronID" );
   if (addElecID_) {
     // it might be a single electron ID
     if (iConfig.existsAs<edm::InputTag>("electronIDSource")) {
@@ -143,6 +171,16 @@ PATElectronProducer::PATElectronProducer(const edm::ParameterSet & iConfig) :
   //   }
   //   isoDepositTokens_ = edm::vector_transform(isoDepositLabels_, [this](std::pair<IsolationKeys,edm::InputTag> const & label){return consumes<edm::ValueMap<IsoDeposit> >(label.second);});
 
+  // for mini-iso
+  computeMiniIso_ = iConfig.getParameter<bool>("computeMiniIso");
+  miniIsoParamsE_ = iConfig.getParameter<std::vector<double> >("miniIsoParamsE");
+  miniIsoParamsB_ = iConfig.getParameter<std::vector<double> >("miniIsoParamsB");
+  if(computeMiniIso_ && (miniIsoParamsE_.size() != 9 || miniIsoParamsB_.size() != 9)){
+      throw cms::Exception("ParameterError") << "miniIsoParams must have exactly 9 elements.\n";
+  }
+  if(computeMiniIso_)
+      pcToken_ = consumes<pat::PackedCandidateCollection>(iConfig.getParameter<edm::InputTag>("pfCandsForMiniIso"));
+
   // read isoDeposit labels, for direct embedding
   readIsolationLabels(iConfig, "isoDeposits", isoDepositLabels_, isoDepositTokens_);
   // read isolation value labels, for direct embedding
@@ -150,7 +188,6 @@ PATElectronProducer::PATElectronProducer(const edm::ParameterSet & iConfig) :
   // read isolation value labels for non PF identified electron, for direct embedding
   readIsolationLabels(iConfig, "isolationValuesNoPFId", isolationValueLabelsNoPFId_, isolationValueNoPFIdTokens_);
   // Efficiency configurables
-  addEfficiencies_ = iConfig.getParameter<bool>("addEfficiencies");
   if (addEfficiencies_) {
     efficiencyLoader_ = pat::helper::EfficiencyLoader(iConfig.getParameter<edm::ParameterSet>("efficiencies"), consumesCollector());
   }
@@ -158,13 +195,7 @@ PATElectronProducer::PATElectronProducer(const edm::ParameterSet & iConfig) :
   if ( useUserData_ ) {
     userDataHelper_ = PATUserDataHelper<Electron>(iConfig.getParameter<edm::ParameterSet>("userData"), consumesCollector());
   }
-  // embed high level selection variables?
-  embedHighLevelSelection_ = iConfig.getParameter<bool>("embedHighLevelSelection");
-  beamLineToken_ = consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("beamLineSrc"));
-  if ( embedHighLevelSelection_ ) {
-    usePV_ = iConfig.getParameter<bool>("usePV");
-    pvToken_ = consumes<std::vector<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("pvSrc"));
-  }
+  
   // produces vector of muons
   produces<std::vector<Electron> >();
   }
@@ -190,6 +221,10 @@ void PATElectronProducer::produce(edm::Event & iEvent, const edm::EventSetup & i
   // Get the collection of electrons from the event
   edm::Handle<edm::View<reco::GsfElectron> > electrons;
   iEvent.getByToken(electronToken_, electrons);
+
+  edm::Handle<PackedCandidateCollection > pc;
+  if(computeMiniIso_)
+      iEvent.getByToken(pcToken_, pc);
 
   // for additional mva variables
   edm::InputTag  reducedEBRecHitCollection(string("reducedEcalRecHitsEB"));
@@ -266,31 +301,33 @@ void PATElectronProducer::produce(edm::Event & iEvent, const edm::EventSetup & i
     // This is needed by the IPTools methods from the tracking group
     iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", trackBuilder);
 
-    if ( ! usePV_ ) {
-
-      if ( beamSpotHandle.isValid() ){
-        beamSpot = *beamSpotHandle;
-        beamSpotIsValid = true;
-      } else{
-        edm::LogError("DataNotAvailable")
-          << "No beam spot available from EventSetup, not adding high level selection \n";
-      }
-
-      double x0 = beamSpot.x0();
-      double y0 = beamSpot.y0();
-      double z0 = beamSpot.z0();
-
-      beamPoint = reco::TrackBase::Point ( x0, y0, z0 );
+    if ( pvHandle.isValid() && !pvHandle->empty() ) {
+        primaryVertex = pvHandle->at(0);
+        primaryVertexIsValid = true;
     } else {
-      if ( pvHandle.isValid() && !pvHandle->empty() ) {
-	primaryVertex = pvHandle->at(0);
-	primaryVertexIsValid = true;
-      } else {
-	edm::LogError("DataNotAvailable")
-	  << "No primary vertex available from EventSetup, not adding high level selection \n";
-      }
+        edm::LogError("DataNotAvailable")
+            << "No primary vertex available from EventSetup, not adding high level selection \n";
     }
   }
+  //value maps for puppi isolation
+  edm::Handle<edm::ValueMap<float>> PUPPIIsolation_charged_hadrons;
+  edm::Handle<edm::ValueMap<float>> PUPPIIsolation_neutral_hadrons;
+  edm::Handle<edm::ValueMap<float>> PUPPIIsolation_photons;
+  //value maps for puppiNoLeptons isolation
+  edm::Handle<edm::ValueMap<float>> PUPPINoLeptonsIsolation_charged_hadrons;
+  edm::Handle<edm::ValueMap<float>> PUPPINoLeptonsIsolation_neutral_hadrons;
+  edm::Handle<edm::ValueMap<float>> PUPPINoLeptonsIsolation_photons;
+  if(addPuppiIsolation_){
+    //puppi
+    iEvent.getByToken(PUPPIIsolation_charged_hadrons_, PUPPIIsolation_charged_hadrons);
+    iEvent.getByToken(PUPPIIsolation_neutral_hadrons_, PUPPIIsolation_neutral_hadrons);
+    iEvent.getByToken(PUPPIIsolation_photons_, PUPPIIsolation_photons);  
+    //puppiNoLeptons
+    iEvent.getByToken(PUPPINoLeptonsIsolation_charged_hadrons_, PUPPINoLeptonsIsolation_charged_hadrons);
+    iEvent.getByToken(PUPPINoLeptonsIsolation_neutral_hadrons_, PUPPINoLeptonsIsolation_neutral_hadrons);
+    iEvent.getByToken(PUPPINoLeptonsIsolation_photons_, PUPPINoLeptonsIsolation_photons);  
+  }
+  
 
   std::vector<Electron> * patElectrons = new std::vector<Electron>();
 
@@ -312,6 +349,7 @@ void PATElectronProducer::produce(edm::Event & iEvent, const edm::EventSetup & i
       bool MatchedToAmbiguousGsfTrack=false;
       for (edm::View<reco::GsfElectron>::const_iterator itElectron = electrons->begin(); itElectron != electrons->end(); ++itElectron) {
 	unsigned int idx = itElectron - electrons->begin();
+  	auto elePtr = electrons -> ptrAt(idx);
 	if (Matched || MatchedToAmbiguousGsfTrack) continue;
 
 	reco::GsfTrackRef EgTk= itElectron->gsfTrack();
@@ -335,6 +373,14 @@ void PATElectronProducer::produce(edm::Event & iEvent, const edm::EventSetup & i
 	  const edm::RefToBase<reco::GsfElectron>& elecsRef = electrons->refAt(idx);
 	  Electron anElectron(elecsRef);
 	  anElectron.setPFCandidateRef( pfRef  );
+    	  if (addPuppiIsolation_) {		 
+	    anElectron.setIsolationPUPPI((*PUPPIIsolation_charged_hadrons)[elePtr], (*PUPPIIsolation_neutral_hadrons)[elePtr], (*PUPPIIsolation_photons)[elePtr]);
+      	    anElectron.setIsolationPUPPINoLeptons((*PUPPINoLeptonsIsolation_charged_hadrons)[elePtr], (*PUPPINoLeptonsIsolation_neutral_hadrons)[elePtr], (*PUPPINoLeptonsIsolation_photons)[elePtr]);
+    	  }
+	  else {
+      	    anElectron.setIsolationPUPPI(-999., -999.,-999.);
+	    anElectron.setIsolationPUPPINoLeptons(-999., -999.,-999.);
+          }
 
           //it should be always true when particleFlow electrons are used.
           anElectron.setIsPF( true );
@@ -366,16 +412,6 @@ void PATElectronProducer::produce(edm::Event & iEvent, const edm::EventSetup & i
 
               std::pair<bool,Measurement1D> ip3dpv = IPTools::absoluteImpactParameter3D(tt, primaryVertex);
               ip3d = ip3dpv.second.value(); // for mva variable
-
-	      if ( !usePV_ ) {
-		double corr_d0 = track->dxy( beamPoint );
-		anElectron.setDB( corr_d0, -1.0 );
-	      } else {
-                 std::pair<bool,Measurement1D> result = IPTools::absoluteTransverseImpactParameter(tt, primaryVertex);
-                double d0_corr = result.second.value();
-                double d0_err = result.second.error();
-		anElectron.setDB( d0_corr, d0_err );
-	      }
 	    }
 	  }
 
@@ -395,7 +431,21 @@ void PATElectronProducer::produce(edm::Event & iEvent, const edm::EventSetup & i
           // add missing mva variables
           std::vector<float> vCov = lazyTools.localCovariances(*( itElectron->superCluster()->seed()));
           anElectron.setMvaVariables(vCov[1], ip3d);
+	  // PFClusterIso
+	  if (addPFClusterIso_) {
+	    // Get PFCluster Isolation
+	    edm::Handle<edm::ValueMap<float> > ecalPFClusterIsoMapH;
+	    iEvent.getByToken(ecalPFClusterIsoT_, ecalPFClusterIsoMapH);
+	    edm::Handle<edm::ValueMap<float> > hcalPFClusterIsoMapH;
+	    iEvent.getByToken(hcalPFClusterIsoT_, hcalPFClusterIsoMapH);
 
+	    anElectron.setEcalPFClusterIso((*ecalPFClusterIsoMapH)[elecsRef]);
+	    anElectron.setHcalPFClusterIso((*hcalPFClusterIsoMapH)[elecsRef]);
+	  } else {
+	    anElectron.setEcalPFClusterIso(-999.);
+	    anElectron.setHcalPFClusterIso(-999.);
+	  }
+	    
 	  std::vector<DetId> selectedCells;
           bool barrel = itElectron->isEB();
           //loop over sub clusters
@@ -489,6 +539,9 @@ void PATElectronProducer::produce(edm::Event & iEvent, const edm::EventSetup & i
 
 	  //COLIN need to use fillElectron2 in the non-pflow case as well, and to test it.
 
+          if(computeMiniIso_)
+              setElectronMiniIso(anElectron, pc.product());
+
 	  patElectrons->push_back(anElectron);
 	}
       }
@@ -511,6 +564,7 @@ void PATElectronProducer::produce(edm::Event & iEvent, const edm::EventSetup & i
       edm::RefToBase<reco::GsfElectron> elecsRef = electrons->refAt(idx);
       reco::CandidateBaseRef elecBaseRef(elecsRef);
       Electron anElectron(elecsRef);
+      auto elePtr = electrons -> ptrAt(idx);
 
       // Is this GsfElectron also identified as an e- in the particle flow?
       bool pfId = false;
@@ -593,22 +647,35 @@ void PATElectronProducer::produce(edm::Event & iEvent, const edm::EventSetup & i
           std::pair<bool,Measurement1D> ip3dpv = IPTools::absoluteImpactParameter3D(tt, primaryVertex);
           ip3d = ip3dpv.second.value(); // for mva variable
 
-	  if ( !usePV_ ) {
-	    double corr_d0 = track->dxy( beamPoint );
-	    anElectron.setDB( corr_d0, -1.0 );
-	  } else {
-            std::pair<bool,Measurement1D> result = IPTools::absoluteTransverseImpactParameter(tt, primaryVertex);
-            double d0_corr = result.second.value();
-            double d0_err = result.second.error();
-	    anElectron.setDB( d0_corr, d0_err );
-	  }
 	}
       }
 
       // add mva variables
       std::vector<float> vCov = lazyTools.localCovariances(*( itElectron->superCluster()->seed()));
       anElectron.setMvaVariables(vCov[1], ip3d);
-
+      // PFCluster Isolation
+      if (addPFClusterIso_) {
+	// Get PFCluster Isolation
+	edm::Handle<edm::ValueMap<float> > ecalPFClusterIsoMapH;
+	iEvent.getByToken(ecalPFClusterIsoT_, ecalPFClusterIsoMapH);
+	edm::Handle<edm::ValueMap<float> > hcalPFClusterIsoMapH;
+	iEvent.getByToken(hcalPFClusterIsoT_, hcalPFClusterIsoMapH);
+	
+	anElectron.setEcalPFClusterIso((*ecalPFClusterIsoMapH)[elecsRef]);
+	anElectron.setHcalPFClusterIso((*hcalPFClusterIsoMapH)[elecsRef]);
+      } else {
+	anElectron.setEcalPFClusterIso(-999.);
+	anElectron.setHcalPFClusterIso(-999.);
+      }
+      if (addPuppiIsolation_) {
+        anElectron.setIsolationPUPPI((*PUPPIIsolation_charged_hadrons)[elePtr], (*PUPPIIsolation_neutral_hadrons)[elePtr], (*PUPPIIsolation_photons)[elePtr]);
+        anElectron.setIsolationPUPPINoLeptons((*PUPPINoLeptonsIsolation_charged_hadrons)[elePtr], (*PUPPINoLeptonsIsolation_neutral_hadrons)[elePtr], (*PUPPINoLeptonsIsolation_photons)[elePtr]);
+      }
+      else {
+        anElectron.setIsolationPUPPI(-999., -999.,-999.);
+        anElectron.setIsolationPUPPINoLeptons(-999., -999.,-999.);
+      }
+        
       std::vector<DetId> selectedCells;
       bool barrel = itElectron->isEB();
       //loop over sub clusters
@@ -683,6 +750,10 @@ void PATElectronProducer::produce(edm::Event & iEvent, const edm::EventSetup & i
       // add sel to selected
       fillElectron( anElectron, elecsRef,elecBaseRef,
 		    genMatches, deposits, pfId, isolationValues, isolationValuesNoPFId);
+
+      if(computeMiniIso_)
+          setElectronMiniIso(anElectron, pc.product());
+
       patElectrons->push_back(anElectron);
     }
   }
@@ -691,8 +762,8 @@ void PATElectronProducer::produce(edm::Event & iEvent, const edm::EventSetup & i
   std::sort(patElectrons->begin(), patElectrons->end(), pTComparator_);
 
   // add the electrons to the event output
-  std::auto_ptr<std::vector<Electron> > ptr(patElectrons);
-  iEvent.put(ptr);
+  std::unique_ptr<std::vector<Electron> > ptr(patElectrons);
+  iEvent.put(std::move(ptr));
 
   // clean up
   if (isolator_.enabled()) isolator_.endEvent();
@@ -878,6 +949,22 @@ void PATElectronProducer::fillElectron2( Electron& anElectron,
   }
 }
 
+void PATElectronProducer::setElectronMiniIso(Electron& anElectron, const PackedCandidateCollection *pc)
+{
+  pat::PFIsolation miniiso;
+  if(anElectron.isEE())
+      miniiso = pat::getMiniPFIsolation(pc, anElectron.p4(),
+                                        miniIsoParamsE_[0], miniIsoParamsE_[1], miniIsoParamsE_[2],
+                                        miniIsoParamsE_[3], miniIsoParamsE_[4], miniIsoParamsE_[5],
+                                        miniIsoParamsE_[6], miniIsoParamsE_[7], miniIsoParamsE_[8]);
+  else
+      miniiso = pat::getMiniPFIsolation(pc, anElectron.p4(),
+                                        miniIsoParamsB_[0], miniIsoParamsB_[1], miniIsoParamsB_[2],
+                                        miniIsoParamsB_[3], miniIsoParamsB_[4], miniIsoParamsB_[5],
+                                        miniIsoParamsB_[6], miniIsoParamsB_[7], miniIsoParamsB_[8]);
+  anElectron.setMiniPFIsolation(miniiso);
+
+}
 
 // ParameterSet description for module
 void PATElectronProducer::fillDescriptions(edm::ConfigurationDescriptions & descriptions)
@@ -888,6 +975,22 @@ void PATElectronProducer::fillDescriptions(edm::ConfigurationDescriptions & desc
   // input source
   iDesc.add<edm::InputTag>("pfCandidateMap", edm::InputTag("no default"))->setComment("input collection");
   iDesc.add<edm::InputTag>("electronSource", edm::InputTag("no default"))->setComment("input collection");
+
+  iDesc.ifValue(edm::ParameterDescription<bool>("addPFClusterIso", false, true),
+		true >> (edm::ParameterDescription<edm::InputTag>("ecalPFClusterIsoMap", edm::InputTag("electronEcalPFClusterIsolationProducer"), true) and
+			 edm::ParameterDescription<edm::InputTag>("hcalPFClusterIsoMap", edm::InputTag("electronHcalPFClusterIsolationProducer"),true)) or
+		false >> (edm::ParameterDescription<edm::InputTag>("ecalPFClusterIsoMap", edm::InputTag(""), true) and
+			  edm::ParameterDescription<edm::InputTag>("hcalPFClusterIsoMap", edm::InputTag(""),true)));
+
+  iDesc.ifValue(edm::ParameterDescription<bool>("addPuppiIsolation", false, true),
+    true >> (edm::ParameterDescription<edm::InputTag>("puppiIsolationChargedHadrons", edm::InputTag("egmElectronPUPPIIsolation","h+-DR030-BarVeto000-EndVeto001"), true) and
+       edm::ParameterDescription<edm::InputTag>("puppiIsolationNeutralHadrons", edm::InputTag("egmElectronPUPPIIsolation","h0-DR030-BarVeto000-EndVeto000"), true) and 
+       edm::ParameterDescription<edm::InputTag>("puppiIsolationPhotons", edm::InputTag("egmElectronPUPPIIsolation","gamma-DR030-BarVeto000-EndVeto008"), true) and
+       edm::ParameterDescription<edm::InputTag>("puppiNoLeptonsIsolationChargedHadrons", edm::InputTag("egmElectronPUPPINoLeptonsIsolation","gamma-DR030-BarVeto000-EndVeto008"), true) and 
+       edm::ParameterDescription<edm::InputTag>("puppiNoLeptonsIsolationNeutralHadrons", edm::InputTag("egmElectronPUPPINoLeptonsIsolation","gamma-DR030-BarVeto000-EndVeto008"), true) and 
+       edm::ParameterDescription<edm::InputTag>("puppiNoLeptonsIsolationPhotons", edm::InputTag("egmElectronPUPPINoLeptonsIsolation","gamma-DR030-BarVeto000-EndVeto008"), true))  or
+    false >> edm::EmptyGroupDescription());
+    
 
   // embedding
   iDesc.add<bool>("embedGsfElectronCore", true)->setComment("embed external gsf electron core");
@@ -923,6 +1026,12 @@ void PATElectronProducer::fillDescriptions(edm::ConfigurationDescriptions & desc
                  edm::ParameterDescription<edm::ParameterSetDescription>("electronIDSources", electronIDSourcesPSet, true)
                  )->setComment("input with electron ID variables");
 
+
+  // mini-iso
+  iDesc.add<bool>("computeMiniIso", false)->setComment("whether or not to compute and store electron mini-isolation");
+  iDesc.add<edm::InputTag>("pfCandsForMiniIso", edm::InputTag("packedPFCandidates"))->setComment("collection to use to compute mini-iso");
+  iDesc.add<std::vector<double> >("miniIsoParamsE", std::vector<double>())->setComment("mini-iso parameters to use for endcap electrons");
+  iDesc.add<std::vector<double> >("miniIsoParamsB", std::vector<double>())->setComment("mini-iso parameters to use for barrel electrons");
 
   // IsoDeposit configurables
   edm::ParameterSetDescription isoDepositsPSet;
@@ -977,6 +1086,7 @@ void PATElectronProducer::fillDescriptions(edm::ConfigurationDescriptions & desc
   PATUserDataHelper<Electron>::fillDescription(userDataPSet);
   iDesc.addOptional("userData", userDataPSet);
 
+
   // electron shapes
   iDesc.add<bool>("addElectronShapes", true);
   iDesc.add<edm::InputTag>("reducedBarrelRecHitCollection", edm::InputTag("reducedEcalRecHitsEB"));
@@ -996,8 +1106,6 @@ void PATElectronProducer::fillDescriptions(edm::ConfigurationDescriptions & desc
                  )->setComment("input with high level selection");
   iDesc.addNode( edm::ParameterDescription<edm::InputTag>("pvSrc", edm::InputTag(), true)
                  )->setComment("input with high level selection");
-  iDesc.addNode( edm::ParameterDescription<bool>("usePV", bool(), true)
-                 )->setComment("input with high level selection, use primary vertex (true) or beam line (false)");
 
   descriptions.add("PATElectronProducer", iDesc);
 

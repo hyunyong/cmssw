@@ -24,7 +24,6 @@
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "PhysicsTools/TagAndProbe/interface/BaseTreeFiller.h"
 #include <set>
-#include "FWCore/ParameterSet/interface/Registry.h"
 
 class ProbeTreeProducer : public edm::EDFilter {
   public:
@@ -54,7 +53,7 @@ class ProbeTreeProducer : public edm::EDFilter {
     int32_t maxProbes_;
 
     /// The object that actually computes variables and fills the tree for the probe
-    std::auto_ptr<tnp::BaseTreeFiller> probeFiller_;
+    std::unique_ptr<tnp::BaseTreeFiller> probeFiller_;
 };
 
 ProbeTreeProducer::ProbeTreeProducer(const edm::ParameterSet& iConfig) :
@@ -98,7 +97,7 @@ bool ProbeTreeProducer::filter(edm::Event& iEvent, const edm::EventSetup& iSetup
 
 void ProbeTreeProducer::endJob(){
     // ask to write the current PSet info into the TTree header
-    probeFiller_->writeProvenance(edm::getProcessParameterSet());
+    probeFiller_->writeProvenance(edm::getProcessParameterSetContainingModule(moduleDescription()));
 }
 
 //define this as a plug-in

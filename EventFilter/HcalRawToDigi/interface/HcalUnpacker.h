@@ -14,6 +14,8 @@
 #include "DataFormats/FEDRawData/interface/FEDRawData.h"
 #include "CondFormats/HcalObjects/interface/HcalElectronicsMap.h"
 #include "DataFormats/HcalDigi/interface/HcalTTPDigi.h"
+#include "DataFormats/HcalDigi/interface/HcalDigiCollections.h"
+#include "DataFormats/HcalDigi/interface/HcalUMNioDigi.h"
 #include <set>
 
 class HcalUnpacker {
@@ -29,6 +31,11 @@ public:
     std::vector<HcalTriggerPrimitiveDigi>* tpCont;
     std::vector<HOTriggerPrimitiveDigi>* tphoCont;
     std::vector<HcalTTPDigi>* ttp;
+    QIE10DigiCollection* qie10;
+    QIE10DigiCollection* qie10ZDC;
+    QIE11DigiCollection* qie11;
+    HcalUMNioDigi* umnio;
+
   };
 
   /// for normal data
@@ -42,6 +49,7 @@ public:
 private:
   void unpackVME(const FEDRawData& raw, const HcalElectronicsMap& emap, Collections& conts, HcalUnpackerReport& report, bool silent=false);
   void unpackUTCA(const FEDRawData& raw, const HcalElectronicsMap& emap, Collections& conts, HcalUnpackerReport& report, bool silent=false);
+  void unpackUMNio(const FEDRawData& raw, int slot, Collections& colls);
 
 
   int sourceIdOffset_; ///< number to subtract from the source id to get the dcc id

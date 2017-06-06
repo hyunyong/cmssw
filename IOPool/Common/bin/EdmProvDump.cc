@@ -17,8 +17,8 @@
 
 #include "FWCore/Utilities/interface/Algorithms.h"
 #include "FWCore/Utilities/interface/Exception.h"
+#include "FWCore/Utilities/interface/propagate_const.h"
 
-#include "Cintex/Cintex.h"
 #include "TError.h"
 #include "TFile.h"
 #include "TTree.h"
@@ -374,8 +374,8 @@ namespace {
   std::unique_ptr<TFile>
   makeTFileWithLookup(std::string const& filename) {
     // See if it is a logical file name.
-    std::auto_ptr<edm::SiteLocalConfig> slcptr(new edm::service::SiteLocalConfigService(edm::ParameterSet()));
-    auto slc = std::make_shared<edm::serviceregistry::ServiceWrapper<edm::SiteLocalConfig> >(slcptr);
+    std::unique_ptr<edm::SiteLocalConfig> slcptr = std::make_unique<edm::service::SiteLocalConfigService>(edm::ParameterSet());
+    auto slc = std::make_shared<edm::serviceregistry::ServiceWrapper<edm::SiteLocalConfig> >(std::move(slcptr));
     edm::ServiceToken slcToken = edm::ServiceRegistry::createContaining(slc);
     edm::ServiceRegistry::Operate operate(slcToken);
     std::string override;
@@ -503,7 +503,7 @@ private:
                       std::map<edm::BranchID, std::set<edm::BranchID> >& parentToChildren) const;
 
   std::string              filename_;
-  std::unique_ptr<TFile>   inputFile_;
+  edm::propagate_const<std::unique_ptr<TFile>>   inputFile_;
   int                      exitCode_;
   std::stringstream        errorLog_;
   int                      errorCount_;
@@ -817,7 +817,7 @@ ProvenanceDumper::work_() {
             storedProvBranch->GetEntry(i);
             for(auto const& item : info) {
               edm::BranchID bid(item.branchID_);
-              perProductParentage[bid].insert(orderedParentageIDs[item.parentageIDIndex_]);
+              perProductParentage[bid].insert(orderedParentageIDs.at(item.parentageIDIndex_));
             }
           }
         } else {
@@ -1217,9 +1217,6 @@ int main(int argc, char* argv[]) {
 
   //silence ROOT warnings about missing dictionaries
   gErrorIgnoreLevel = kError;
-
-  //make sure dictionaries can be used for reading
-  ROOT::Cintex::Cintex::Enable();
 
   ProvenanceDumper dumper(fileName, showDependencies, extendedAncestors, extendedDescendants,
                           excludeESModules, showAllModules, showTopLevelPSets, findMatch, dontPrintProducts, dumpPSetID);

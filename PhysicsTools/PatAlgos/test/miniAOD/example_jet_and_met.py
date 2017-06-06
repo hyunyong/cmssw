@@ -1,6 +1,15 @@
+# THIS CONFIGURATION IS BROKEN. SINCE 2015 Geometry_cff has been deleted
+# and it is a fatal error to load it. And because of this I did not bother
+# to convert it to use tasks in 2017 when Tasks where implemented for unscheduled
+# mode (or remove the allowUnscheduled flag which no longer does anything).
+# Modules which are supposed to run unscheduled will not run.  Someone should
+# probably either fix or delete this ...
+
 import FWCore.ParameterSet.Config as cms
 
 process = cms.Process("S2")
+process.task = cms.Task()
+
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring("file:patTuple_mini.root")
 )
@@ -44,7 +53,6 @@ process.ak5JetTracksAssociatorAtVertexPF.jets = cms.InputTag("ak5PFJetsCHS")
 process.ak5JetTracksAssociatorAtVertexPF.tracks = cms.InputTag("unpackedTracksAndVertices")
 process.impactParameterTagInfos.primaryVertex = cms.InputTag("unpackedTracksAndVertices")
 process.inclusiveSecondaryVertexFinderTagInfos.extSVCollection = cms.InputTag("unpackedTracksAndVertices","secondary","")
-process.combinedSecondaryVertex.trackMultiplicityMin = 1 #silly sv, uses un filtered tracks.. i.e. any pt
 
 
 process.p = cms.Path(
@@ -61,5 +69,5 @@ process.OUT = cms.OutputModule("PoolOutputModule",
     fileName = cms.untracked.string('test.root'),
     outputCommands = cms.untracked.vstring(['drop *','keep patJets_patJets_*_*','keep *_*_*_PAT','keep recoTracks_unp*_*_*','keep recoVertexs_unp*_*_*'])
 )
-process.endpath= cms.EndPath(process.OUT)
+process.endpath= cms.EndPath(process.OUT, process.task)
 

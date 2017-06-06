@@ -96,6 +96,8 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
+#include "DataFormats/Provenance/interface/RunLumiEventNumber.h"
+
 // For ROOT
 #include <TROOT.h>
 #include <TChain.h>
@@ -122,10 +124,10 @@ class TestWithTracks : public edm::EDAnalyzer {
   
   explicit TestWithTracks(const edm::ParameterSet& conf);  
   virtual ~TestWithTracks();
-  virtual void analyze(const edm::Event& e, const edm::EventSetup& c);
-  virtual void beginRun(const edm::EventSetup& iSetup);
-  virtual void beginJob();
-  virtual void endJob();
+  virtual void analyze(const edm::Event& e, const edm::EventSetup& c) override;
+  virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
+  virtual void beginJob() override;
+  virtual void endJob() override;
   
  private:
   edm::ParameterSet conf_;
@@ -216,7 +218,7 @@ TestWithTracks::TestWithTracks(edm::ParameterSet const& conf)
 TestWithTracks::~TestWithTracks() { }  
 
 // ------------ method called at the begining   ------------
-void TestWithTracks::beginRun(const edm::EventSetup& iSetup) {
+void TestWithTracks::beginRun(edm::Run const&, const edm::EventSetup& iSetup) {
   cout << "BeginRun, Verbosity =  " <<PRINT<<endl;
 }
 
@@ -514,7 +516,7 @@ void TestWithTracks::analyze(const edm::Event& e,
 
   using namespace edm;
   using namespace reco;
-  static int lumiBlockOld = -9999;
+  static LuminosityBlockNumber_t lumiBlockOld = -9999;
 
   const float CLU_SIZE_PT_CUT = 1.;
 
@@ -550,9 +552,10 @@ void TestWithTracks::analyze(const edm::Event& e,
   int numOfClustersPerDisk3=0; 
   int numOfClustersPerDisk4=0; 
 
-  int run       = e.id().run();
-  int event     = e.id().event();
-  int lumiBlock = e.luminosityBlock();
+  RunNumber_t const run       = e.id().run();
+  EventNumber_t const event     = e.id().event();
+  LuminosityBlockNumber_t const lumiBlock = e.luminosityBlock();
+
   int bx        = e.bunchCrossing();
   //int orbit     = e.orbitNumber(); // unused 
 
@@ -834,7 +837,7 @@ void TestWithTracks::analyze(const edm::Event& e,
       //std::vector<SiStripRecHit2D*> output = getRecHitComponents((*recHit).get()); 
       //std::vector<SiPixelRecHit*> TrkComparison::getRecHitComponents(const TrackingRecHit* rechit){
 
-      const SiPixelRecHit* hit = dynamic_cast<const SiPixelRecHit*>((*recHit).get());
+      const SiPixelRecHit* hit = dynamic_cast<const SiPixelRecHit*>((*recHit));
       //edm::Ref<edmNew::DetSetVector<SiStripCluster> ,SiStripCluster> cluster = hit->cluster();
       // get the edm::Ref to the cluster
 

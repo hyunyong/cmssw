@@ -103,7 +103,7 @@ void CosmicNavigationSchool::build(const GeometricSearchTracker* theInputTracker
   // Get barrel layers
   vector<BarrelDetLayer const*> const& blc = theTracker->barrelLayers();
   for ( auto i = blc.begin(); i != blc.end(); i++) {
-    if (conf.noPXB && (*i)->subDetector() == GeomDetEnumerators::PixelBarrel) continue;
+    if (conf.noPXB && GeomDetEnumerators::isTrackerPixel((*i)->subDetector())) continue;
     if (conf.noTOB && (*i)->subDetector() == GeomDetEnumerators::TOB) continue;
     if (conf.noTIB && (*i)->subDetector() == GeomDetEnumerators::TIB) continue;
     theBarrelLayers.push_back( (*i) );
@@ -112,7 +112,7 @@ void CosmicNavigationSchool::build(const GeometricSearchTracker* theInputTracker
   // get forward layers
   vector<ForwardDetLayer const*> const& flc = theTracker->forwardLayers();
   for ( auto i = flc.begin(); i != flc.end(); i++) {
-    if (conf.noPXF && (*i)->subDetector() == GeomDetEnumerators::PixelEndcap) continue;
+    if (conf.noPXF && GeomDetEnumerators::isTrackerPixel((*i)->subDetector())) continue;
     if (conf.noTEC && (*i)->subDetector() == GeomDetEnumerators::TEC) continue;
     if (conf.noTID && (*i)->subDetector() == GeomDetEnumerators::TID) continue;
     theForwardLayers.push_back( (*i) );
@@ -337,7 +337,6 @@ SkippingLayerCosmicNavigationSchool::SkippingLayerCosmicNavigationSchool(const G
 #include <FWCore/Utilities/interface/ESInputTag.h>
 
 #include <memory>
-#include "boost/shared_ptr.hpp"
 
 // user include files
 #include "FWCore/Framework/interface/ModuleFactory.h"
@@ -365,7 +364,7 @@ class dso_hidden SkippingLayerCosmicNavigationSchoolESProducer final : public ed
 
   ~SkippingLayerCosmicNavigationSchoolESProducer(){}
 
-   typedef boost::shared_ptr<NavigationSchool> ReturnType;
+   typedef std::shared_ptr<NavigationSchool> ReturnType;
 
 
   ReturnType produce(const NavigationSchoolRecord&);
@@ -373,7 +372,7 @@ class dso_hidden SkippingLayerCosmicNavigationSchoolESProducer final : public ed
   // ----------member data ---------------------------
   edm::ParameterSet theNavigationPSet;
   std::string theNavigationSchoolName;
-  boost::shared_ptr<NavigationSchool> theNavigationSchool ;
+  std::shared_ptr<NavigationSchool> theNavigationSchool ;
 
 
 };

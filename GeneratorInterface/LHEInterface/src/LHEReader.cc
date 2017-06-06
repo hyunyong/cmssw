@@ -51,7 +51,7 @@ class LHEReader::FileSource : public LHEReader::Source {
     public:
 	FileSource(const std::string &fileURL)
 	{
-		Storage *storage =
+		auto storage =
 			StorageFactory::get()->open(fileURL,
 			                            IOFlags::OpenRead);
 
@@ -61,7 +61,7 @@ class LHEReader::FileSource : public LHEReader::Source {
 				<< fileURL << "\" for reading"
 				<< std::endl;
 
-		fileStream.reset(new StorageWrap(storage));
+		fileStream.reset(new StorageWrap(std::move(storage)));
 	}
 
 	~FileSource() {}
@@ -99,7 +99,8 @@ class LHEReader::XMLHandler : public XMLDocument::Handler {
     public:
   typedef std::vector<std::pair<std::string,std::string> > wgt_info;
 	XMLHandler() :
-		impl(0), gotObject(kNone), mode(kNone),
+		impl(nullptr),
+		gotObject(kNone), mode(kNone),
 		xmlHeader(0), xmlEvent(0), headerOk(false), npLO(-99), npNLO(-99) {}
 	~XMLHandler()
 	{ if (xmlHeader) xmlHeader->release(); 
@@ -127,13 +128,14 @@ class LHEReader::XMLHandler : public XMLDocument::Handler {
 	                const XMLCh *const localname,
 	                const XMLCh *const qname) override;
 
-	void characters(const XMLCh *const data, const unsigned int length) override;
-	void comment(const XMLCh *const data, const unsigned int length) override;
+        virtual void characters (const XMLCh *const chars, const XMLSize_t length) override;
+        virtual void comment (const XMLCh *const chars, const XMLSize_t length) override; 	
 
     private:
 	friend class LHEReader;
 
-	DOMImplementation		*impl;
+        bool                            skipEvent = false;
+        std::unique_ptr<DOMImplementation>	impl;
 	std::string			buffer;
 	Object				gotObject;
 	Object				mode;
@@ -197,6 +199,9 @@ void LHEReader::XMLHandler::startElement(const XMLCh *const uri,
     xmlNodes.push_back(elem);
     return;
   } else if ( mode == kEvent ) {
+
+    if (skipEvent) {return;}
+
     DOMElement *elem = xmlEvent->createElement(qname);    
     attributesToDom(elem, attributes);
 
@@ -237,8 +242,8 @@ void LHEReader::XMLHandler::startElement(const XMLCh *const uri,
   
   if (name == "header") {
     if (!impl)
-      impl = DOMImplementationRegistry::getDOMImplementation(
-							  XMLUniStr("Core"));
+      impl.reset(DOMImplementationRegistry::getDOMImplementation(XMLUniStr("Core")));
+
     xmlHeader = impl->createDocument(0, qname, 0);
     xmlNodes.resize(1);
     xmlNodes[0] = xmlHeader->getDocumentElement();
@@ -246,29 +251,32 @@ void LHEReader::XMLHandler::startElement(const XMLCh *const uri,
   } if (name == "init") {
       mode = kInit;
   } else if (name == "event") {
-    if (!impl)
-      impl = DOMImplementationRegistry::getDOMImplementation(
-							  XMLUniStr("Core"));
-    if(xmlEvent)  xmlEvent->release();
-    xmlEvent = impl->createDocument(0, qname, 0);
-    weightsinevent.resize(0);
-    scales.clear();
+    if (!skipEvent)
+    {
+      if (!impl)
+	impl.reset(DOMImplementationRegistry::getDOMImplementation(XMLUniStr("Core")));
+
+      if(xmlEvent)  xmlEvent->release();
+      xmlEvent = impl->createDocument(0, qname, 0);
+      weightsinevent.resize(0);
+      scales.clear();
     
-    npLO = -99;
-    npNLO = -99;
-    const XMLCh *npLOval = attributes.getValue(XMLString::transcode("npLO"));
-    if (npLOval) {
-      const char *npLOs = XMLSimpleStr(npLOval);      
-      sscanf(npLOs,"%d",&npLO);
+      npLO = -99;
+      npNLO = -99;
+      const XMLCh *npLOval = attributes.getValue(XMLString::transcode("npLO"));
+      if (npLOval) {
+        const char *npLOs = XMLSimpleStr(npLOval);      
+        sscanf(npLOs,"%d",&npLO);
+      }
+      const XMLCh *npNLOval = attributes.getValue(XMLString::transcode("npNLO"));
+      if (npNLOval) {
+        const char *npNLOs = XMLSimpleStr(npNLOval);      
+         sscanf(npNLOs,"%d",&npNLO);
+     }    
+    
+      xmlEventNodes.resize(1);
+      xmlEventNodes[0] = xmlEvent->getDocumentElement();
     }
-    const XMLCh *npNLOval = attributes.getValue(XMLString::transcode("npNLO"));
-    if (npNLOval) {
-      const char *npNLOs = XMLSimpleStr(npNLOval);      
-      sscanf(npNLOs,"%d",&npNLO);
-    }    
-    
-    xmlEventNodes.resize(1);
-    xmlEventNodes[0] = xmlEvent->getDocumentElement();
     mode = kEvent;    
   }
   
@@ -291,14 +299,14 @@ void LHEReader::XMLHandler::endElement(const XMLCh *const uri,
       xmlNodes.resize(xmlNodes.size() - 1);
       return;
     } else if (mode == kHeader) {
-      std::auto_ptr<DOMWriter> writer(
-				      static_cast<DOMImplementationLS*>(
-                                                impl)->createDOMWriter());
-      writer->setEncoding(XMLUniStr("UTF-8"));
-      
+      std::unique_ptr<DOMLSSerializer> writer(impl->createLSSerializer());
+      std::unique_ptr<DOMLSOutput> outputDesc(impl->createLSOutput());
+      assert(outputDesc.get());
+      outputDesc->setEncoding(XMLUniStr("UTF-8"));
+
       for(DOMNode *node = xmlNodes[0]->getFirstChild();
 	  node; node = node->getNextSibling()) {
-	XMLSimpleStr buffer(writer->writeToString(*node));
+	XMLSimpleStr buffer(writer->writeToString(node));
 
 	std::string type;
 	const char *p, *q;
@@ -336,7 +344,15 @@ void LHEReader::XMLHandler::endElement(const XMLCh *const uri,
     }
     else if (name == "event" && 
 	mode == kEvent && 
-	xmlEventNodes.size() >= 1) { // handling of weights in LHE file
+	(skipEvent || (xmlEventNodes.size() >= 1))) { // handling of weights in LHE file
+
+      if (skipEvent)
+      {
+        gotObject = mode;
+        mode = kNone;
+        return;
+      }
+
       for(DOMNode *node = xmlEventNodes[0]->getFirstChild();
 	  node; node = node->getNextSibling()) {
 	switch( node->getNodeType() ) {
@@ -365,7 +381,7 @@ void LHEReader::XMLHandler::endElement(const XMLCh *const uri,
 	default:
 	  break;
 	}
-      }      
+      }
     }
     else if (mode == kEvent) {
       //skip unknown tags
@@ -384,7 +400,7 @@ void LHEReader::XMLHandler::endElement(const XMLCh *const uri,
 }
 
 void LHEReader::XMLHandler::characters(const XMLCh *const data_,
-                                       const unsigned int length)
+                                       const XMLSize_t length)
 {
 	if (mode == kHeader) {
 		DOMText *text = xmlHeader->createTextNode(data_);
@@ -400,8 +416,11 @@ void LHEReader::XMLHandler::characters(const XMLCh *const data_,
 		offset++;	
 
 	if( mode == kEvent ) {
-	  DOMText *text = xmlEvent->createTextNode(data_+offset);
-	  xmlEventNodes.back()->appendChild(text);
+          if (!skipEvent)
+          {
+            DOMText *text = xmlEvent->createTextNode(data_+offset);
+            xmlEventNodes.back()->appendChild(text);
+          }
 	  return;
 	}	
 
@@ -414,7 +433,7 @@ void LHEReader::XMLHandler::characters(const XMLCh *const data_,
 }
 
 void LHEReader::XMLHandler::comment(const XMLCh *const data_,
-                                    const unsigned int length)
+                                    const XMLSize_t length)
 {
 	if (mode == kHeader) {
 		DOMComment *comment = xmlHeader->createComment(data_);
@@ -454,6 +473,13 @@ LHEReader::LHEReader(const std::vector<std::string> &fileNames,
 
 LHEReader::~LHEReader()
 {
+  // Explicitly release "orphaned" resources
+  // that were created through DOM implementation
+  // createXXXX factory method *before* last
+  // XMLPlatformUtils::Terminate is called.
+  handler.release();
+  curDoc.release();
+  curSource.release();
 }
 
   boost::shared_ptr<LHEEvent> LHEReader::next(bool* newFileOpened)
@@ -473,15 +499,11 @@ LHEReader::~LHEReader()
         curDoc.reset(curSource->createReader(*handler));
         curRunInfo.reset();
       }
+      handler->skipEvent = firstEvent > 0;
     
       XMLHandler::Object event = handler->gotObject;
       handler->gotObject = XMLHandler::kNone;
     
-      std::istringstream data;
-      if (event != XMLHandler::kNone) {
-        data.str(handler->buffer);
-        handler->buffer.clear();
-      }
         
       switch(event) {
       case XMLHandler::kNone:
@@ -496,6 +518,11 @@ LHEReader::~LHEReader()
         break;
         
       case XMLHandler::kInit:
+	{
+	std::istringstream data;
+	data.str(handler->buffer);
+	handler->buffer.clear();
+
         curRunInfo.reset(new LHERunInfo(data));
 		
         std::for_each(handler->headers.begin(),
@@ -503,12 +530,14 @@ LHEReader::~LHEReader()
                       boost::bind(&LHERunInfo::addHeader,
                                   curRunInfo.get(), _1));
         handler->headers.clear();
+	}
         break;
         
       case XMLHandler::kComment:
         break;
         
       case XMLHandler::kEvent:
+	{
         if (!curRunInfo.get())
           throw cms::Exception("InvalidState")
             << "Got LHE event without"
@@ -524,13 +553,16 @@ LHEReader::~LHEReader()
         else if (maxEvents > 0)
           maxEvents--;
 
+	std::istringstream data;
+	data.str(handler->buffer);
+	handler->buffer.clear();
+
 	boost::shared_ptr<LHEEvent> lheevent;
 	lheevent.reset(new LHEEvent(curRunInfo, data));
 	const XMLHandler::wgt_info& info = handler->weightsinevent;
 	for( size_t i=0; i< info.size(); ++i ) {
-	  std::string snum = info[i].second.substr(0,info[i].second.size()-1);
 	  double num = -1.0;
-	  sscanf(snum.c_str(),"%le",&num);	  
+	  sscanf(info[i].second.c_str(),"%le",&num);	  
 	  lheevent->addWeight(gen::WeightsInfo(info[i].first,num));
 	}
 	lheevent->setNpLO(handler->npLO);
@@ -540,6 +572,7 @@ LHEReader::~LHEReader()
           lheevent->setScales(handler->scales);
         }
         return lheevent;
+	}
       }
     }
     

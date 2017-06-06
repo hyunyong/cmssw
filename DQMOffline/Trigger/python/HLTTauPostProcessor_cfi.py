@@ -1,9 +1,10 @@
 import FWCore.ParameterSet.Config as cms
+from DQMServices.Core.DQMEDHarvester import DQMEDHarvester
 
 from DQMOffline.Trigger.HLTTauDQMOffline_cfi import *
 
 def makeInclusiveAnalyzer(monitorModule):
-    m1 = cms.EDAnalyzer("DQMGenericClient",
+    m1 = DQMEDHarvester("DQMGenericClient",
         subDirs        = cms.untracked.vstring(monitorModule.DQMBaseFolder.value()+"/"+monitorModule.PathSummaryPlotter.DQMFolder.value()),
         verbose        = cms.untracked.uint32(0), # Set to 2 for all messages
         outputFileName = cms.untracked.string(''),
@@ -14,7 +15,7 @@ def makeInclusiveAnalyzer(monitorModule):
         ),
     )
 
-    m2 = cms.EDAnalyzer("HLTTauPostProcessor",
+    m2 = DQMEDHarvester("HLTTauPostProcessor",
         DQMBaseFolder = cms.untracked.string(monitorModule.DQMBaseFolder.value())
     )
 
@@ -33,23 +34,27 @@ def makePFTauAnalyzer(monitorModule):
             title = "%s %s %s efficiency%s" % (level, titleObject, titleLabel, postfix)
             m1.efficiencyProfile.append("%s '%s' helpers/%sNum helpers/%sDenom" % (name, title, name, name))
 
-
     _addEfficiencies("L1", [("Et", "E_{T}"),
                             ("Eta", "#eta"),
                             ("Phi", "#phi")], "%sTau%sEff")
     _addEfficiencies("L1", [("HighEt", "E_{T}")], "%sTau%sEff", postfix="(high E_{T})")
 
-    _addEfficiencies("L1", [("Et", "E_{T}")], "%sJet%sEff")
-    _addEfficiencies("L1", [("HighEt", "E_{T}")], "%sJet%sEff", "central jet", postfix="(high E_{T})")
-    _addEfficiencies("L1", [("Eta", "#eta"),
-                            ("Phi", "#phi")], "%sJet%sEff", "central jet", "(E_{T} > %.1f)" % monitorModule.L1Plotter.L1JetMinEt.value())
+    _addEfficiencies("L1", [("Et", "E_{T}")], "%sETM%sEff", "ETM")
+
+    _addEfficiencies("L2", [("Et", "E_{T}"),
+                            ("Phi", "#phi")], "%sTrigMET%sEff", "MET")
 
     for level in ["L2", "L3"]:
         _addEfficiencies(level, [("Et", "p_{T}"),
                                  ("Eta", "#eta"),
                                  ("Phi", "#phi")], "%sTrigTau%sEff")
         _addEfficiencies(level, [("HighEt", "p_{T}")], "%sTrigTau%sEff", postfix="(high p_{T})")
-
+        _addEfficiencies(level, [("Et", "p_{T}"),
+                                 ("Eta", "#eta"),
+                                 ("Phi", "#phi")], "%sTrigElectron%sEff", "electron")
+        _addEfficiencies(level, [("Et", "p_{T}"),
+                                 ("Eta", "#eta"),
+                                 ("Phi", "#phi")], "%sTrigMuon%sEff", "muon")
     return (m1, m2)
 
 

@@ -35,11 +35,11 @@ class NuclearInteractionSimulator : public MaterialEffectsSimulator
  public:
 
   /// Constructor
-  NuclearInteractionSimulator(std::vector<double>& pionEnergies,
-			      std::vector<int>& pionTypes,
-			      std::vector<std::string>& pionNames,
-			      std::vector<double>& pionMasses,
-			      std::vector<double>& pionPMin,
+  NuclearInteractionSimulator(std::vector<double>& hadronEnergies,
+			      std::vector<int>& hadronTypes,
+			      std::vector<std::string>& hadronNames,
+			      std::vector<double>& hadronMasses,
+			      std::vector<double>& hadronPMin,
 			      double pionEnergy,
 			      std::vector<double>& lengthRatio,
 			      std::vector< std::vector<double> >& ratios,
@@ -78,7 +78,7 @@ class NuclearInteractionSimulator : public MaterialEffectsSimulator
   std::vector<double> theLengthRatio;
   std::vector< std::vector<double> > theRatios;
 
-  std::vector< std::vector<TFile*> > theFiles;
+  TFile* theFile;
   std::vector< std::vector<TTree*> > theTrees;
   std::vector< std::vector<TBranch*> > theBranches;
   std::vector< std::vector<NUEvent*> > theNUEvents;

@@ -9,5 +9,4 @@ EDMtoMEConvertSiStripGains.runInputTag = cms.InputTag("MEtoEDMConvertSiStripGain
 
 DQMStore = cms.Service("DQMStore")
 
-ALCAHARVESTSiStripGains = cms.Sequence(EDMtoMEConvertSiStripGains + alcaSiStripGainsHarvester)
-
+ALCAHARVESTSiStripGains = cms.Sequence( EDMtoMEConvertSiStripGains + alcaSiStripGainsHarvester)

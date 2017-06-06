@@ -2,8 +2,8 @@
 #define FWCore_Framework_OccurrenceTraits_h
 
 /*----------------------------------------------------------------------
-  
-OccurrenceTraits: 
+
+OccurrenceTraits:
 
 ----------------------------------------------------------------------*/
 
@@ -13,9 +13,6 @@ OccurrenceTraits:
 #include "FWCore/Framework/interface/EventPrincipal.h"
 #include "FWCore/Framework/interface/LuminosityBlockPrincipal.h"
 #include "FWCore/Framework/interface/RunPrincipal.h"
-#include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/LuminosityBlock.h"
-#include "FWCore/Framework/interface/Run.h"
 #include "FWCore/ServiceRegistry/interface/ActivityRegistry.h"
 #include "FWCore/ServiceRegistry/interface/GlobalContext.h"
 #include "FWCore/ServiceRegistry/interface/ModuleCallingContext.h"
@@ -59,11 +56,9 @@ namespace edm {
     static void postPathSignal(ActivityRegistry *a, HLTPathStatus const& status, PathContext const* pathContext) {
       a->postPathEventSignal_(*pathContext->streamContext(), *pathContext, status);
     }
-    static void preModuleSignal(ActivityRegistry *a, StreamContext const* streamContext, ModuleCallingContext const*  moduleCallingContext) {
-      a->preModuleEventSignal_(*streamContext, *moduleCallingContext);
-    }
-    static void postModuleSignal(ActivityRegistry *a, StreamContext const* streamContext, ModuleCallingContext const*  moduleCallingContext) {
-      a->postModuleEventSignal_(*streamContext, *moduleCallingContext);
+    
+    static const char* transitionName() {
+      return "Event";
     }
   };
 
@@ -101,6 +96,9 @@ namespace edm {
     static void postModuleSignal(ActivityRegistry *a, GlobalContext const* globalContext, ModuleCallingContext const*  moduleCallingContext) {
       a->postModuleGlobalBeginRunSignal_(*globalContext, *moduleCallingContext);
     }
+    static const char* transitionName() {
+      return "global begin Run";
+    }
   };
 
   template <>
@@ -126,15 +124,18 @@ namespace edm {
     static void postScheduleSignal(ActivityRegistry *a, StreamContext const* streamContext) {
       a->postStreamBeginRunSignal_(*streamContext);
     }
-    static void prePathSignal(ActivityRegistry *a, PathContext const* pathContext) {
+    static void prePathSignal(ActivityRegistry *, PathContext const* ) {
     }
-    static void postPathSignal(ActivityRegistry *a, HLTPathStatus const& status, PathContext const* pathContext) {
+    static void postPathSignal(ActivityRegistry *, HLTPathStatus const& , PathContext const*) {
     }
     static void preModuleSignal(ActivityRegistry *a, StreamContext const* streamContext, ModuleCallingContext const*  moduleCallingContext) {
       a->preModuleStreamBeginRunSignal_(*streamContext, *moduleCallingContext);
     }
     static void postModuleSignal(ActivityRegistry *a, StreamContext const* streamContext, ModuleCallingContext const*  moduleCallingContext) {
       a->postModuleStreamBeginRunSignal_(*streamContext, *moduleCallingContext);
+    }
+    static const char* transitionName() {
+      return "stream begin Run";
     }
   };
 
@@ -161,15 +162,18 @@ namespace edm {
     static void postScheduleSignal(ActivityRegistry *a, StreamContext const* streamContext) {
       a->postStreamEndRunSignal_(*streamContext);
     }
-    static void prePathSignal(ActivityRegistry *a, PathContext const* pathContext) {
+    static void prePathSignal(ActivityRegistry *, PathContext const* ) {
     }
-    static void postPathSignal(ActivityRegistry *a, HLTPathStatus const& status, PathContext const* pathContext) {
+    static void postPathSignal(ActivityRegistry *, HLTPathStatus const& , PathContext const* ) {
     }
     static void preModuleSignal(ActivityRegistry *a, StreamContext const* streamContext, ModuleCallingContext const*  moduleCallingContext) {
       a->preModuleStreamEndRunSignal_(*streamContext, *moduleCallingContext);
     }
     static void postModuleSignal(ActivityRegistry *a, StreamContext const* streamContext, ModuleCallingContext const*  moduleCallingContext) {
       a->postModuleStreamEndRunSignal_(*streamContext, *moduleCallingContext);
+    }
+    static const char* transitionName() {
+      return "stream end Run";
     }
   };
 
@@ -197,9 +201,9 @@ namespace edm {
     static void postScheduleSignal(ActivityRegistry *a, GlobalContext const* globalContext) {
       a->postGlobalEndRunSignal_(*globalContext);
     }
-    static void prePathSignal(ActivityRegistry *a, PathContext const* pathContext) {
+    static void prePathSignal(ActivityRegistry *, PathContext const*) {
     }
-    static void postPathSignal(ActivityRegistry *a, HLTPathStatus const& status, PathContext const* pathContext) {
+    static void postPathSignal(ActivityRegistry *, HLTPathStatus const& , PathContext const* ) {
     }
     static void preModuleSignal(ActivityRegistry *a, GlobalContext const* globalContext, ModuleCallingContext const*  moduleCallingContext) {
       a->preModuleGlobalEndRunSignal_(*globalContext, *moduleCallingContext);
@@ -207,8 +211,11 @@ namespace edm {
     static void postModuleSignal(ActivityRegistry *a, GlobalContext const* globalContext, ModuleCallingContext const*  moduleCallingContext) {
       a->postModuleGlobalEndRunSignal_(*globalContext, *moduleCallingContext);
     }
+    static const char* transitionName() {
+      return "global end Run";
+    }
   };
-  
+
   template <>
   class OccurrenceTraits<LuminosityBlockPrincipal, BranchActionGlobalBegin> {
   public:
@@ -233,9 +240,9 @@ namespace edm {
     static void postScheduleSignal(ActivityRegistry *a, GlobalContext const* globalContext) {
       a->postGlobalBeginLumiSignal_(*globalContext);
     }
-    static void prePathSignal(ActivityRegistry *a, PathContext const* pathContext) {
+    static void prePathSignal(ActivityRegistry *, PathContext const*) {
     }
-    static void postPathSignal(ActivityRegistry *a, HLTPathStatus const& status, PathContext const* pathContext) {
+    static void postPathSignal(ActivityRegistry *, HLTPathStatus const&, PathContext const*) {
     }
     static void preModuleSignal(ActivityRegistry *a, GlobalContext const* globalContext, ModuleCallingContext const*  moduleCallingContext) {
       a->preModuleGlobalBeginLumiSignal_(*globalContext, *moduleCallingContext);
@@ -243,8 +250,11 @@ namespace edm {
     static void postModuleSignal(ActivityRegistry *a, GlobalContext const* globalContext, ModuleCallingContext const*  moduleCallingContext) {
       a->postModuleGlobalBeginLumiSignal_(*globalContext, *moduleCallingContext);
     }
+    static const char* transitionName() {
+      return "global begin LuminosityBlock";
+    }
   };
-  
+
   template <>
   class OccurrenceTraits<LuminosityBlockPrincipal, BranchActionStreamBegin> {
   public:
@@ -268,15 +278,18 @@ namespace edm {
     static void postScheduleSignal(ActivityRegistry *a, StreamContext const* streamContext) {
       a->postStreamBeginLumiSignal_(*streamContext);
     }
-    static void prePathSignal(ActivityRegistry *a, PathContext const* pathContext) {
+    static void prePathSignal(ActivityRegistry *, PathContext const*) {
     }
-    static void postPathSignal(ActivityRegistry *a, HLTPathStatus const& status, PathContext const* pathContext) {
+    static void postPathSignal(ActivityRegistry *, HLTPathStatus const&, PathContext const*) {
     }
     static void preModuleSignal(ActivityRegistry *a, StreamContext const* streamContext, ModuleCallingContext const*  moduleCallingContext) {
       a->preModuleStreamBeginLumiSignal_(*streamContext, *moduleCallingContext);
     }
     static void postModuleSignal(ActivityRegistry *a, StreamContext const* streamContext, ModuleCallingContext const*  moduleCallingContext) {
       a->postModuleStreamBeginLumiSignal_(*streamContext, *moduleCallingContext);
+    }
+    static const char* transitionName() {
+      return "stream begin LuminosityBlock";
     }
   };
 
@@ -289,7 +302,7 @@ namespace edm {
     static bool const begin_ = false;
     static bool const isEvent_ = false;
 
-    static StreamContext const* context(StreamContext const* s, GlobalContext const* g) { return s; }
+    static StreamContext const* context(StreamContext const* s, GlobalContext const*) { return s; }
 
     static void setStreamContext(StreamContext& streamContext, MyPrincipal const& principal) {
       streamContext.setTransition(StreamContext::Transition::kEndLuminosityBlock);
@@ -305,15 +318,18 @@ namespace edm {
     static void postScheduleSignal(ActivityRegistry *a, StreamContext const* streamContext) {
       a->postStreamEndLumiSignal_(*streamContext);
     }
-    static void prePathSignal(ActivityRegistry *a, PathContext const* pathContext) {
+    static void prePathSignal(ActivityRegistry *, PathContext const* ) {
     }
-    static void postPathSignal(ActivityRegistry *a, HLTPathStatus const& status, PathContext const* pathContext) {
+    static void postPathSignal(ActivityRegistry *, HLTPathStatus const&, PathContext const*) {
     }
     static void preModuleSignal(ActivityRegistry *a, StreamContext const* streamContext, ModuleCallingContext const*  moduleCallingContext) {
       a->preModuleStreamEndLumiSignal_(*streamContext, *moduleCallingContext);
     }
     static void postModuleSignal(ActivityRegistry *a, StreamContext const* streamContext, ModuleCallingContext const*  moduleCallingContext) {
       a->postModuleStreamEndLumiSignal_(*streamContext, *moduleCallingContext);
+    }
+    static const char* transitionName() {
+      return "end stream LuminosityBlock";
     }
   };
 
@@ -341,15 +357,18 @@ namespace edm {
     static void postScheduleSignal(ActivityRegistry *a, GlobalContext const* globalContext) {
       a->postGlobalEndLumiSignal_(*globalContext);
     }
-    static void prePathSignal(ActivityRegistry *a, PathContext const* pathContext) {
+    static void prePathSignal(ActivityRegistry *, PathContext const*) {
     }
-    static void postPathSignal(ActivityRegistry *a, HLTPathStatus const& status, PathContext const* pathContext) {
+    static void postPathSignal(ActivityRegistry *, HLTPathStatus const& , PathContext const* ) {
     }
     static void preModuleSignal(ActivityRegistry *a, GlobalContext const* globalContext, ModuleCallingContext const*  moduleCallingContext) {
       a->preModuleGlobalEndLumiSignal_(*globalContext, *moduleCallingContext);
     }
     static void postModuleSignal(ActivityRegistry *a, GlobalContext const* globalContext, ModuleCallingContext const*  moduleCallingContext) {
       a->postModuleGlobalEndLumiSignal_(*globalContext, *moduleCallingContext);
+    }
+    static const char* transitionName() {
+      return "end global LuminosityBlock";
     }
   };
 }

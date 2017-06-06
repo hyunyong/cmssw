@@ -17,12 +17,26 @@ namespace ecaldqm {
     bool analyze(void const*, Collections) override;
 
     void runOnRecHits(EcalRecHitCollection const&, Collections);
+    void runOnUncalibRecHits(EcalUncalibratedRecHitCollection const&);
+
+    enum Constants {
+      nBXBins = 15
+    };
 
   private:
+    void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
+    void beginEvent(edm::Event const&, edm::EventSetup const&) override;
     void setParams(edm::ParameterSet const&) override;
 
+    std::array<int,nBXBins+1> bxBinEdges_;
+    double bxBin_;
+
+    float chi2ThresholdEB_;
+    float chi2ThresholdEE_;
     float energyThresholdEB_;
     float energyThresholdEE_;
+
+    MESet* meTimeMapByLS;
   };
 
   inline bool TimingTask::analyze(void const* _p, Collections _collection){
@@ -30,6 +44,11 @@ namespace ecaldqm {
     case kEBRecHit:
     case kEERecHit:
       if(_p) runOnRecHits(*static_cast<EcalRecHitCollection const*>(_p), _collection);
+      return true;
+      break;
+    case kEBUncalibRecHit:
+    case kEEUncalibRecHit:
+      if(_p) runOnUncalibRecHits(*static_cast<EcalUncalibratedRecHitCollection const*>(_p));
       return true;
       break;
     default:

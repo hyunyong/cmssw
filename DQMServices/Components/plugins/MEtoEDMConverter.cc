@@ -51,32 +51,32 @@ MEtoEDMConverter::MEtoEDMConverter(const edm::ParameterSet & iPSet) :
   // create persistent objects
 
   sName = fName + "Run";
-  produces<MEtoEDM<TH1F>, edm::InRun>(sName);
-  produces<MEtoEDM<TH1S>, edm::InRun>(sName);
-  produces<MEtoEDM<TH1D>, edm::InRun>(sName);
-  produces<MEtoEDM<TH2F>, edm::InRun>(sName);
-  produces<MEtoEDM<TH2S>, edm::InRun>(sName);
-  produces<MEtoEDM<TH2D>, edm::InRun>(sName);
-  produces<MEtoEDM<TH3F>, edm::InRun>(sName);
-  produces<MEtoEDM<TProfile>, edm::InRun>(sName);
-  produces<MEtoEDM<TProfile2D>, edm::InRun>(sName);
-  produces<MEtoEDM<double>, edm::InRun>(sName);
-  produces<MEtoEDM<long long>, edm::InRun>(sName);
-  produces<MEtoEDM<TString>, edm::InRun>(sName);
+  produces<MEtoEDM<TH1F>, edm::Transition::EndRun>(sName);
+  produces<MEtoEDM<TH1S>, edm::Transition::EndRun>(sName);
+  produces<MEtoEDM<TH1D>, edm::Transition::EndRun>(sName);
+  produces<MEtoEDM<TH2F>, edm::Transition::EndRun>(sName);
+  produces<MEtoEDM<TH2S>, edm::Transition::EndRun>(sName);
+  produces<MEtoEDM<TH2D>, edm::Transition::EndRun>(sName);
+  produces<MEtoEDM<TH3F>, edm::Transition::EndRun>(sName);
+  produces<MEtoEDM<TProfile>, edm::Transition::EndRun>(sName);
+  produces<MEtoEDM<TProfile2D>, edm::Transition::EndRun>(sName);
+  produces<MEtoEDM<double>, edm::Transition::EndRun>(sName);
+  produces<MEtoEDM<long long>, edm::Transition::EndRun>(sName);
+  produces<MEtoEDM<TString>, edm::Transition::EndRun>(sName);
 
   sName = fName + "Lumi";
-  produces<MEtoEDM<TH1F>, edm::InLumi>(sName);
-  produces<MEtoEDM<TH1S>, edm::InLumi>(sName);
-  produces<MEtoEDM<TH1D>, edm::InLumi>(sName);
-  produces<MEtoEDM<TH2F>, edm::InLumi>(sName);
-  produces<MEtoEDM<TH2S>, edm::InLumi>(sName);
-  produces<MEtoEDM<TH2D>, edm::InLumi>(sName);
-  produces<MEtoEDM<TH3F>, edm::InLumi>(sName);
-  produces<MEtoEDM<TProfile>, edm::InLumi>(sName);
-  produces<MEtoEDM<TProfile2D>, edm::InLumi>(sName);
-  produces<MEtoEDM<double>, edm::InLumi>(sName);
-  produces<MEtoEDM<long long>, edm::InLumi>(sName);
-  produces<MEtoEDM<TString>, edm::InLumi>(sName);
+  produces<MEtoEDM<TH1F>, edm::Transition::EndLuminosityBlock>(sName);
+  produces<MEtoEDM<TH1S>, edm::Transition::EndLuminosityBlock>(sName);
+  produces<MEtoEDM<TH1D>, edm::Transition::EndLuminosityBlock>(sName);
+  produces<MEtoEDM<TH2F>, edm::Transition::EndLuminosityBlock>(sName);
+  produces<MEtoEDM<TH2S>, edm::Transition::EndLuminosityBlock>(sName);
+  produces<MEtoEDM<TH2D>, edm::Transition::EndLuminosityBlock>(sName);
+  produces<MEtoEDM<TH3F>, edm::Transition::EndLuminosityBlock>(sName);
+  produces<MEtoEDM<TProfile>, edm::Transition::EndLuminosityBlock>(sName);
+  produces<MEtoEDM<TProfile2D>, edm::Transition::EndLuminosityBlock>(sName);
+  produces<MEtoEDM<double>, edm::Transition::EndLuminosityBlock>(sName);
+  produces<MEtoEDM<long long>, edm::Transition::EndLuminosityBlock>(sName);
+  produces<MEtoEDM<TString>, edm::Transition::EndLuminosityBlock>(sName);
 
   iCount.clear();
 
@@ -456,18 +456,18 @@ MEtoEDMConverter::putData(T& iPutTo,
     }
   }
 
-  std::auto_ptr<MEtoEDM<long long> > pOutInt(new MEtoEDM<long long>(nInt64));
-  std::auto_ptr<MEtoEDM<double> > pOutDouble(new MEtoEDM<double>(nDouble));
-  std::auto_ptr<MEtoEDM<TString> > pOutString(new MEtoEDM<TString>(nString));
-  std::auto_ptr<MEtoEDM<TH1F> > pOut1(new MEtoEDM<TH1F>(n1F));
-  std::auto_ptr<MEtoEDM<TH1S> > pOut1s(new MEtoEDM<TH1S>(n1S));
-  std::auto_ptr<MEtoEDM<TH1D> > pOut1d(new MEtoEDM<TH1D>(n1D));
-  std::auto_ptr<MEtoEDM<TH2F> > pOut2(new MEtoEDM<TH2F>(n2F));
-  std::auto_ptr<MEtoEDM<TH2S> > pOut2s(new MEtoEDM<TH2S>(n2S));
-  std::auto_ptr<MEtoEDM<TH2D> > pOut2d(new MEtoEDM<TH2D>(n2D));
-  std::auto_ptr<MEtoEDM<TH3F> > pOut3(new MEtoEDM<TH3F>(n3F));
-  std::auto_ptr<MEtoEDM<TProfile> > pOutProf(new MEtoEDM<TProfile>(nProf));
-  std::auto_ptr<MEtoEDM<TProfile2D> > pOutProf2(new MEtoEDM<TProfile2D>(nProf2));
+  std::unique_ptr<MEtoEDM<long long> > pOutInt(new MEtoEDM<long long>(nInt64));
+  std::unique_ptr<MEtoEDM<double> > pOutDouble(new MEtoEDM<double>(nDouble));
+  std::unique_ptr<MEtoEDM<TString> > pOutString(new MEtoEDM<TString>(nString));
+  std::unique_ptr<MEtoEDM<TH1F> > pOut1(new MEtoEDM<TH1F>(n1F));
+  std::unique_ptr<MEtoEDM<TH1S> > pOut1s(new MEtoEDM<TH1S>(n1S));
+  std::unique_ptr<MEtoEDM<TH1D> > pOut1d(new MEtoEDM<TH1D>(n1D));
+  std::unique_ptr<MEtoEDM<TH2F> > pOut2(new MEtoEDM<TH2F>(n2F));
+  std::unique_ptr<MEtoEDM<TH2S> > pOut2s(new MEtoEDM<TH2S>(n2S));
+  std::unique_ptr<MEtoEDM<TH2D> > pOut2d(new MEtoEDM<TH2D>(n2D));
+  std::unique_ptr<MEtoEDM<TH3F> > pOut3(new MEtoEDM<TH3F>(n3F));
+  std::unique_ptr<MEtoEDM<TProfile> > pOutProf(new MEtoEDM<TProfile>(nProf));
+  std::unique_ptr<MEtoEDM<TProfile2D> > pOutProf2(new MEtoEDM<TProfile2D>(nProf2));
 
   for (mmi = items.begin (), mme = items.end (); mmi != mme; ++mmi) {
 
@@ -554,18 +554,18 @@ MEtoEDMConverter::putData(T& iPutTo,
   }
 
   // produce objects to put in events
-  iPutTo.put(pOutInt,sName);
-  iPutTo.put(pOutDouble,sName);
-  iPutTo.put(pOutString,sName);
-  iPutTo.put(pOut1,sName);
-  iPutTo.put(pOut1s,sName);
-  iPutTo.put(pOut1d,sName);
-  iPutTo.put(pOut2,sName);
-  iPutTo.put(pOut2s,sName);
-  iPutTo.put(pOut2d,sName);
-  iPutTo.put(pOut3,sName);
-  iPutTo.put(pOutProf,sName);
-  iPutTo.put(pOutProf2,sName);
+  iPutTo.put(std::move(pOutInt),sName);
+  iPutTo.put(std::move(pOutDouble),sName);
+  iPutTo.put(std::move(pOutString),sName);
+  iPutTo.put(std::move(pOut1),sName);
+  iPutTo.put(std::move(pOut1s),sName);
+  iPutTo.put(std::move(pOut1d),sName);
+  iPutTo.put(std::move(pOut2),sName);
+  iPutTo.put(std::move(pOut2s),sName);
+  iPutTo.put(std::move(pOut2d),sName);
+  iPutTo.put(std::move(pOut3),sName);
+  iPutTo.put(std::move(pOutProf),sName);
+  iPutTo.put(std::move(pOutProf2),sName);
 
 }
 

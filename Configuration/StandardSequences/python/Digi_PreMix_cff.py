@@ -9,7 +9,9 @@ from Configuration.StandardSequences.DigiNZS_cff import *
 #simMuonCSCDigis.strips.doNoise = False
 #simMuonCSCDigis.wires.doNoise = False
 #simMuonDTDigis.onlyMuHits = True
+
 simMuonRPCDigis.doBkgNoise = False
+
 
 # Note: the other noise is turned of in the DigitizersNoNoise sequence defined in the MixingModule
 # because the MM holds/controls all of the other digitizers.
@@ -18,4 +20,17 @@ simMuonRPCDigis.doBkgNoise = False
 simEcalDigis.UseFullReadout = cms.bool(True)
 # This is extra, since the configuration skips it anyway.  Belts and suspenders.
 pdigi.remove(simEcalPreshowerDigis)
+# remove HCAL TP sim - not needed, sometimes breaks
+hcalDigiSequence.remove(simHcalTriggerPrimitiveDigis)
+hcalDigiSequence.remove(simHcalTTPDigis)
 
+from Configuration.Eras.Modifier_fastSim_cff import fastSim
+if fastSim.isChosen():
+    # no need for the aliases for usual mixing
+    del generalTracks,ecalPreshowerDigis,ecalDigis,hcalDigis,muonDTDigis,muonCSCDigis,muonRPCDigis
+else:
+#hack - our code is too fast at large scale - lets slow it down and idle for 15 seconds
+    cpuSpender=cms.EDAnalyzer("CPUSpender")
+    cpuSpender.secPerEvent=cms.untracked.int32(20)
+   
+    pdigi.insert(0,cpuSpender)

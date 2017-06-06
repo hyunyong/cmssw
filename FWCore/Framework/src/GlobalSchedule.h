@@ -19,6 +19,8 @@
 #include "FWCore/Utilities/interface/ConvertException.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Utilities/interface/StreamID.h"
+#include "FWCore/Utilities/interface/propagate_const.h"
+#include "FWCore/Concurrency/interface/WaitingTaskHolder.h"
 
 #include <map>
 #include <memory>
@@ -26,6 +28,8 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include "boost/range/adaptor/reversed.hpp"
+
 
 namespace edm {
 
@@ -52,7 +56,7 @@ namespace edm {
 
     private:
       // We own none of these resources.
-      ActivityRegistry* a_;
+      ActivityRegistry* a_; // We do not use propagate_const because the registry itself is mutable.
       typename T::Context const* context_;
       bool allowThrow_;
     };
@@ -73,7 +77,7 @@ namespace edm {
     typedef std::shared_ptr<Worker> WorkerPtr;
     typedef std::vector<Worker*> Workers;
 
-    GlobalSchedule(TriggerResultInserter* inserter,
+    GlobalSchedule(std::shared_ptr<TriggerResultInserter> inserter,
                    std::shared_ptr<ModuleRegistry> modReg,
                    std::vector<std::string> const& modulesToUse,
                    ParameterSet& proc_pset,
@@ -89,6 +93,12 @@ namespace edm {
     void processOneGlobal(typename T::MyPrincipal& principal,
                           EventSetup const& eventSetup,
                           bool cleaningUpAfterException = false);
+
+    template <typename T>
+    void processOneGlobalAsync(WaitingTaskHolder holder,
+                               typename T::MyPrincipal& principal,
+                               EventSetup const& eventSetup,
+                               bool cleaningUpAfterException = false);
 
     void beginJob(ProductRegistry const&);
     void endJob(ExceptionCollector & collector);
@@ -135,13 +145,13 @@ namespace edm {
         reg_ = nullptr;
       }
     private:
-      edm::ActivityRegistry* reg_;
+      edm::ActivityRegistry* reg_; // We do not use propagate_const because the registry itself is mutable.
       GlobalContext const* context_;
     };
 
     
     template<typename T>
-    void runNow(typename T::MyPrincipal& p, EventSetup const& es,
+    void runNow(typename T::MyPrincipal const& p, EventSetup const& es,
                 GlobalContext const* context);
 
     /// returns the action table
@@ -152,8 +162,8 @@ namespace edm {
     void addToAllWorkers(Worker* w);
     
     WorkerManager                         workerManager_;
-    std::shared_ptr<ActivityRegistry>   actReg_;
-    WorkerPtr                             results_inserter_;
+    std::shared_ptr<ActivityRegistry>     actReg_; // We do not use propagate_const because the registry itself is mutable.
+    edm::propagate_const<WorkerPtr>       results_inserter_;
 
 
     ProcessContext const*                 processContext_;
@@ -171,6 +181,11 @@ namespace edm {
     
     SendTerminationSignalIfException terminationSentry(actReg_.get(), &globalContext);
 
+    //If we are in an end transition, we need to reset failed items since they might
+    // be set this time around
+    if( not T::begin_) {
+      ep.resetFailedFromThisProcess();
+    }
     // This call takes care of the unscheduled processing.
     workerManager_.processOneOccurrence<T>(ep, es, StreamID::invalidStreamID(), &globalContext, &globalContext, cleaningUpAfterException);
 
@@ -192,9 +207,84 @@ namespace edm {
     //If we got here no other exception has happened so we can propogate any Service related exceptions
     sentry.allowThrow();
   }
+  
   template <typename T>
   void
-  GlobalSchedule::runNow(typename T::MyPrincipal& p, EventSetup const& es,
+  GlobalSchedule::processOneGlobalAsync(WaitingTaskHolder iHolder,
+                                        typename T::MyPrincipal& ep,
+                                        EventSetup const& es,
+                                        bool cleaningUpAfterException) {
+    ServiceToken token = ServiceRegistry::instance().presentToken();
+    
+    //need the doneTask to own the memory
+    auto globalContext = std::make_shared<GlobalContext>(T::makeGlobalContext(ep, processContext_));
+    
+    if(actReg_) {
+      T::preScheduleSignal(actReg_.get(), globalContext.get());
+    }
+    
+    
+    //If we are in an end transition, we need to reset failed items since they might
+    // be set this time around
+    if( not T::begin_) {
+      ep.resetFailedFromThisProcess();
+    }
+    
+    auto doneTask = make_waiting_task(tbb::task::allocate_root(),
+                                      [this,iHolder, cleaningUpAfterException, globalContext, token](std::exception_ptr const* iPtr) mutable
+                                      {
+                                        ServiceRegistry::Operate op(token);
+                                        std::exception_ptr excpt;
+                                        if(iPtr) {
+                                          excpt = *iPtr;
+                                          //add context information to the exception and print message
+                                          try {
+                                            convertException::wrap([&]() {
+                                              std::rethrow_exception(excpt);
+                                            });
+                                          } catch(cms::Exception& ex) {
+                                            //TODO: should add the transition type info
+                                            std::ostringstream ost;
+                                            if(ex.context().empty()) {
+                                              ost<<"Processing "<<T::transitionName()<<" ";
+                                            }
+                                            addContextAndPrintException(ost.str().c_str(), ex, cleaningUpAfterException);
+                                            excpt = std::current_exception();
+                                          }
+                                          if(actReg_) {
+                                            actReg_->preGlobalEarlyTerminationSignal_(*globalContext,TerminationOrigin::ExceptionFromThisContext);
+                                          }
+                                        }
+                                        if(actReg_) {
+                                          try {
+                                            T::postScheduleSignal(actReg_.get(), globalContext.get());
+                                          } catch(...) {
+                                            if(not excpt) {
+                                              excpt = std::current_exception();
+                                            }
+                                          }
+                                        }
+                                        iHolder.doneWaiting(excpt);
+                                        
+                                      });
+    workerManager_.resetAll();
+    
+    ParentContext parentContext(globalContext.get());
+    //make sure the ProductResolvers know about their
+    // workers to allow proper data dependency handling
+    workerManager_.setupOnDemandSystem(ep,es);
+    
+    //make sure the task doesn't get run until all workers have beens started
+    WaitingTaskHolder holdForLoop(doneTask);
+    for(auto& worker: boost::adaptors::reverse((allWorkers()))) {
+      worker->doWorkAsync<T>(doneTask,ep,es,StreamID::invalidStreamID(),parentContext,globalContext.get());
+    }
+
+  }
+
+  template <typename T>
+  void
+  GlobalSchedule::runNow(typename T::MyPrincipal const& p, EventSetup const& es,
               GlobalContext const* context) {
     //do nothing for event since we will run when requested
     for(auto & worker: allWorkers()) {
@@ -203,29 +293,11 @@ namespace edm {
         worker->doWork<T>(p, es,StreamID::invalidStreamID(), parentContext, context);
       }
       catch (cms::Exception & ex) {
-        std::ostringstream ost;
-        if (T::begin_ && T::branchType_ == InRun) {
-          ost << "Calling beginRun";
+        if(ex.context().empty()) {
+          std::ostringstream ost;
+          ost << "Processing " <<T::transitionName()<<" "<< p.id();
+          ex.addContext(ost.str());
         }
-        else if (T::begin_ && T::branchType_ == InLumi) {
-          ost << "Calling beginLuminosityBlock";
-        }
-        else if (!T::begin_ && T::branchType_ == InLumi) {
-          ost << "Calling endLuminosityBlock";
-        }
-        else if (!T::begin_ && T::branchType_ == InRun) {
-          ost << "Calling endRun";
-        }
-        else {
-          // It should be impossible to get here ...
-          ost << "Calling unknown function";
-        }
-        ost << " for unscheduled module " << worker->description().moduleName()
-        << "/'" << worker->description().moduleLabel() << "'";
-        ex.addContext(ost.str());
-        ost.str("");
-        ost << "Processing " << p.id();
-        ex.addContext(ost.str());
         throw;
       }
     }

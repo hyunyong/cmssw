@@ -1,4 +1,5 @@
 import FWCore.ParameterSet.Config as cms
+from DQMServices.Core.DQMEDHarvester import DQMEDHarvester
 import DQMServices.Components.test.checkBooking as booking
 import DQMServices.Components.test.createElements as c
 import sys
@@ -11,6 +12,9 @@ process.load("DQMServices.Components.DQMFileSaver_cfi")
 
 from DQMServices.StreamerIO.DQMProtobufReader_cff import DQMProtobufReader
 process.source = DQMProtobufReader
+process.source.runNumber = cms.untracked.uint32(1)
+process.source.runInputDir = cms.untracked.string("./")
+
 
 elements = c.createElements()
 
@@ -20,7 +24,7 @@ process.harvester = cms.EDAnalyzer("DummyHarvestingClient",
                                    cumulateRuns = cms.untracked.bool(False),
                                    cumulateLumis = cms.untracked.bool(True))
 
-process.eff = cms.EDAnalyzer("DQMGenericClient",
+process.eff = DQMEDHarvester("DQMGenericClient",
                              efficiency = cms.vstring("eff1 \'Eff1\' Bar0 Bar1"),
                              resolution = cms.vstring(),
                              subDirs = cms.untracked.vstring(folder))

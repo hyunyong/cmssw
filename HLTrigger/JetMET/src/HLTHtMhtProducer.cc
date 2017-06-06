@@ -34,7 +34,7 @@ HLTHtMhtProducer::HLTHtMhtProducer(const edm::ParameterSet & iConfig) :
 }
 
 // Destructor
-HLTHtMhtProducer::~HLTHtMhtProducer() {}
+HLTHtMhtProducer::~HLTHtMhtProducer() = default;
 
 // Fill descriptions
 void HLTHtMhtProducer::fillDescriptions(edm::ConfigurationDescriptions & descriptions) {
@@ -57,7 +57,7 @@ void HLTHtMhtProducer::fillDescriptions(edm::ConfigurationDescriptions & descrip
 void HLTHtMhtProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
 
     // Create a pointer to the products
-    std::auto_ptr<reco::METCollection> result(new reco::METCollection());
+    std::unique_ptr<reco::METCollection> result(new reco::METCollection());
 
     if (pfCandidatesLabel_.label() == "")
         excludePFMuons_ = false;
@@ -94,10 +94,10 @@ void HLTHtMhtProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup
     }
 
     if (excludePFMuons_) {
-        for (reco::PFCandidateCollection::const_iterator j = pfCandidates->begin(); j != pfCandidates->end(); ++j) {
-            if (std::abs(j->pdgId()) == 13) {
-                mhx += j->px();
-                mhy += j->py();
+        for (auto const & j : *pfCandidates) {
+            if (std::abs(j.pdgId()) == 13) {
+                mhx += j.px();
+                mhy += j.py();
             }
         }
     }
@@ -111,5 +111,5 @@ void HLTHtMhtProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup
     result->push_back(htmht);
 
     // Put the products into the Event
-    iEvent.put(result);
+    iEvent.put(std::move(result));
 }

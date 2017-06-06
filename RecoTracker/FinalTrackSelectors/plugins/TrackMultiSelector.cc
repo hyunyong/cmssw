@@ -13,7 +13,7 @@
 #include <memory>
 #include <algorithm>
 #include <map>
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/InputTag.h"
@@ -29,7 +29,7 @@
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 
 
-    class dso_hidden TrackMultiSelector : public edm::EDProducer {
+    class dso_hidden TrackMultiSelector : public edm::stream::EDProducer<> {
         private:
             struct Block {
                 std::pair<double,double> pt;
@@ -80,11 +80,11 @@
             /// output labels
             std::vector<std::string> labels_;
             /// some storage
-            std::auto_ptr<reco::TrackCollection> *selTracks_;
-            std::auto_ptr<reco::TrackExtraCollection> *selTrackExtras_;
-            std::auto_ptr< TrackingRecHitCollection>  *selHits_;
-            std::auto_ptr< std::vector<Trajectory> > *selTrajs_;
-            std::auto_ptr< TrajTrackAssociationCollection >  *selTTAss_;
+            std::unique_ptr<reco::TrackCollection> *selTracks_;
+            std::unique_ptr<reco::TrackExtraCollection> *selTrackExtras_;
+            std::unique_ptr<TrackingRecHitCollection>  *selHits_;
+            std::unique_ptr<std::vector<Trajectory>> *selTrajs_;
+            std::unique_ptr<TrajTrackAssociationCollection>  *selTTAss_;
             std::vector<reco::TrackRefProd> rTracks_;
             std::vector<reco::TrackExtraRefProd> rTrackExtras_;
             std::vector<TrackingRecHitRefProd> rHits_;
@@ -173,21 +173,21 @@ TrackMultiSelector::TrackMultiSelector( const edm::ParameterSet & cfg ) :
     }
 
     size_t nblocks = splitOutputs_ ? blocks_.size() : 1;
-    selTracks_ = new std::auto_ptr<reco::TrackCollection>[nblocks];
-    selTrackExtras_ = new std::auto_ptr<reco::TrackExtraCollection>[nblocks];
-    selHits_ = new std::auto_ptr<TrackingRecHitCollection>[nblocks];
-    selTrajs_ = new std::auto_ptr< std::vector<Trajectory> >[nblocks];
-    selTTAss_ = new std::auto_ptr< TrajTrackAssociationCollection >[nblocks];
+    selTracks_ = new std::unique_ptr<reco::TrackCollection>[nblocks];
+    selTrackExtras_ = new std::unique_ptr<reco::TrackExtraCollection>[nblocks];
+    selHits_ = new std::unique_ptr<TrackingRecHitCollection>[nblocks];
+    selTrajs_ = new std::unique_ptr<std::vector<Trajectory> >[nblocks];
+    selTTAss_ = new std::unique_ptr<TrajTrackAssociationCollection >[nblocks];
     rTracks_ = std::vector<reco::TrackRefProd>(nblocks);
     rHits_ = std::vector<TrackingRecHitRefProd>(nblocks);
     rTrackExtras_ = std::vector<reco::TrackExtraRefProd>(nblocks);
     rTrajectories_ = std::vector< edm::RefProd< std::vector<Trajectory> > >(nblocks);
     for (size_t i = 0; i < nblocks; i++) {
-        selTracks_[i] = std::auto_ptr<reco::TrackCollection>(new reco::TrackCollection());
-        selTrackExtras_[i] = std::auto_ptr<reco::TrackExtraCollection>(new reco::TrackExtraCollection());
-        selHits_[i] = std::auto_ptr<TrackingRecHitCollection>(new TrackingRecHitCollection());
-        selTrajs_[i] = std::auto_ptr< std::vector<Trajectory> >(new std::vector<Trajectory>());
-        selTTAss_[i] = std::auto_ptr< TrajTrackAssociationCollection >(new TrajTrackAssociationCollection());
+        selTracks_[i] = std::make_unique<reco::TrackCollection>();
+        selTrackExtras_[i] = std::make_unique<reco::TrackExtraCollection>();
+        selHits_[i] = std::make_unique<TrackingRecHitCollection>();
+        selTrajs_[i] = std::make_unique<std::vector<Trajectory>>();
+        selTTAss_[i] = std::make_unique<TrajTrackAssociationCollection>();
     }
 
 }
@@ -223,11 +223,11 @@ void TrackMultiSelector::produce( edm::Event& evt, const edm::EventSetup& es )
     evt.getByToken( tokenTracks, hSrcTrack );
 
     for (size_t i = 0; i < nblocks; i++) {
-        selTracks_[i] = auto_ptr<TrackCollection>(new TrackCollection());
+        selTracks_[i] = std::make_unique<TrackCollection>();
         rTracks_[i] = evt.getRefBeforePut<TrackCollection>(labels_[i]);
         if (copyExtras_) {
-            selTrackExtras_[i] = auto_ptr<TrackExtraCollection>(new TrackExtraCollection());
-            selHits_[i] = auto_ptr<TrackingRecHitCollection>(new TrackingRecHitCollection());
+            selTrackExtras_[i] = std::make_unique<TrackExtraCollection>();
+            selHits_[i] = std::make_unique<TrackingRecHitCollection>();
             rHits_[i] = evt.getRefBeforePut<TrackingRecHitCollection>(labels_[i]);
             rTrackExtras_[i] = evt.getRefBeforePut<TrackExtraCollection>(labels_[i]);
         }
@@ -256,10 +256,13 @@ void TrackMultiSelector::produce( edm::Event& evt, const edm::EventSetup& es )
         TrackExtra & tx = selTrackExtras_[where]->back();
 	tx.setResiduals(trk.residuals());
         // TrackingRecHits
+        auto& selHitsWhere = selHits_[where];
+        auto const firstHitIndex = selHitsWhere->size();
         for( trackingRecHit_iterator hit = trk.recHitsBegin(); hit != trk.recHitsEnd(); ++ hit ) {
-            selHits_[where]->push_back( (*hit)->clone() );
-            tx.add( TrackingRecHitRef( rHits_[where], selHits_[where]->size() - 1) );
+            selHitsWhere->push_back( (*hit)->clone() );
         }
+        tx.setHits( rHits_[where], firstHitIndex, selHitsWhere->size() - firstHitIndex);
+
         if (copyTrajectories_) {
             whereItWent_[current] = std::pair<short, reco::TrackRef>(where, TrackRef(rTracks_[where], selTracks_[where]->size() - 1));
         }
@@ -271,8 +274,8 @@ void TrackMultiSelector::produce( edm::Event& evt, const edm::EventSetup& es )
         evt.getByToken(tokenTraj, hTraj);
         for (size_t i = 0; i < nblocks; i++) {
             rTrajectories_[i] = evt.getRefBeforePut< vector<Trajectory> >(labels_[i]);
-            selTrajs_[i] = auto_ptr< vector<Trajectory> >(new vector<Trajectory>());
-            selTTAss_[i] = auto_ptr< TrajTrackAssociationCollection >(new TrajTrackAssociationCollection());
+            selTrajs_[i] = std::make_unique<std::vector<Trajectory>>();
+            selTTAss_[i] = std::make_unique<TrajTrackAssociationCollection>();
         }
         for (size_t i = 0, n = hTraj->size(); i < n; ++i) {
             Ref< vector<Trajectory> > trajRef(hTraj, i);
@@ -293,13 +296,13 @@ void TrackMultiSelector::produce( edm::Event& evt, const edm::EventSetup& es )
     static const std::string emptyString;
     for (size_t i = 0; i < nblocks; i++) {
         const std::string & lbl = ( splitOutputs_ ? labels_[i] : emptyString);
-        evt.put(selTracks_[i], lbl);
+        evt.put(std::move(selTracks_[i]), lbl);
         if (copyExtras_ ) {
-            evt.put(selTrackExtras_[i], lbl);
-            evt.put(selHits_[i], lbl);
+            evt.put(std::move(selTrackExtras_[i]), lbl);
+            evt.put(std::move(selHits_[i]), lbl);
             if ( copyTrajectories_ ) {
-                evt.put(selTrajs_[i], lbl);
-                evt.put(selTTAss_[i], lbl);
+                evt.put(std::move(selTrajs_[i]), lbl);
+                evt.put(std::move(selTTAss_[i]), lbl);
             }
         }
     }

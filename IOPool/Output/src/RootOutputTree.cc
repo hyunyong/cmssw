@@ -9,6 +9,8 @@
 #include "FWCore/Utilities/interface/Algorithms.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "FWCore/Utilities/interface/RootHandlers.h"
+#include "FWCore/Catalog/interface/SiteLocalConfig.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
 
 #include "TBranch.h"
 #include "TBranchElement.h"
@@ -21,6 +23,66 @@
 #include <limits>
 
 namespace edm {
+
+    /**
+     * Currently, ROOT doesn't use any latency-hiding optimizations for
+     * fast-cloning.  This causes a significant slowdown when doing fast-cloning
+     * over a high-latency network (30ms latency makes this multiple factors slower).
+     *
+     * Accordingly, we allow sites to provide a separate hint on how to treat fast-
+     * cloning.  The DuplicateTreeSentry allows us to implement it - given a tree
+     * we are about to clone, with the appropriate configs, this will re-open the
+     * file with lazy-download and re-open the tree.  The new tree is appropriate
+     * for cloning.  When the object is destroyed, the new file and tree are cleaned up.
+     *
+     */
+    class DuplicateTreeSentry
+    {
+    public:
+        DuplicateTreeSentry(TTree * tree)
+          : tree_(tree)
+        {
+            dup();
+        }
+
+        TTree *tree() const {return mytree_ ? mytree_.get() : tree_;}
+
+    private:
+        DuplicateTreeSentry(DuplicateTreeSentry const&) = delete; // Disallow copying and moving
+        DuplicateTreeSentry& operator=(DuplicateTreeSentry const&) = delete;
+        struct CloseBeforeDelete { void operator()(TFile* iFile) const { if( iFile) { iFile->Close(); } delete iFile; } };
+
+        void dup()
+        {
+            edm::Service<edm::SiteLocalConfig> pSLC;
+            if (!pSLC.isAvailable()) {return;}
+            if (pSLC->sourceCacheHint() && *(pSLC->sourceCacheHint()) == "lazy-download") {return;}
+            if (!pSLC->sourceCloneCacheHint() || *(pSLC->sourceCloneCacheHint()) != "lazy-download") {return;}
+            edm::LogWarning("DuplicateTreeSentry") << "Re-opening file for fast-cloning";
+
+            TFile *file = tree_->GetCurrentFile();
+            const TUrl *url = file->GetEndpointUrl();
+            if (!url)
+            {
+                return;
+            }
+            file_.reset(TFile::Open(url->GetUrl(), "READWRAP")); // May throw an exception.
+            if (!file_)
+            {
+                return;
+            }
+            mytree_.reset(dynamic_cast<TTree*>(file_->Get(tree_->GetName())));
+            if (!mytree_) {return;}
+        }
+
+        /**
+         * Note this relies on the implicit delete ordering - mytree_ (if non-null)
+         * must be deleted before file_.  Do not reorder the class members!
+         */
+        std::unique_ptr<TFile, CloseBeforeDelete> file_;
+        TTree *tree_ = nullptr;
+        std::unique_ptr<TTree> mytree_ = nullptr;
+    };
 
     RootOutputTree::RootOutputTree(
                    std::shared_ptr<TFile> filePtr,
@@ -67,10 +129,7 @@ namespace edm {
     assert(inputTree != nullptr);
 
     // Do the split level and basket size match in the input and output?
-    for(std::vector<TBranch*>::const_iterator it = readBranches_.begin(), itEnd = readBranches_.end();
-      it != itEnd; ++it) {
-
-      TBranch* outputBranch = *it;
+    for(auto const& outputBranch : readBranches_) {
       if(outputBranch != nullptr) {
         TBranch* inputBranch = inputTree->GetBranch(outputBranch->GetName());
 
@@ -119,8 +178,8 @@ namespace edm {
     if(inputTree == nullptr) return false;
 
     // Do the sub-branches match in the input and output. Extra sub-branches in the input are OK for fast cloning, but not in the output.
-    for(std::vector<TBranch*>::const_iterator it = readBranches_.begin(), itEnd = readBranches_.end(); it != itEnd; ++it) {
-      TBranchElement* outputBranch = dynamic_cast<TBranchElement*>(*it);
+    for(auto const& outputBr : readBranches_) {
+      TBranchElement* outputBranch = dynamic_cast<TBranchElement*>(outputBr);
       if(outputBranch != nullptr) {
         TBranchElement* inputBranch = dynamic_cast<TBranchElement*>(inputTree->GetBranch(outputBranch->GetName()));
         if(inputBranch != nullptr) {
@@ -137,8 +196,8 @@ namespace edm {
   }
 
   bool RootOutputTree::checkEntriesInReadBranches(Long64_t expectedNumberOfEntries) const {
-    for(std::vector<TBranch*>::const_iterator it = readBranches_.begin(), itEnd = readBranches_.end(); it != itEnd; ++it) {
-      if((*it)->GetEntries() != expectedNumberOfEntries) {
+    for(auto const& readBranch : readBranches_) {
+      if(readBranch->GetEntries() != expectedNumberOfEntries) {
         return false;
       }
     }
@@ -154,23 +213,20 @@ namespace edm {
       std::map<Int_t, TBranch *> auxIndexes;
       bool mustRemoveSomeAuxs = false;
       if(!fastCloneAuxBranches_) {
-        for(std::vector<TBranch *>::const_iterator it = auxBranches_.begin(), itEnd = auxBranches_.end();
-             it != itEnd; ++it) {
-          int auxIndex = branches->IndexOf(*it);
+        for(auto const& auxBranch : auxBranches_) {
+          int auxIndex = branches->IndexOf(auxBranch);
           assert (auxIndex >= 0);
-          auxIndexes.insert(std::make_pair(auxIndex, *it));
+          auxIndexes.insert(std::make_pair(auxIndex, auxBranch));
           branches->RemoveAt(auxIndex);
         }
         mustRemoveSomeAuxs = true;
       }
 
       //Deal with any aux branches which can never be cloned
-      for(std::vector<TBranch *>::const_iterator it = unclonedAuxBranches_.begin(),
-           itEnd = unclonedAuxBranches_.end();
-           it != itEnd; ++it) {
-        int auxIndex = branches->IndexOf(*it);
+      for(auto const& auxBranch : unclonedAuxBranches_) {
+        int auxIndex = branches->IndexOf(auxBranch);
         assert (auxIndex >= 0);
-        auxIndexes.insert(std::make_pair(auxIndex, *it));
+        auxIndexes.insert(std::make_pair(auxIndex, auxBranch));
         branches->RemoveAt(auxIndex);
         mustRemoveSomeAuxs = true;
       }
@@ -179,7 +235,8 @@ namespace edm {
         branches->Compress();
       }
 
-      TTreeCloner cloner(in, tree_, option.c_str(), TTreeCloner::kNoWarnings|TTreeCloner::kIgnoreMissingTopLevel);
+      DuplicateTreeSentry dupTree(in);
+      TTreeCloner cloner(dupTree.tree(), tree_, option.c_str(), TTreeCloner::kNoWarnings|TTreeCloner::kIgnoreMissingTopLevel);
 
       if(!cloner.IsValid()) {
         // Let's check why
@@ -194,19 +251,19 @@ namespace edm {
       tree_->SetEntries(tree_->GetEntries() + in->GetEntries());
       Service<RootHandlers> rootHandler;
       rootHandler->ignoreWarningsWhileDoing([&cloner] { cloner.Exec(); });
+
       if(mustRemoveSomeAuxs) {
-        for(std::map<Int_t, TBranch *>::const_iterator it = auxIndexes.begin(), itEnd = auxIndexes.end();
-             it != itEnd; ++it) {
+        for(auto const& auxIndex : auxIndexes) {
           // Add the auxiliary branches back after fast copying the rest of the tree.
           Int_t last = branches->GetLast();
           if(last >= 0) {
             branches->AddAtAndExpand(branches->At(last), last+1);
-            for(Int_t ind = last-1; ind >= it->first; --ind) {
+            for(Int_t ind = last-1; ind >= auxIndex.first; --ind) {
               branches->AddAt(branches->At(ind), ind+1);
             };
-            branches->AddAt(it->second, it->first);
+            branches->AddAt(auxIndex.second, auxIndex.first);
           } else {
-            branches->Add(it->second);
+            branches->Add(auxIndex.second);
           }
         }
       }
@@ -228,8 +285,8 @@ namespace edm {
   }
 
   void
-  RootOutputTree::writeTree() const {
-    writeTTree(tree_);
+  RootOutputTree::writeTree() {
+    writeTTree(tree());
   }
 
   void
@@ -240,12 +297,11 @@ namespace edm {
     if(currentlyFastCloning_) {
       fastCloneAuxBranches_ = canFastCloneAux;
       fastCloneTTree(tree, option);
-      for(std::vector<TBranch*>::const_iterator it = readBranches_.begin(), itEnd = readBranches_.end();
-          it != itEnd; ++it) {
-        if((*it)->GetEntries() == tree_->GetEntries()) {
-          clonedReadBranchNames_.insert(std::string((*it)->GetName()));
+      for(auto const& branch : readBranches_) {
+        if(branch->GetEntries() == tree_->GetEntries()) {
+          clonedReadBranchNames_.insert(std::string(branch->GetName()));
         } else {
-          unclonedReadBranches_.push_back(*it);
+          unclonedReadBranches_.push_back(branch);
         }
       }
       Service<JobReport> reportSvc;
@@ -254,7 +310,7 @@ namespace edm {
   }
 
   void
-  RootOutputTree::fillTree() const {
+  RootOutputTree::fillTree() {
     if(currentlyFastCloning_) {
       if(!fastCloneAuxBranches_)fillTTree(auxBranches_);
       fillTTree(unclonedAuxBranches_);
@@ -280,12 +336,14 @@ namespace edm {
                  basketSize,
                  splitLevel);
       assert(branch != nullptr);
+/*
       if(pProd != nullptr) {
         // Delete the product that ROOT has allocated.
         WrapperBase const* edp = static_cast<WrapperBase const *>(pProd);
         delete edp;
         pProd = nullptr;
       }
+*/
       if(produced) {
         producedBranches_.push_back(branch);
       } else {
@@ -302,7 +360,7 @@ namespace edm {
     producedBranches_.clear();
     readBranches_.clear();
     unclonedReadBranches_.clear();
-    tree_ = nullptr;
-    filePtr_.reset();
+    tree_ = nullptr; // propagate_const<T> has no reset() function
+    filePtr_ = nullptr; // propagate_const<T> has no reset() function
   }
 }

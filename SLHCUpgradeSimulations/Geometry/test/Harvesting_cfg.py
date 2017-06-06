@@ -4,6 +4,7 @@
 # Source: /cvs_server/repositories/CMSSW/CMSSW/Configuration/PyReleaseValidation/python/ConfigBuilder.py,v 
 # with command line options: harvest -s HARVESTING:dqmHarvesting -n -1 --conditions MC_3XY_V9A::All --filein file:RecoOutput.root --python_filename Harvesting_cfg.py --no_exec
 import FWCore.ParameterSet.Config as cms
+from DQMServices.Core.DQMEDHarvester import DQMEDHarvester
 import FWCore.Utilities.FileUtils as FileUtils
 
 process = cms.Process('HARVESTING')
@@ -62,8 +63,7 @@ process.schedule = cms.Schedule(process.edmtome_step,process.dqmHarvesting,proce
 
 # For some reason a seed harvester isn't included in the standard sequences. If this next processor isn't
 # run then things like efficiencies are just added together instead of recalculated.
-process.postProcessorSeed = cms.EDAnalyzer("DQMGenericClient",
-	profile = cms.vstring(),
+process.postProcessorSeed = DQMEDHarvester("DQMGenericClient",
 	resolution = cms.vstring(),
 	efficiency = cms.vstring("effic \'Efficiency vs #eta\' num_assoc(simToReco)_eta num_simul_eta", 
 		"efficPt \'Efficiency vs p_{T}\' num_assoc(simToReco)_pT num_simul_pT", 
@@ -79,7 +79,7 @@ process.dqmSaver.forceRunNumber = 1
 
 # Remove the HLT harvesting from the validation harvesting step
 process.validationHarvesting = cms.Path(process.postValidation)
-process.trackingOnlyHarvesting = cms.Path(process.postProcessorTrack)
+process.trackingOnlyHarvesting = cms.Path(process.postProcessorTrackSequence)
 process.seedingOnlyHarvesting = cms.Path(process.postProcessorSeed)
 #process.schedule = cms.Schedule(process.edmtome_step,process.validationHarvesting,process.dqmsave_step)
 #process.schedule = cms.Schedule(process.edmtome_step,process.trackingOnlyHarvesting,process.seedingOnlyHarvesting,process.dqmsave_step)

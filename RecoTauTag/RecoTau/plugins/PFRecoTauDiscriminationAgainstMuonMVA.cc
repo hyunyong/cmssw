@@ -74,7 +74,9 @@ class PFRecoTauDiscriminationAgainstMuonMVA final : public PFTauDiscriminationPr
     mvaName_ = cfg.getParameter<std::string>("mvaName");
     loadMVAfromDB_ = cfg.exists("loadMVAfromDB") ? cfg.getParameter<bool>("loadMVAfromDB") : false;
     if ( !loadMVAfromDB_ ) {
-      inputFileName_ = cfg.getParameter<edm::FileInPath>("inputFileName");
+      if(cfg.exists("inputFileName")){
+	inputFileName_ = cfg.getParameter<edm::FileInPath>("inputFileName");
+      }else throw cms::Exception("MVA input not defined") << "Requested to load tau MVA input from ROOT file but no file provided in cfg file";
     }
     mvaInput_ = new float[11];
     
@@ -120,7 +122,7 @@ class PFRecoTauDiscriminationAgainstMuonMVA final : public PFTauDiscriminationPr
   double dRmuonMatch_;
 
   edm::Handle<TauCollection> taus_;
-  std::auto_ptr<PFTauDiscriminator> category_output_;
+  std::unique_ptr<PFTauDiscriminator> category_output_;
 
   std::vector<TFile*> inputFilesToDelete_;
 
@@ -237,7 +239,7 @@ double PFRecoTauDiscriminationAgainstMuonMVA::discriminate(const PFTauRef& tau) 
 void PFRecoTauDiscriminationAgainstMuonMVA::endEvent(edm::Event& evt)
 {
   // add all category indices to event
-  evt.put(category_output_, "category");
+  evt.put(std::move(category_output_), "category");
 }
 
 }

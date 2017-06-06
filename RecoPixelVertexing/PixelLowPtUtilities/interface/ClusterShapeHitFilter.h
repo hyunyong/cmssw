@@ -140,9 +140,20 @@ class SiPixelLorentzAngle;
 class SiStripLorentzAngle;
 class PixelGeomDetUnit;
 class StripGeomDetUnit;
+class StripTopology;
+
+// Function for testing ClusterShapeHitFilter
+namespace test {
+  namespace ClusterShapeHitFilterTest {
+    int test();
+  }
+}
 
 class ClusterShapeHitFilter
 {
+  // For tests
+  friend int test::ClusterShapeHitFilterTest::test();
+
  public:
 
   struct PixelData {
@@ -153,8 +164,15 @@ class ClusterShapeHitFilter
 
   };
 
+  struct StripData {
+    const StripGeomDetUnit * det;
+    StripTopology const * topology;
+    float drift;
+    float thickness;
+    int nstrips;
+  };
+
   typedef TrajectoryFilter::Record Record;
-  //  typedef CkfComponentsRecord Record;
 
   ClusterShapeHitFilter(const TrackerGeometry * theTracker_,
                         const MagneticField          * theMagneticField_,
@@ -188,26 +206,50 @@ class ClusterShapeHitFilter
 		    PixelData const * pd=nullptr ) const;
 
 
-  bool getSizes(DetId detId, const SiStripCluster & cluster, const LocalVector & ldir,
+  bool getSizes(DetId detId, const SiStripCluster & cluster, const LocalPoint &lpos, const LocalVector & ldir,
      int & meas, float & pred) const;
-  bool getSizes(const SiStripRecHit2D & recHit, const LocalVector & ldir,
+  bool getSizes(const SiStripRecHit2D & recHit, const LocalPoint &lpos, const LocalVector & ldir,
      int & meas, float & pred) const {
-    return getSizes(recHit.geographicalId(), recHit.stripCluster(), ldir, meas, pred);
+    return getSizes(recHit.geographicalId(), recHit.stripCluster(), lpos, ldir, meas, pred);
   }
   bool isCompatible(DetId detId,
                     const SiStripCluster & cluster,
+                    const LocalPoint  & lpos,
                     const LocalVector & ldir) const;
   bool isCompatible(DetId detId,
                     const SiStripCluster & cluster,
+                    const LocalVector & ldir) const { 
+      return isCompatible(detId, cluster, LocalPoint(0,0,0), ldir); 
+  }
+
+  bool isCompatible(DetId detId,
+                    const SiStripCluster & cluster,
+                    const GlobalPoint  & gpos,
                     const GlobalVector & gdir ) const;
+  bool isCompatible(DetId detId,
+                    const SiStripCluster & cluster,
+                    const GlobalVector & gdir ) const;
+
+
+  bool isCompatible(const SiStripRecHit2D & recHit,
+                    const LocalPoint  & lpos,
+                    const LocalVector & ldir) const {
+            return isCompatible(recHit.geographicalId(), recHit.stripCluster(), lpos, ldir);
+  }
   bool isCompatible(const SiStripRecHit2D & recHit,
                     const LocalVector & ldir) const {
             return isCompatible(recHit.geographicalId(), recHit.stripCluster(), ldir);
   }
   bool isCompatible(const SiStripRecHit2D & recHit,
+                    const GlobalPoint  & gpos,
+                    const GlobalVector & gdir ) const {
+            return isCompatible(recHit.geographicalId(), recHit.stripCluster(), gpos, gdir);
+  } 
+  bool isCompatible(const SiStripRecHit2D & recHit,
                     const GlobalVector & gdir ) const {
             return isCompatible(recHit.geographicalId(), recHit.stripCluster(), gdir);
   } 
+
 
 
  private:
@@ -222,12 +264,16 @@ class ClusterShapeHitFilter
     return (*p).second;
   }
 
+  const StripData & getsd(DetId id) const {return stripData.find(id)->second;}
+
   void loadPixelLimits();
   void loadStripLimits();
   void fillPixelData();
+  void fillStripData();
+
 
   std::pair<float,float> getCotangent(const PixelGeomDetUnit * pixelDet) const;
-                   float getCotangent(const StripGeomDetUnit * stripDet) const;
+                   float getCotangent(const ClusterShapeHitFilter::StripData& sd, const LocalPoint &p) const;
 
   std::pair<float,float> getDrift(const PixelGeomDetUnit * pixelDet) const;
                    float getDrift(const StripGeomDetUnit * stripDet) const;
@@ -243,6 +289,7 @@ class ClusterShapeHitFilter
   const std::string * PixelShapeFile;
 
   std::unordered_map<unsigned int, PixelData> pixelData;
+  std::unordered_map<unsigned int, StripData> stripData;
 
   PixelLimits pixelLimits[PixelKeys::N+1]; // [2][2][2]
 

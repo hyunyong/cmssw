@@ -71,6 +71,9 @@ namespace edm {
     exists = pset.existsAs<ParameterSet>(label(), isTracked());
 
     if(exists) {
+      if(pset.isRegistered()) {
+         pset.invalidateRegistration("");
+      }
       ParameterSet * containedPSet = pset.getPSetForUpdate(label());
       psetDesc_->validate(*containedPSet);
     }
@@ -80,7 +83,7 @@ namespace edm {
   ParameterDescription<ParameterSetDescription>::
   printDefault_(std::ostream& os,
                   bool writeToCfi,
-                  DocFormatHelper& dfh) {
+                  DocFormatHelper& dfh) const {
     os << "see Section " << dfh.section()
        << "." << dfh.counter();
     if(!writeToCfi) os << " (do not write to cfi)";
@@ -89,7 +92,7 @@ namespace edm {
 
   bool
   ParameterDescription<ParameterSetDescription>::
-  hasNestedContent_() {
+  hasNestedContent_() const {
     return true;
   }
 
@@ -97,7 +100,7 @@ namespace edm {
   ParameterDescription<ParameterSetDescription>::
   printNestedContent_(std::ostream& os,
                       bool /*optional*/,
-                      DocFormatHelper& dfh) {
+                      DocFormatHelper& dfh) const {
     int indentation = dfh.indentation();
     if(dfh.parent() != DocFormatHelper::TOP) {
       indentation -= DocFormatHelper::offsetSectionContent();
@@ -270,7 +273,7 @@ namespace edm {
   ParameterDescription<std::vector<ParameterSet> >::
   printDefault_(std::ostream& os,
                 bool writeToCfi,
-                DocFormatHelper& dfh) {
+                DocFormatHelper& dfh) const {
     os << "see Section " << dfh.section()
        << "." << dfh.counter();
     if(!writeToCfi) os << " (do not write to cfi)";
@@ -280,7 +283,7 @@ namespace edm {
 
   bool
   ParameterDescription<std::vector<ParameterSet> >::
-  hasNestedContent_() {
+  hasNestedContent_() const {
     return true;
   }
 
@@ -288,7 +291,7 @@ namespace edm {
   ParameterDescription<std::vector<ParameterSet> >::
   printNestedContent_(std::ostream& os,
                       bool /*optional*/,
-                      DocFormatHelper& dfh) {
+                      DocFormatHelper& dfh) const {
 
     int indentation = dfh.indentation();
     if(dfh.parent() != DocFormatHelper::TOP) {
@@ -642,6 +645,7 @@ namespace edm {
         writeValueInVector<T>(os, value_[0], format);
       } else if(value_.size() >= 1U) {
         if(format == DOC) os << "(vector size = " << value_.size() << ")";
+        if(format == CFI and value_.size() > 255U) os << " *(";
         os.fill(' ');
         bool startWithComma = false;
         int i = 0;
@@ -653,6 +657,7 @@ namespace edm {
                                     format,
                                     std::ref(i)));
         if(format == CFI) os << "\n" << std::setw(indentation) << "";
+        if(format == CFI and value_.size() > 255U) os << ") ";
       }
       os.flags(ff);
       os.fill(oldFill);

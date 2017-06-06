@@ -14,32 +14,53 @@ from JetMETCorrections.Type1MET.correctedMet_cff import pfMetT0pc,pfMetT0pcT1,pf
 from JetMETCorrections.Type1MET.correctionTermsPfMetType0PFCandidate_cff import *
 from JetMETCorrections.Type1MET.correctionTermsPfMetType1Type2_cff import corrPfMetType1
 
+from JetMETCorrections.Configuration.JetCorrectors_cff import ak4PFCHSL1FastL2L3ResidualCorrectorChain,ak4PFCHSL1FastL2L3CorrectorChain,ak4PFCHSL1FastL2L3ResidualCorrector,ak4PFCHSResidualCorrector,ak4PFCHSL1FastL2L3Corrector,ak4PFCHSL3AbsoluteCorrector,ak4PFCHSL2RelativeCorrector,ak4PFCHSL1FastjetCorrector
 
-from JetMETCorrections.Configuration.JetCorrectionServices_cff import ak4PFL1FastL2L3,ak4PFL1Fastjet,ak4PFL2Relative,ak4PFL3Absolute
-newAK4PFL1FastL2L3 = ak4PFL1FastL2L3.clone()
-corrPfMetType1.jetCorrLabel = cms.string('newAK4PFL1FastL2L3')
+newAK4PFCHSL1FastL2L3Corrector = ak4PFCHSL1FastL2L3Corrector.clone()
+newAK4PFCHSL1FastL2L3CorrectorChain = cms.Sequence(
+    #ak4PFCHSL1FastjetCorrector * ak4PFCHSL2RelativeCorrector * ak4PFCHSL3AbsoluteCorrector * 
+    newAK4PFCHSL1FastL2L3Corrector
+    )
+
+newAK4PFCHSL1FastL2L3ResidualCorrector = ak4PFCHSL1FastL2L3ResidualCorrector.clone()
+newAK4PFCHSL1FastL2L3ResidualCorrectorChain = cms.Sequence(
+    #ak4PFCHSL1FastjetCorrector * ak4PFCHSL2RelativeCorrector * ak4PFCHSL3AbsoluteCorrector * 
+    newAK4PFCHSL1FastL2L3ResidualCorrector
+    )
+
+metPreValidSeqTask = cms.Task(ak4PFCHSL1FastjetCorrector,
+                              ak4PFCHSL2RelativeCorrector,
+                              ak4PFCHSL3AbsoluteCorrector,
+                              ak4PFCHSResidualCorrector
+)
+metPreValidSeq = cms.Sequence(metPreValidSeqTask)
+
+valCorrPfMetType1=corrPfMetType1.clone(jetCorrLabel = cms.InputTag('newAK4PFCHSL1FastL2L3Corrector'),
+                                       jetCorrLabelRes = cms.InputTag('newAK4PFCHSL1FastL2L3ResidualCorrector')
+                                      )
+
+PfMetT1=pfMetT1.clone(srcCorrections = cms.VInputTag(
+        cms.InputTag('valCorrPfMetType1', 'type1')
+        ))
+
+PfMetT0pcT1=pfMetT0pcT1.clone(
+    srcCorrections = cms.VInputTag(
+        cms.InputTag('corrPfMetType0PfCand'),
+        cms.InputTag('valCorrPfMetType1', 'type1')
+        )
+    )
 
 METRelValSequence = cms.Sequence(
     metAnalyzer*
-    #metHOAnalyzer*
-    #metNoHFAnalyzer*
-    #metNoHFHOAnalyzer*
-    #metOptAnalyzer*
-    #metOptHOAnalyzer*
-    #metOptNoHFAnalyzer*
-    #metOptNoHFHOAnalyzer
     pfMetAnalyzer*
-    #tcMetAnalyzer*
-    #corMetGlobalMuonsAnalyzer*
     genMetTrueAnalyzer*
-    #genMetCaloAnalyzer*
-    #genMetCaloAndNonPromptAnalyzer
-    correctionTermsPfMetType0PFCandidate*
-    corrPfMetType1*
-    #pfchsMETcorr*
+    correctionTermsPfMetType0PFCandidateForValidation*
+    newAK4PFCHSL1FastL2L3CorrectorChain*
+    newAK4PFCHSL1FastL2L3ResidualCorrectorChain*
+    valCorrPfMetType1*
     pfMetT0pc*
-    pfMetT1*
-    pfMetT0pcT1*
+    PfMetT1*
+    PfMetT0pcT1*
     pfType0CorrectedMetAnalyzer*
     pfType1CorrectedMetAnalyzer*
     pfType01CorrectedMetAnalyzer
@@ -48,30 +69,18 @@ METRelValSequence = cms.Sequence(
 
 METValidation = cms.Sequence(
     metAnalyzer*
-    #metHOAnalyzer*
-    #metNoHFAnalyzer*
-    #metNoHFHOAnalyzer*
-    #metOptAnalyzer*
-    #metOptHOAnalyzer*
-    #metOptNoHFAnalyzer*
-    #metOptNoHFHOAnalyzer*
     pfMetAnalyzer*
-    #tcMetAnalyzer*
-    #corMetGlobalMuonsAnalyzer*
-    genMetTrueAnalyzer*#*
-    #genMetCaloAnalyzer*
-    #genMetCaloAndNonPromptAnalyzer
-    correctionTermsPfMetType0PFCandidate*
-    corrPfMetType1*
-    #pfchsMETcorr*
+    genMetTrueAnalyzer*
+    correctionTermsPfMetType0PFCandidateForValidation*
+    newAK4PFCHSL1FastL2L3CorrectorChain*
+    newAK4PFCHSL1FastL2L3ResidualCorrectorChain*
+    valCorrPfMetType1*
     pfMetT0pc*
-    pfMetT1*
-    pfMetT0pcT1*
+    PfMetT1*
+    PfMetT0pcT1*
     pfType0CorrectedMetAnalyzer*
     pfType1CorrectedMetAnalyzer*
     pfType01CorrectedMetAnalyzer
     )
 
-
-
-
+METValidationMiniAOD = cms.Sequence(pfType1CorrectedMetAnalyzerMiniAOD*pfPuppiMetAnalyzerMiniAOD)

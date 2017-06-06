@@ -24,18 +24,21 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/RandomEngineSentry.h"
 #include "FWCore/Utilities/interface/EDMException.h"
+#include "CLHEP/Random/RandomEngine.h"
 
 // #include "GeneratorInterface/ExternalDecays/interface/ExternalDecayDriver.h"
 
 //#include "GeneratorInterface/LHEInterface/interface/LHEEvent.h"
 #include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenRunInfoProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenLumiInfoHeader.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenLumiInfoProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 
 namespace edm
 {
   template <class HAD, class DEC> class GeneratorFilter : public one::EDFilter<EndRunProducer,
+                                                                               BeginLuminosityBlockProducer,
 									       EndLuminosityBlockProducer,
                                                                                one::WatchLuminosityBlocks,
                                                                                one::SharedResources>
@@ -53,14 +56,17 @@ namespace edm
     virtual bool filter(Event& e, EventSetup const& es) override;
     virtual void endRunProduce(Run &, EventSetup const&) override;
     virtual void beginLuminosityBlock(LuminosityBlock const&, EventSetup const&) override;
+    virtual void beginLuminosityBlockProduce(LuminosityBlock&, EventSetup const&) override;
     virtual void endLuminosityBlock(LuminosityBlock const&, EventSetup const&) override;
     virtual void endLuminosityBlockProduce(LuminosityBlock &, EventSetup const&) override;
+    virtual void preallocThreads(unsigned int iThreads) override;
 
   private:
     Hadronizer            hadronizer_;
     //gen::ExternalDecayDriver* decayer_;
     Decayer*              decayer_;
     unsigned int          nEventsInLumiBlock_;
+    unsigned int          nThreads_{1};
   };
 
   //------------------------------------------------------------------------
@@ -99,22 +105,30 @@ namespace edm
          usesResource(resource);
        }
     }
+    
     // This handles the case where there are no shared resources, because you
     // have to declare something when the SharedResources template parameter was used.
     if(sharedResources.empty() && (!decayer_ || decayer_->sharedResources().empty())) {
       usesResource(edm::uniqueSharedResourceName());
     }
 
-    produces<edm::HepMCProduct>();
+    produces<edm::HepMCProduct>("unsmeared");
     produces<GenEventInfoProduct>();
-    produces<GenLumiInfoProduct, edm::InLumi>();
-    produces<GenRunInfoProduct, edm::InRun>();
+    produces<GenLumiInfoHeader, edm::Transition::BeginLuminosityBlock>();
+    produces<GenLumiInfoProduct, edm::Transition::EndLuminosityBlock>();
+    produces<GenRunInfoProduct, edm::Transition::EndRun>();
  
   }
 
   template <class HAD, class DEC>
   GeneratorFilter<HAD, DEC>::~GeneratorFilter()
   { if ( decayer_ ) delete decayer_;}
+
+  template <class HAD, class DEC>
+  void
+  GeneratorFilter<HAD, DEC>::preallocThreads(unsigned int iThreads) {
+    nThreads_ = iThreads;
+  }
 
   template <class HAD, class DEC>
   bool
@@ -126,7 +140,7 @@ namespace edm
     //added for selecting/filtering gen events, in the case of hadronizer+externalDecayer
       
     bool passEvtGenSelector = false;
-    std::auto_ptr<HepMC::GenEvent> event(0);
+    std::unique_ptr<HepMC::GenEvent> event(nullptr);
    
     while(!passEvtGenSelector)
       {
@@ -143,16 +157,19 @@ namespace edm
 	//
 	if ( !hadronizer_.decay() ) return false;
 	
-	event = std::auto_ptr<HepMC::GenEvent>(hadronizer_.getGenEvent());
+	event = std::unique_ptr<HepMC::GenEvent>(hadronizer_.getGenEvent());
 	if ( !event.get() ) return false; 
 	
 	// The external decay driver is being added to the system,
 	// it should be called here
 	//
 	if ( decayer_ ) 
-	  {
-	    event.reset( decayer_->decay( event.get() ) );
-	  }
+	{
+           auto t = decayer_->decay( event.get() );
+           if(t != event.get()) {
+             event.reset(t);
+           }
+	}
 	if ( !event.get() ) return false;
 	
 	passEvtGenSelector = hadronizer_.select( event.get() );
@@ -180,17 +197,18 @@ namespace edm
     //
     // tutto bene - finally, form up EDM products !
     //
-    std::auto_ptr<GenEventInfoProduct> genEventInfo(hadronizer_.getGenEventInfo());
+    std::unique_ptr<GenEventInfoProduct> genEventInfo(hadronizer_.getGenEventInfo());
     if (!genEventInfo.get())
       { 
 	// create GenEventInfoProduct from HepMC event in case hadronizer didn't provide one
 	genEventInfo.reset(new GenEventInfoProduct(event.get()));
       }
-    ev.put(genEventInfo);
+      
+    ev.put(std::move(genEventInfo));
    
-    std::auto_ptr<HepMCProduct> bare_product(new HepMCProduct());
+    std::unique_ptr<HepMCProduct> bare_product(new HepMCProduct());
     bare_product->addHepMCData( event.release() );
-    ev.put(bare_product);
+    ev.put(std::move(bare_product), "unsmeared");
     nEventsInLumiBlock_ ++;
     return true;
   }
@@ -208,18 +226,26 @@ namespace edm
     
     if ( decayer_ ) decayer_->statistics();
     
-    std::auto_ptr<GenRunInfoProduct> griproduct(new GenRunInfoProduct(hadronizer_.getGenRunInfo()));
-    r.put(griproduct);
+    std::unique_ptr<GenRunInfoProduct> griproduct(new GenRunInfoProduct(hadronizer_.getGenRunInfo()));
+    r.put(std::move(griproduct));
   }
 
   template <class HAD, class DEC>
   void
   GeneratorFilter<HAD, DEC>::beginLuminosityBlock( LuminosityBlock const& lumi, EventSetup const& es )
+  {}
+  
+  template <class HAD, class DEC>
+  void
+  GeneratorFilter<HAD, DEC>::beginLuminosityBlockProduce( LuminosityBlock &lumi, EventSetup const& es )
   {
     nEventsInLumiBlock_ = 0;
     RandomEngineSentry<HAD> randomEngineSentry(&hadronizer_, lumi.index());
     RandomEngineSentry<DEC> randomEngineSentryDecay(decayer_, lumi.index());
 
+    hadronizer_.randomizeIndex(lumi,randomEngineSentry.randomEngine());
+    hadronizer_.generateLHE(lumi,randomEngineSentry.randomEngine(), nThreads_);
+    
     if ( !hadronizer_.readSettings(0) )
        throw edm::Exception(errors::Configuration) 
 	 << "Failed to read settings for the hadronizer "
@@ -245,12 +271,18 @@ namespace edm
 	 << "Failed to initialize hadronizer "
 	 << hadronizer_.classname()
 	 << " for internal parton generation\n";
+         
+    std::unique_ptr<GenLumiInfoHeader> genLumiInfoHeader(hadronizer_.getGenLumiInfoHeader());
+    lumi.put(std::move(genLumiInfoHeader));
+
   }
 
   template <class HAD, class DEC>
   void
   GeneratorFilter<HAD, DEC>::endLuminosityBlock(LuminosityBlock const&, EventSetup const&)
-  {}
+  {
+    hadronizer_.cleanLHE();
+  }
 
   template <class HAD, class DEC>
   void
@@ -276,10 +308,11 @@ namespace edm
     temp.setAcceptedBr(0,-1,-1);
     GenLumiProcess.push_back(temp);
 
-    std::auto_ptr<GenLumiInfoProduct> genLumiInfo(new GenLumiInfoProduct());
+    std::unique_ptr<GenLumiInfoProduct> genLumiInfo(new GenLumiInfoProduct());
     genLumiInfo->setHEPIDWTUP(-1);
     genLumiInfo->setProcessInfo( GenLumiProcess );
-    lumi.put(genLumiInfo);
+        
+    lumi.put(std::move(genLumiInfo));
 
     nEventsInLumiBlock_ = 0;
 

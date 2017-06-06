@@ -12,6 +12,7 @@
 #include "FWCore/Framework/src/WorkerRegistry.h"
 #include "FWCore/Utilities/interface/ConvertException.h"
 #include "FWCore/Utilities/interface/Exception.h"
+#include "FWCore/Utilities/interface/get_underlying_safe.h"
 
 #include <memory>
 
@@ -52,6 +53,17 @@ namespace edm {
                               typename T::Context const* topContext,
                               U const* context,
                               bool cleaningUpAfterException = false);
+    template <typename T, typename U>
+    void processOneOccurrenceAsync(
+                              WaitingTask* task,
+                              typename T::MyPrincipal& principal,
+                              EventSetup const& eventSetup,
+                              StreamID streamID,
+                              typename T::Context const* topContext,
+                              U const* context);
+
+    
+    void setupOnDemandSystem(Principal& principal, EventSetup const& es);
 
     void beginJob(ProductRegistry const& iRegistry);
     void endJob();
@@ -72,18 +84,15 @@ namespace edm {
                       std::shared_ptr<ProcessConfiguration const> processConfiguration,
                       std::string const& label);
 
-  private:
-
     void resetAll();
 
-    void setupOnDemandSystem(EventPrincipal& principal, EventSetup const& es);
+  private:
 
     WorkerRegistry      workerReg_;
     ExceptionToActionTable const*  actionTable_;
-
     AllWorkers          allWorkers_;
-
-    std::shared_ptr<UnscheduledCallProducer> unscheduled_;
+    UnscheduledCallProducer unscheduled_;
+    void const* lastSetupEventPrincipal_;
   };
 
   template <typename T, typename U>
@@ -98,25 +107,10 @@ namespace edm {
 
     try {
       convertException::wrap([&]() {
-        try {
-          if (T::isEvent_) {
-            setupOnDemandSystem(dynamic_cast<EventPrincipal&>(ep), es);
-          } else {
-            //make sure the unscheduled items see this run or lumi rtansition
-            unscheduled_->runNow<T,U>(ep, es,streamID, topContext, context);
-          }
+        //make sure the unscheduled items see this run or lumi transition
+        unscheduled_.runNow<T,U>(ep, es,streamID, topContext, context);
         }
-        catch(cms::Exception& e) {
-          exception_actions::ActionCodes action = (T::isEvent_ ? actionTable_->find(e.category()) : exception_actions::Rethrow);
-          assert (action != exception_actions::IgnoreCompletely);
-          assert (action != exception_actions::FailPath);
-          if (action == exception_actions::SkipEvent) {
-            printCmsExceptionWarning("SkipEvent", e);
-          } else {
-            throw;
-          }
-        }
-      });
+      );
     }
     catch(cms::Exception& ex) {
       if (ex.context().empty()) {
@@ -127,6 +121,19 @@ namespace edm {
       throw;
     }
   }
+  
+  template <typename T, typename U>
+  void
+  WorkerManager::processOneOccurrenceAsync(WaitingTask* task,
+                                           typename T::MyPrincipal& ep,
+                                           EventSetup const& es,
+                                           StreamID streamID,
+                                           typename T::Context const* topContext,
+                                           U const* context) {
+    //make sure the unscheduled items see this run or lumi transition
+    unscheduled_.runNowAsync<T,U>(task,ep, es,streamID, topContext, context);
+  }
+
 }
 
 #endif
