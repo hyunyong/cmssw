@@ -71,7 +71,7 @@ public:
   static const std::string tagDiamondCh; 
 
   TotemDAQMappingESSourceXML(const edm::ParameterSet &);
-  ~TotemDAQMappingESSourceXML();
+  ~TotemDAQMappingESSourceXML() override;
 
   edm::ESProducts< std::shared_ptr<TotemDAQMapping>, std::shared_ptr<TotemAnalysisMask> > produce( const TotemReadoutRcd & );
 
@@ -168,7 +168,7 @@ private:
 
 protected:
   /// sets infinite validity of this data
-  virtual void setIntervalFor(const edm::eventsetup::EventSetupRecordKey&, const edm::IOVSyncValue&, edm::ValidityInterval&);
+  void setIntervalFor(const edm::eventsetup::EventSetupRecordKey&, const edm::IOVSyncValue&, edm::ValidityInterval&) override;
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -237,9 +237,11 @@ void TotemDAQMappingESSourceXML::setIntervalFor(const edm::eventsetup::EventSetu
 
     edm::EventRange range = bl.validityRange;
 
-    // event id "1:min" has a special meaning and is translated to a truly minimal event id (1:0:0)
-    if (range.startEventID()==edm::EventID(1, 0, 1))
-      range = edm::EventRange(edm::EventID(1, 0, 0), range.endEventID());
+    // If "<run>:min" is specified in python config, it is translated into event <run>:0:1.
+    // However, the truly minimal event id often found in data is <run>:0:0. Therefore the
+    // adjustment below is needed.
+    if (range.startEventID().luminosityBlock() == 0 && range.startEventID().event() == 1)
+      range = edm::EventRange(edm::EventID(range.startEventID().run(), 0, 0), range.endEventID());
 
     if (edm::contains(range, iosv.eventID()))
     {

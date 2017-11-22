@@ -9,23 +9,23 @@
 class StripTopology;
 class GEMEtaPartitionSpecs;
 
-class GEMEtaPartition : public GeomDetUnit
+class GEMEtaPartition : public GeomDet
 {
 public:
   
-  GEMEtaPartition(GEMDetId id, BoundPlane::BoundPlanePointer bp, GEMEtaPartitionSpecs* rrs);
-  ~GEMEtaPartition();
+  GEMEtaPartition(GEMDetId id, const BoundPlane::BoundPlanePointer& bp, GEMEtaPartitionSpecs* rrs);
+  ~GEMEtaPartition() override;
 
   const GEMEtaPartitionSpecs* specs() const { return specs_; }
   GEMDetId id() const { return id_; }
 
-  const Topology& topology() const;
+  const Topology& topology() const override;
   const StripTopology& specificTopology() const;
 
   const Topology& padTopology() const;
   const StripTopology& specificPadTopology() const;
 
-  const GeomDetType& type() const; 
+  const GeomDetType& type() const override; 
  
   // strip-related methods:
 

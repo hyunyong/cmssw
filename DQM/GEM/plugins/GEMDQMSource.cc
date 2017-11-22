@@ -1,7 +1,3 @@
-/****************************************************************************
-
-****************************************************************************/
-
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/PluginManager/interface/ModuleDef.h"
@@ -20,10 +16,8 @@
 #include "DataFormats/GEMRecHit/interface/GEMRecHitCollection.h"
 #include "DataFormats/GEMDigi/interface/GEMDigiCollection.h"
 
-
 #include "Geometry/GEMGeometry/interface/GEMGeometry.h"
 #include "Geometry/Records/interface/MuonGeometryRecord.h"
-
 
 #include <string>
 
@@ -31,42 +25,52 @@
  
 class GEMDQMSource: public DQMEDAnalyzer
 {
-  public:
-    GEMDQMSource(const edm::ParameterSet& cfg);
-    virtual ~GEMDQMSource();
+public:
+  GEMDQMSource(const edm::ParameterSet& cfg);
+  ~GEMDQMSource() override;
   
-  protected:
-    void dqmBeginRun(edm::Run const &, edm::EventSetup const &) override;
-    void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
-    void analyze(edm::Event const& e, edm::EventSetup const& eSetup) override;
-    void beginLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& eSetup) override;
-    void endLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& eSetup) override;
-    void endRun(edm::Run const& run, edm::EventSetup const& eSetup) override;
+protected:
+  void dqmBeginRun(edm::Run const &, edm::EventSetup const &) override;
+  void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
+  void analyze(edm::Event const& e, edm::EventSetup const& eSetup) override;
+  void beginLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& eSetup) override;
+  void endLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const& eSetup) override;
+  void endRun(edm::Run const& run, edm::EventSetup const& eSetup) override;
 
-  private:
-    unsigned int verbosity;
+private:
+  unsigned int verbosity;
    
-    int nCh;
+  int nCh;
 
+  edm::EDGetToken tagRecHit;
 
-    edm::EDGetToken tagRecHit;
-
-    const GEMGeometry* initGeometry(edm::EventSetup const & iSetup);
-    int findVFAT(float min_, float max_, float x_, int roll_);
+  const GEMGeometry* initGeometry(edm::EventSetup const & iSetup);
+  int findVFAT(float min_, float max_, float x_, int roll_);
      
-    const GEMGeometry* GEMGeometry_; 
+  const GEMGeometry* GEMGeometry_; 
 
-    std::vector<GEMChamber> gemChambers;
+  std::vector<GEMChamber> gemChambers;
 
-    MonitorElement* Phi;
-    MonitorElement* Eta;
+  MonitorElement* Phi;
+  MonitorElement* Eta;
     
-    std::unordered_map<UInt_t,  MonitorElement*> recHitME;
+  std::unordered_map<UInt_t,  MonitorElement*> recHitME;
     
-    std::unordered_map<UInt_t,  MonitorElement*> VFAT_vs_ClusterSize;
+  std::unordered_map<UInt_t,  MonitorElement*> VFAT_vs_ClusterSize;
     
-    std::unordered_map<UInt_t,  MonitorElement*> StripsFired_vs_eta;
-    std::unordered_map<UInt_t,  MonitorElement*> rh_vs_eta;
+  std::unordered_map<UInt_t,  MonitorElement*> StripsFired_vs_eta;
+  std::unordered_map<UInt_t,  MonitorElement*> rh_vs_eta;
+  
+  MonitorElement *h2BeamProfile;
+  MonitorElement *h1SlotN;
+  
+  MonitorElement *h1ClusterMul;
+  MonitorElement *h1ClusterSize;
+  
+  MonitorElement *h2SlotN;
+  
+  MonitorElement *h2ClusterMul;
+  MonitorElement *h2ClusterSize;
 
 };
 
@@ -167,12 +171,26 @@ void GEMDQMSource::bookHistograms(DQMStore::IBooker &ibooker, edm::Run const &, 
 
   }
   
+  ibooker.setCurrentFolder("GEM/digi");
+  
+  h2BeamProfile = ibooker.book2D("VFAT_BeamProfile", "2D Occupancy", 384, 0.5, 384.5, 8, 0.5, 8.5);
+  h1SlotN = ibooker.book1D("VFAT_Slots", "VFAT Slots", 24, 0, 24);
+  
+  h1ClusterMul = ibooker.book1D("ClusterMul", "Cluster Multiplicity", 384, 0, 384);
+  h1ClusterSize = ibooker.book1D("ClusterSize", "Cluster Size", 11, -0.5, 10.5);
+  
+  //h3BeamProfile_PerGEB = ibooker.book3D("VFAT_BeamProfile_PerGEB", "2D Occupancy", 384, 0.5, 384.5, 8, 0.5, 8.5); // 3D...?
+  h2SlotN = ibooker.book2D("VFAT_Slots_PerGEB", "VFAT Slots", 24, 0, 24, nCh, 0, nCh);
+  
+  h2ClusterMul = ibooker.book2D("ClusterMul_PerGEB", "Cluster Multiplicity", 384, 0, 384, nCh, 0, nCh);
+  h2ClusterSize = ibooker.book2D("ClusterSize_PerGEB", "Cluster Size", 11, -0.5, 10.5, nCh, 0, nCh);
+  
 }
 
 //----------------------------------------------------------------------------------------------------
 
 void GEMDQMSource::beginLuminosityBlock(edm::LuminosityBlock const& lumiSeg, 
-                                            edm::EventSetup const& context) 
+					edm::EventSetup const& context) 
 {
 }
 
@@ -190,13 +208,13 @@ void GEMDQMSource::analyze(edm::Event const& event, edm::EventSetup const& event
   ////////////////
   edm::Handle<GEMRecHitCollection> gemRecHits;
   event.getByToken( this->tagRecHit, gemRecHits);
-//   if (!gemRecHits.isValid()) {
-//     edm::LogError("GEMDQMSource") << "GEM recHit is not valid.\n";
-//     return ;
-//   }  
+  //   if (!gemRecHits.isValid()) {
+  //     edm::LogError("GEMDQMSource") << "GEM recHit is not valid.\n";
+  //     return ;
+  //   }  
   for (GEMRecHitCollection::const_iterator recHit = gemRecHits->begin(); recHit != gemRecHits->end(); ++recHit){
     // Sometimes this value is null
-    if ( GEMGeometry_->idToDet((*recHit).gemId()) == NULL ) continue;
+    if ( GEMGeometry_->idToDet((*recHit).gemId()) == nullptr ) continue;
     
     //std::cout << "DetId : " << (*recHit).gemId() << std::endl;
     
@@ -208,6 +226,7 @@ void GEMDQMSource::analyze(edm::Event const& event, edm::EventSetup const& event
     Phi->Fill(rhPhi);
     Eta->Fill(rhEta);
   }
+  int nMulCluster = 0;
   for (auto ch : gemChambers){
     GEMDetId cId = ch.id();
     for(auto roll : ch.etaPartitions()){
@@ -215,16 +234,21 @@ void GEMDQMSource::analyze(edm::Event const& event, edm::EventSetup const& event
       const auto& recHitsRange = gemRecHits->get(rId); 
       auto gemRecHit = recHitsRange.first;
       for ( auto hit = gemRecHit; hit != recHitsRange.second; ++hit ) {
+        nMulCluster++;
         int nVfat = findVFAT(1.0, 385.0, hit->firstClusterStrip()+0.5*hit->clusterSize(), rId.roll());
         recHitME[ cId ]->Fill(nVfat);
+        h1SlotN->Fill(nVfat);
         rh_vs_eta[ cId ]->Fill(hit->localPosition().x(), rId.roll());
         VFAT_vs_ClusterSize[ cId ]->Fill(hit->clusterSize(), nVfat);
+        h1ClusterSize->Fill(hit->clusterSize());
         for(int i = hit->firstClusterStrip(); i < (hit->firstClusterStrip() + hit->clusterSize()); i++){
-        	StripsFired_vs_eta[ cId ]->Fill(i, rId.roll());
+	  StripsFired_vs_eta[ cId ]->Fill(i, rId.roll());
+          h2BeamProfile->Fill(i, rId.roll());
         }
       }  
     }   
   }
+  h1ClusterMul->Fill(nMulCluster);
 
   
 }

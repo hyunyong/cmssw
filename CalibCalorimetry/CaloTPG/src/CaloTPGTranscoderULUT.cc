@@ -7,7 +7,7 @@
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
 #include <iostream>
 #include <fstream>
-#include <math.h>
+#include <cmath>
 
 //#include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -18,7 +18,7 @@ using namespace std;
 
 CaloTPGTranscoderULUT::CaloTPGTranscoderULUT(const std::string& compressionFile,
                                              const std::string& decompressionFile)
-                                                : theTopology(0),
+                                                : theTopology(nullptr),
                                                   nominal_gain_(0.), lsb_factor_(0.), rct_factor_(1.), nct_factor_(1.),
                                                   compressionFile_(compressionFile),
                                                   decompressionFile_(decompressionFile)
@@ -70,6 +70,7 @@ void CaloTPGTranscoderULUT::loadHCALCompress(HcalLutMetadata const& lutMetadata,
 	bool isHBHE = (abs(ieta) < theTrigTowerGeometry.firstHFTower(version)); 
 
         unsigned int lutsize = getOutputLUTSize(id);
+	outputLUT_[index].resize(lutsize);
 
         for (unsigned int i = 0; i < threshold; ++i)
            outputLUT_[index][i] = 0;

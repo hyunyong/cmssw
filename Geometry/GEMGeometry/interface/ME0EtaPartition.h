@@ -8,25 +8,24 @@
 
 class StripTopology;
 class ME0EtaPartitionSpecs;
-//class ME0Chamber;
 
-class ME0EtaPartition : public GeomDetUnit
+class ME0EtaPartition : public GeomDet
 {
 public:
   
-  ME0EtaPartition(ME0DetId id, BoundPlane::BoundPlanePointer bp, ME0EtaPartitionSpecs* rrs);
-  ~ME0EtaPartition();
+  ME0EtaPartition(ME0DetId id, const BoundPlane::BoundPlanePointer& bp, ME0EtaPartitionSpecs* rrs);
+  ~ME0EtaPartition() override;
 
   const ME0EtaPartitionSpecs* specs() const { return specs_; }
   ME0DetId id() const { return id_; }
 
-  const Topology& topology() const;
+  const Topology& topology() const override;
   const StripTopology& specificTopology() const;
 
   const Topology& padTopology() const;
   const StripTopology& specificPadTopology() const;
 
-  const GeomDetType& type() const; 
+  const GeomDetType& type() const override; 
  
   /// Return the chamber this roll belongs to 
   //const ME0Chamber* chamber() const;

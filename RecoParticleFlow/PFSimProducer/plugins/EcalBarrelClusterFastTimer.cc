@@ -37,9 +37,9 @@
 class EcalBarrelClusterFastTimer : public edm::global::EDProducer<> {
 public:    
   EcalBarrelClusterFastTimer(const edm::ParameterSet&);
-  ~EcalBarrelClusterFastTimer() { }
+  ~EcalBarrelClusterFastTimer() override { }
   
-  virtual void produce(edm::StreamID, edm::Event&, const edm::EventSetup&) const override;
+  void produce(edm::StreamID, edm::Event&, const edm::EventSetup&) const override;
   
 private:
   // inputs
@@ -58,7 +58,7 @@ private:
 DEFINE_FWK_MODULE(EcalBarrelClusterFastTimer);
 
 namespace {
-  static const std::string resolution("Resolution");
+  const std::string resolution("Resolution");
 
   constexpr float cm_per_ns = 29.9792458;
 

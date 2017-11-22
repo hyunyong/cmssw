@@ -15,6 +15,7 @@
 #include "DataFormats/JetReco/interface/BasicJet.h"
 #include "DataFormats/JetReco/interface/GenJet.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
+#include "DataFormats/PatCandidates/interface/PackedGenParticle.h"
 
 #include "DataFormats/JetReco/interface/BasicJetCollection.h"
 
@@ -79,7 +80,7 @@ protected:
   //
 public:
   explicit VirtualJetProducer(const edm::ParameterSet& iConfig);
-  virtual ~VirtualJetProducer();
+  ~VirtualJetProducer() override;
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
   static void fillDescriptionsFromVirtualJetProducer(edm::ParameterSetDescription& desc);
   
@@ -95,7 +96,7 @@ public:
   // member functions
   //
 public:
-  virtual void  produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
+  void  produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
   std::string   jetType() const { return jetType_; }
   
 protected:
@@ -149,6 +150,8 @@ protected:
   template< typename T>
   void writeCompoundJets(  edm::Event & iEvent, edm::EventSetup const& iSetup);
 
+  template< typename T>
+    void writeJetsWithConstituents(  edm::Event & iEvent, edm::EventSetup const& iSetup);
 
   // This method copies the constituents from the fjConstituents method
   // to an output of CandidatePtr's. 
@@ -210,6 +213,7 @@ protected:
 
   std::string                     jetCollInstanceName_;       // instance name for output jet collection
   bool                            writeCompound_;    // write compound jets (i.e. jets of jets)
+  bool                            writeJetsWithConst_;    // write jets with constituents
   boost::shared_ptr<PileUpSubtractor>  subtractor_;
 
   bool                            useDeterministicSeed_; // If desired, use a deterministic seed to fastjet
@@ -225,7 +229,9 @@ private:
   edm::EDGetTokenT<reco::CandidateView> input_candidateview_token_;
   edm::EDGetTokenT<std::vector<edm::FwdPtr<reco::PFCandidate> > > input_candidatefwdptr_token_;
   edm::EDGetTokenT<std::vector<edm::FwdPtr<pat::PackedCandidate> > > input_packedcandidatefwdptr_token_;
-
+  edm::EDGetTokenT<std::vector<edm::FwdPtr<reco::GenParticle> > > input_gencandidatefwdptr_token_;
+  edm::EDGetTokenT<std::vector<edm::FwdPtr<pat::PackedGenParticle> > > input_packedgencandidatefwdptr_token_;
+  
  protected:
   edm::EDGetTokenT<reco::VertexCollection> input_vertex_token_;
   

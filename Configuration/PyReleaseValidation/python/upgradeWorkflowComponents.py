@@ -13,6 +13,10 @@ upgradeKeys[2017] = [
 #    '2018PU',
     '2018Design',
 #    '2018DesignPU',
+    '2019',
+#    '2019PU',
+    '2019Design',
+#    '2019DesignPU',
 ]
 
 upgradeKeys[2023] = [
@@ -31,7 +35,7 @@ numWFStart={
 }
 numWFSkip=200
 # temporary measure to keep other WF numbers the same
-numWFConflict = [[11000,11200],[11400,19800],[25000,26000],[50000,51000]]
+numWFConflict = [[11000,11200],[11400,11600],[11800,12000],[12200,12400],[25000,26000],[50000,51000]]
 numWFAll={
     2017: [],
     2023: []
@@ -63,6 +67,7 @@ upgradeSteps['baseline'] = {
         'HARVESTFast',
         'HARVESTFullGlobal',
         'ALCAFull',
+        'NanoFull',
     ],
     'PU' : [
         'DigiFullTrigger',
@@ -142,6 +147,21 @@ upgradeProperties[2017] = {
         'BeamSpot': 'GaussSigmaZ4cm',
         'ScenToRun' : ['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
     },
+    '2019' : {
+        'Geom' : 'Extended2019',
+        'GT' : 'auto:phase1_2018_realistic',
+        'HLTmenu': '@relval2017',
+        'Era' : 'Run3',
+        'ScenToRun' : ['GenSimFull','DigiFull','RecoFull','ALCAFull','HARVESTFull'],
+    },
+    '2019Design' : {
+        'Geom' : 'Extended2019',
+        'GT' : 'auto:phase1_2018_design',
+        'HLTmenu': '@relval2017',
+        'Era' : 'Run3',
+        'BeamSpot': 'GaussSigmaZ4cm',
+        'ScenToRun' : ['GenSimFull','DigiFull','RecoFull','HARVESTFull'],
+    },
 }
 
 upgradeProperties[2017]['2017PU'] = deepcopy(upgradeProperties[2017]['2017'])
@@ -173,7 +193,7 @@ upgradeProperties[2023] = {
         'GT' : 'auto:phase2_realistic',
         'HLTmenu': '@fake2',
         'Era' : 'Phase2',
-        'ScenToRun' : ['GenSimHLBeamSpotFull','DigiFullTrigger','RecoFullGlobal','HARVESTFullGlobal'],
+        'ScenToRun' : ['GenSimHLBeamSpotFull','DigiFull','RecoFullGlobal','HARVESTFullGlobal'],
     },
 }
 
@@ -185,7 +205,7 @@ upgradeProperties[2023]['2023D17PU']['ScenToRun'] = ['GenSimHLBeamSpotFull','Dig
 upgradeProperties[2023]['2023D19PU'] = deepcopy(upgradeProperties[2023]['2023D19'])
 upgradeProperties[2023]['2023D19PU']['ScenToRun'] = ['GenSimHLBeamSpotFull','DigiFullTriggerPU','RecoFullGlobalPU', 'HARVESTFullGlobalPU']
 upgradeProperties[2023]['2023D20PU'] = deepcopy(upgradeProperties[2023]['2023D20'])
-upgradeProperties[2023]['2023D20PU']['ScenToRun'] = ['GenSimHLBeamSpotFull','DigiFullTriggerPU','RecoFullGlobalPU', 'HARVESTFullGlobalPU']
+upgradeProperties[2023]['2023D20PU']['ScenToRun'] = ['GenSimHLBeamSpotFull','DigiFullPU','RecoFullGlobalPU', 'HARVESTFullGlobalPU']
 
 
 from  Configuration.PyReleaseValidation.relval_steps import Kby
@@ -277,6 +297,11 @@ upgradeFragments=['FourMuPt_1_200_pythia8_cfi',
                   'DisplacedSUSY_stopToBottom_M_300_1000mm_TuneCUETP8M1_13TeV_pythia8_cff',
                   'TenE_E_0_200_pythia8_cfi',
                   'FlatRandomPtAndDxyGunProducer_cfi',
+                  'TenTau_E_15_500_pythia8_cfi',
+                  'SinglePiPt25Eta1p7_2p7_cfi',
+                  'SingleMuPt15Eta1p7_2p7_cfi',
+                  'SingleGammaPt25Eta1p7_2p7_cfi',
+                  'SingleElectronPt15Eta1p7_2p7_cfi',
 ]
 
 howMuches={'FourMuPt_1_200_pythia8_cfi':Kby(10,100),
@@ -350,7 +375,7 @@ howMuches={'FourMuPt_1_200_pythia8_cfi':Kby(10,100),
            'Wjet_Pt_80_120_13TeV_TuneCUETP8M1_cfi':Kby(9,50),
            'Wjet_Pt_3000_3500_13TeV_TuneCUETP8M1_cfi':Kby(9,50),
            'SMS-T1tttt_mGl-1500_mLSP-100_13TeV-pythia8_cfi':Kby(9,50),
-           'QCDForPF_13TeV_TuneCUETP8M1_cfi':Kby(9,50),
+           'QCDForPF_13TeV_TuneCUETP8M1_cfi':Kby(50,100),
            'PYTHIA8_PhiToMuMu_TuneCUETP8M1_13TeV_cff':Kby(9,50),
            'RSKKGluon_m3000GeV_13TeV_TuneCUETP8M1_cff':Kby(9,50),
            'ZpMM_2250_13TeV_TuneCUETP8M1_cfi':Kby(9,50),
@@ -366,6 +391,11 @@ howMuches={'FourMuPt_1_200_pythia8_cfi':Kby(10,100),
            'DisplacedSUSY_stopToBottom_M_300_1000mm_TuneCUETP8M1_13TeV_pythia8_cff':Kby(9,50),
            'TenE_E_0_200_pythia8_cfi':Kby(9,100),
            'FlatRandomPtAndDxyGunProducer_cfi':Kby(9,100),
+           'TenTau_E_15_500_pythia8_cfi':Kby(9,100),
+           'SinglePiPt25Eta1p7_2p7_cfi':Kby(9,100),
+           'SingleMuPt15Eta1p7_2p7_cfi':Kby(9,100),
+           'SingleGammaPt25Eta1p7_2p7_cfi':Kby(9,100),
+           'SingleElectronPt15Eta1p7_2p7_cfi':Kby(9,100),
 }
 
 upgradeDatasetFromFragment={'FourMuPt_1_200_pythia8_cfi': 'FourMuPt1_200',
@@ -455,4 +485,9 @@ upgradeDatasetFromFragment={'FourMuPt_1_200_pythia8_cfi': 'FourMuPt1_200',
                             'DisplacedSUSY_stopToBottom_M_300_1000mm_TuneCUETP8M1_13TeV_pythia8_cff': 'DisplacedSUSY_stopToBottom_M_300_1000mm_13',
                             'TenE_E_0_200_pythia8_cfi': 'TenE_0_200',
                             'FlatRandomPtAndDxyGunProducer_cfi': 'DisplacedMuonsDxy_0_500',
+                            'TenTau_E_15_500_pythia8_cfi':'TenTau_15_500',
+                            'SinglePiPt25Eta1p7_2p7_cfi':'SinglePiPt25Eta1p7_2p7',
+                            'SingleMuPt15Eta1p7_2p7_cfi':'SingleMuPt15Eta1p7_2p7',
+                            'SingleGammaPt25Eta1p7_2p7_cfi':'SingleGammaPt25Eta1p7_2p7',
+                            'SingleElectronPt15Eta1p7_2p7_cfi':'SingleElectronPt15Eta1p7_2p7',
 }

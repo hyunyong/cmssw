@@ -30,6 +30,9 @@ theDigitizers = cms.PSet(
   ),
   puVtx = cms.PSet(
     pileupVtxDigitizer
+  ),
+  mergedtruth = cms.PSet(
+    trackingParticles
   )
 )
 
@@ -52,8 +55,8 @@ phase2_hgcal.toModify( theDigitizers,
                             hgchefrontDigitizer = cms.PSet(hgchefrontDigitizer),
 )
 
-from Configuration.Eras.Modifier_phase2_common_cff import phase2_common
-phase2_common.toModify( theDigitizers, castor = None )
+from Configuration.Eras.Modifier_run3_common_cff import run3_common
+run3_common.toModify( theDigitizers, castor = None )
 
 from SimGeneral.MixingModule.ecalTimeDigitizer_cfi import ecalTimeDigitizer
 from Configuration.Eras.Modifier_phase2_timing_cff import phase2_timing
@@ -65,13 +68,8 @@ from SimFastTiming.Configuration.SimFastTiming_cff import fastTimeDigitizer
 phase2_timing_layer.toModify( theDigitizers,
                         fastTimingLayer = fastTimeDigitizer.clone() )
 
-theDigitizersValid = cms.PSet(
-    theDigitizers,
-    mergedtruth = cms.PSet(
-        trackingParticles
-        )
-    )
-
+theDigitizersValid = cms.PSet(theDigitizers)
+theDigitizers.mergedtruth.select.signalOnlyTP = cms.bool(True)
 
 phase2_hgcal.toModify( theDigitizersValid,
                        calotruth = cms.PSet( caloParticles ) )

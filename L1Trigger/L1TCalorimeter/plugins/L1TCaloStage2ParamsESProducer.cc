@@ -31,7 +31,7 @@
 
 #include "CondFormats/L1TObjects/interface/CaloParams.h"
 #include "L1Trigger/L1TCalorimeter/interface/CaloParamsHelper.h"
-#include "CondFormats/DataRecord/interface/L1TCaloStage2ParamsRcd.h"
+#include "CondFormats/DataRecord/interface/L1TCaloParamsRcd.h"
 
 using namespace std;
 
@@ -44,11 +44,11 @@ using namespace l1t;
 class L1TCaloStage2ParamsESProducer : public edm::ESProducer {
 public:
   L1TCaloStage2ParamsESProducer(const edm::ParameterSet&);
-  ~L1TCaloStage2ParamsESProducer();
+  ~L1TCaloStage2ParamsESProducer() override;
 
   typedef std::shared_ptr<CaloParams> ReturnType;
 
-  ReturnType produce(const L1TCaloStage2ParamsRcd&);
+  ReturnType produce(const L1TCaloParamsRcd&);
 
 private:
   CaloParams  m_params ;
@@ -343,6 +343,10 @@ L1TCaloStage2ParamsESProducer::L1TCaloStage2ParamsESProducer(const edm::Paramete
   m_params_helper.setLayer1HCalScalePhiBins(conf.exists("layer1HCalScalePhiBins") ? conf.getParameter<std::vector<unsigned>>("layer1HCalScalePhiBins") : std::vector<unsigned>(36,0));
   m_params_helper.setLayer1HFScalePhiBins  (conf.exists("layer1HFScalePhiBins") ? conf.getParameter<std::vector<unsigned>>("layer1HFScalePhiBins") : std::vector<unsigned>(36,0));
 
+  if (conf.existsAs<std::vector<unsigned>>("layer1SecondStageLUT")) {
+    m_params_helper.setLayer1SecondStageLUT(conf.getParameter<std::vector<unsigned>>("layer1SecondStageLUT"));
+  }
+
   m_params = (CaloParams)m_params_helper;
 }
 
@@ -362,7 +366,7 @@ L1TCaloStage2ParamsESProducer::~L1TCaloStage2ParamsESProducer()
 
 // ------------ method called to produce the data  ------------
 L1TCaloStage2ParamsESProducer::ReturnType
-L1TCaloStage2ParamsESProducer::produce(const L1TCaloStage2ParamsRcd& iRecord)
+L1TCaloStage2ParamsESProducer::produce(const L1TCaloParamsRcd& iRecord)
 {
    using namespace edm::es;
    std::shared_ptr<CaloParams> pCaloParams ;

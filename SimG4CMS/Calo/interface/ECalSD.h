@@ -7,6 +7,7 @@
 // Use in your sensitive detector builder:
 //    ECalSD* ecalSD = new ECalSD(SDname, new CaloNumberingScheme());
 ///////////////////////////////////////////////////////////////////////////////
+//#define plotDebug
 
 #include "SimG4CMS/Calo/interface/CaloSD.h"
 #include "SimG4CMS/Calo/interface/EnergyResolutionVsLumi.h"
@@ -16,6 +17,9 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include "G4String.hh"
+#ifdef plotDebug
+#include <TH2F.h>
+#endif
 #include <string>
 #include <map>
 
@@ -29,18 +33,20 @@ public:
 
   ECalSD(G4String, const DDCompactView &, const SensitiveDetectorCatalog &,
 	 edm::ParameterSet const & p, const SimTrackManager*);
-  virtual ~ECalSD();
-  virtual double                    getEnergyDeposit(G4Step*);
+  ~ECalSD() override;
+  double                    getEnergyDeposit(G4Step*) override;
   virtual uint16_t                  getRadiationLength(G4Step *);
   virtual uint16_t                  getLayerIDForTimeSim(G4Step *);
-  virtual uint32_t                  setDetUnitId(G4Step*);
+  uint32_t                  setDetUnitId(G4Step*) override;
   void                              setNumberingScheme(EcalNumberingScheme*);
-  virtual int                       getTrackID(G4Track*);
-  virtual uint16_t                  getDepth(G4Step*);
+  int                       getTrackID(G4Track*) override;
+  uint16_t                  getDepth(G4Step*) override;
+
 private:    
   void                              initMap(G4String, const DDCompactView &);
   double                            curve_LY(G4Step*); 
   double                            crystalLength(G4LogicalVolume*);
+  double                            crystalDepth(G4LogicalVolume*, const G4ThreeVector&);
   void                              getBaseNumber(const G4Step*); 
   double                            getBirkL3(G4Step*);
   std::vector<double>               getDDDArray(const std::string&,
@@ -60,7 +66,9 @@ private:
   EcalBaseNumber                    theBaseNumber;
   EnergyResolutionVsLumi            ageing;
   bool                              ageingWithSlopeLY;
-
+#ifdef plotDebug
+  TH2F                             *g2L_[4];
+#endif
 };
 
 #endif // ECalSD_h

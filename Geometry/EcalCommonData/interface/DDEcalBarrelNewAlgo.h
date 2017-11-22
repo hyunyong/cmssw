@@ -31,14 +31,14 @@ class DDEcalBarrelNewAlgo : public DDAlgorithm {
 
       //Constructor and Destructor
       DDEcalBarrelNewAlgo();
-      virtual ~DDEcalBarrelNewAlgo();
+      ~DDEcalBarrelNewAlgo() override;
 
       void initialize(const DDNumericArguments      & nArgs,
 		      const DDVectorArguments       & vArgs,
 		      const DDMapArguments          & mArgs,
 		      const DDStringArguments       & sArgs,
-		      const DDStringVectorArguments & vsArgs);
-      void execute(DDCompactView& cpv);
+		      const DDStringVectorArguments & vsArgs) override;
+      void execute(DDCompactView& cpv) override;
 
       DDMaterial ddmat(  const std::string& s ) const ;
       DDName     ddname( const std::string& s ) const ;
@@ -420,7 +420,7 @@ private:
 		double              LWeb,
 		double              theta,
 		const Pt3D&         corner,
-		const DDLogicalPart logPar,
+		const DDLogicalPart& logPar,
 		double&             zee  ,
 		double              side,
 		double              front,

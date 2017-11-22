@@ -231,7 +231,7 @@ MuonAssociatorByHitsHelper::associateRecoToSimIndices(const TrackHitsCollection 
       <<n_dt_matched<<"/"<<n_csc_matched<<"/"<<n_rpc_matched<<"/"<<n_gem_matched<<" in Tracker/DT/CSC/RPC/GEM)";
 
     if (n_all>0 && n_matching_simhits == 0)
-      edm::LogWarning("MuonAssociatorByHitsHelper")
+      edm::LogVerbatim("MuonAssociatorByHitsHelper")
 	<<"*** WARNING in MuonAssociatorByHitsHelper::associateRecoToSim: no matching PSimHit found for this reco::Track !";
 
     if (n_matching_simhits != 0) {
@@ -327,7 +327,7 @@ MuonAssociatorByHitsHelper::associateRecoToSimIndices(const TrackHitsCollection 
     
   }    // loop over reco::Track
 
-  if (!tC.size()) 
+  if (tC.empty()) 
     edm::LogVerbatim("MuonAssociatorByHitsHelper")<<"0 reconstructed tracks (-->> 0 associated !)";
 
   for (IndexAssociation::iterator it = outputCollection.begin(), ed = outputCollection.end(); it != ed; ++it) {
@@ -516,7 +516,7 @@ MuonAssociatorByHitsHelper::associateSimToRecoIndices( const TrackHitsCollection
       <<n_dt_matched<<"/"<<n_csc_matched<<"/"<<n_rpc_matched<<"/"<<n_gem_matched<<" in Tracker/DT/CSC/RPC/GEM)";
     
     if (printRtS && n_all>0 && n_matching_simhits==0)
-      edm::LogWarning("MuonAssociatorByHitsHelper")
+      edm::LogVerbatim("MuonAssociatorByHitsHelper")
 	<<"*** WARNING in MuonAssociatorByHitsHelper::associateSimToReco: no matching PSimHit found for this reco::Track !";
     
     if (n_matching_simhits != 0) {
@@ -613,9 +613,14 @@ MuonAssociatorByHitsHelper::associateSimToRecoIndices( const TrackHitsCollection
 
         // Handle the case of TrackingParticles that don't have PSimHits inside, e.g. because they were made on RECOSIM only.
         if (trpart->numberOfHits()==0) {
-            // FIXME this can be made better, counting the digiSimLinks associated to this TP, but perhaps it's not worth it
-            n_tracker_recounted_simhits = tracker_nshared;
-            n_muon_simhits = muon_nshared;
+	  // FIXME this can be made better, counting the digiSimLinks associated to this TP, but perhaps it's not worth it
+	  //n_tracker_recounted_simhits = tracker_nshared;
+	  //n_muon_simhits = muon_nshared;
+	  // ---> on RECOSIM when the AbsoluteNumberOfHits_muon=True this always obtains quality=1, 
+	  //      hence no sorting is possible in case of duplicate matchings
+	  // ---> reset these variables to 1 so to keep the number of shared hits as ranking criterion
+	  n_tracker_recounted_simhits = 1;
+	  n_muon_simhits = 1;
         }	
 	n_global_simhits = n_tracker_recounted_simhits + n_muon_simhits;
 
@@ -935,6 +940,7 @@ void MuonAssociatorByHitsHelper::getMatchedIds
 	      <<"\n\t this TrackingRecHit is a DTRecSegment4D with "
 	      <<componentHits.size()<<" hits (phi:"<<phiHits.size()<<", z:"<<zHits.size()<<")";
 	    
+	    SimTrackIds.clear();
 	    std::vector<SimHitIdpr> i_SimTrackIds;
 	    int i_compHit = 0;
 	    for (std::vector<const TrackingRecHit *>::const_iterator ithit =componentHits.begin(); 
@@ -967,7 +973,7 @@ void MuonAssociatorByHitsHelper::getMatchedIds
                     
 		  } 
 		}
-	      } else if (printRtS) edm::LogWarning("MuonAssociatorByHitsHelper")
+	      } else if (printRtS) edm::LogVerbatim("MuonAssociatorByHitsHelper")
 		<<"*** WARNING in MuonAssociatorByHitsHelper::getMatchedIds, null dynamic_cast of a DT TrackingRecHit !";
 	      
 	      unsigned int i_detid = (*ithit)->geographicalId().rawId();
@@ -987,7 +993,7 @@ void MuonAssociatorByHitsHelper::getMatchedIds
 	    }	      
 	  }  // if (dtsegment)
 
-	  else if (printRtS) edm::LogWarning("MuonAssociatorByHitsHelper")
+	  else if (printRtS) edm::LogVerbatim("MuonAssociatorByHitsHelper")
 	    <<"*** WARNING in MuonAssociatorByHitsHelper::getMatchedIds, DT TrackingRecHit is neither DTRecHit1D nor DTRecSegment4D ! ";	    
 	}
       }
@@ -1036,6 +1042,7 @@ void MuonAssociatorByHitsHelper::getMatchedIds
 	    if (printRtS) edm::LogVerbatim("MuonAssociatorByHitsHelper")
 	      <<"\n\t this TrackingRecHit is a CSCSegment with "<<componentHits.size()<<" hits";
 	    
+	    SimTrackIds.clear();
 	    std::vector<SimHitIdpr> i_SimTrackIds;
 	    int i_compHit = 0;
 	    for (std::vector<const TrackingRecHit *>::const_iterator ithit =componentHits.begin(); 
@@ -1067,7 +1074,7 @@ void MuonAssociatorByHitsHelper::getMatchedIds
                     muon_matchedIds_INVALID.push_back (new uint_SimHitIdpr_pair(iH,i_SimTrackIds));
 		  }
 		}
-	      } else if (printRtS) edm::LogWarning("MuonAssociatorByHitsHelper")
+	      } else if (printRtS) edm::LogVerbatim("MuonAssociatorByHitsHelper")
 		<<"*** WARNING in MuonAssociatorByHitsHelper::getMatchedIds, null dynamic_cast of a CSC TrackingRecHit !";
 	      
 	      unsigned int i_detid = (*ithit)->geographicalId().rawId();
@@ -1087,7 +1094,7 @@ void MuonAssociatorByHitsHelper::getMatchedIds
 	    }	    
 	  }  // if (cscsegment)
 
-	  else if (printRtS) edm::LogWarning("MuonAssociatorByHitsHelper")
+	  else if (printRtS) edm::LogVerbatim("MuonAssociatorByHitsHelper")
 	    <<"*** WARNING in MuonAssociatorByHitsHelper::getMatchedIds, CSC TrackingRecHit is neither CSCRecHit2D nor CSCSegment ! ";
 	}
       }
@@ -1163,6 +1170,7 @@ void MuonAssociatorByHitsHelper::getMatchedIds
 	    if (printRtS) edm::LogVerbatim("MuonAssociatorByHitsHelper")
 	      <<"\n\t this TrackingRecHit is a GEMSegment with "<<componentHits.size()<<" hits";
 	    
+	    SimTrackIds.clear();
 	    std::vector<SimHitIdpr> i_SimTrackIds;
 	    int i_compHit = 0;
 
@@ -1195,7 +1203,7 @@ void MuonAssociatorByHitsHelper::getMatchedIds
                     muon_matchedIds_INVALID.push_back (new uint_SimHitIdpr_pair(iH,i_SimTrackIds));
 		  }
 		}
-	      } else if (printRtS) edm::LogWarning("MuonAssociatorByHitsHelper")
+	      } else if (printRtS) edm::LogVerbatim("MuonAssociatorByHitsHelper")
 		<<"*** WARNING in MuonAssociatorByHitsHelper::getMatchedIds, null dynamic_cast of a GEM TrackingRecHit !";
 	      
 	      if (printRtS){
@@ -1206,7 +1214,7 @@ void MuonAssociatorByHitsHelper::getMatchedIds
 		i_hitlog = i_hitlog + write_matched_simtracks(i_SimTrackIds);
 		edm::LogVerbatim("MuonAssociatorByHitsHelper") << i_hitlog;
 	      }
-	      
+
 	      SimTrackIds.insert(SimTrackIds.end(),i_SimTrackIds.begin(),i_SimTrackIds.end());
 	    }	    
 	  }  // if (gemsegment)	  
@@ -1215,7 +1223,7 @@ void MuonAssociatorByHitsHelper::getMatchedIds
       }
       else if (printRtS) edm::LogVerbatim("MuonAssociatorByHitsHelper")
 			   <<"TrackingRecHit "<<iloop<<"  *** WARNING *** Unexpected Hit from Detector = "<<det;
-    }
+    } // end if (det == DetId::Muon && UseMuon)
     else continue;
     
     hitlog = hitlog + write_matched_simtracks(SimTrackIds);

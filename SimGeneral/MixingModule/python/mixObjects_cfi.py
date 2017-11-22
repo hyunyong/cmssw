@@ -119,7 +119,7 @@ if fastSim.isChosen():
     mixSimVertices.input = cms.VInputTag(cms.InputTag("famosSimHits"))
     
 mixHepMCProducts = cms.PSet(
-    makeCrossingFrame = cms.untracked.bool(False),
+    makeCrossingFrame = cms.untracked.bool(True),
     input = cms.VInputTag(cms.InputTag("generatorSmeared"),cms.InputTag("generator")),
     type = cms.string('HepMCProduct')
 )
@@ -221,6 +221,14 @@ mixPCFHepMCProducts = cms.PSet(
 
 from SimCalorimetry.HGCalSimProducers.hgcalDigitizer_cfi import hgceeDigitizer, hgchefrontDigitizer
 
+from Configuration.Eras.Modifier_run2_GEM_2017_cff import run2_GEM_2017
+run2_GEM_2017.toModify( theMixObjects,
+    mixSH = dict(
+        input = theMixObjects.mixSH.input + [ cms.InputTag("g4SimHits","MuonGEMHits") ],
+        subdets = theMixObjects.mixSH.subdets + [ 'MuonGEMHits' ],
+        crossingFrames = theMixObjects.mixSH.crossingFrames + [ 'MuonGEMHits' ]
+    )
+)
 from Configuration.Eras.Modifier_run3_GEM_cff import run3_GEM
 run3_GEM.toModify( theMixObjects,
     mixSH = dict(

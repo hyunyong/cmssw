@@ -6,8 +6,8 @@
  *  \author J. Lee - UoS
  */
 
-#include <FWCore/Framework/interface/ConsumesCollector.h>
-#include <FWCore/Framework/interface/EDProducer.h>
+#include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/Framework/interface/global/EDProducer.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
@@ -24,30 +24,24 @@ namespace edm {
   class ConfigurationDescriptions;
 }
 
-class GEMDigiToRawModule : public edm::EDProducer {
+class GEMDigiToRawModule : public edm::global::EDProducer<> {
  public:
   
   /// Constructor
   GEMDigiToRawModule(const edm::ParameterSet & pset);
 
-  /// Destructor
-  virtual ~GEMDigiToRawModule(){}
-
-  virtual void beginRun(const edm::Run &, const edm::EventSetup&);
+  void doBeginRun_(edm::Run const& rp, edm::EventSetup const& c) override;
+  
+  //  void streamBeginRun(edm::StreamID, edm::Run const&, edm::EventSetup const&) const override;
 
   // Operations
-  virtual void produce( edm::Event&, const edm::EventSetup& );
+  void produce( edm::StreamID, edm::Event&, const edm::EventSetup& ) const override;
 
   // Fill parameters descriptions
   static void fillDescriptions(edm::ConfigurationDescriptions & descriptions);
 
  private:
 
-  uint16_t checkCRC(uint8_t b1010, uint16_t BC, uint8_t b1100,
-		    uint8_t EC, uint8_t Flag, uint8_t b1110,
-		    uint16_t ChipID, uint64_t msData, uint64_t lsData);
-  uint16_t crc_cal(uint16_t crc_in, uint16_t dato);
-  
   int event_type_;
   edm::EDGetTokenT<GEMDigiCollection> digi_token;
   bool useDBEMap_;

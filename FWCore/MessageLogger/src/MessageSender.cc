@@ -51,8 +51,8 @@ namespace  {
     }
 
     bool operator==(ErrorSummaryMapKey const& iOther) const {
-      return ((0==category.compare(iOther.category)) and
-              (0==module.compare(iOther.module)) and
+      return ((iOther.category==category) and
+              (iOther.module==module) and
               (severity.getLevel() ==iOther.severity.getLevel()));
     }
     size_t smallHash() const {
@@ -97,7 +97,7 @@ MessageSender::MessageSender( ELseverityLevel const & sev,
 // boost::thread_resoruce_error is thrown at static destruction time,
 // if the MessageLogger library is loaded -- even if it is not used.
 void MessageSender::ErrorObjDeleter::operator()(ErrorObj * errorObjPtr) {
-  if (errorObjPtr == 0) {
+  if (errorObjPtr == nullptr) {
     return;
   }
   try 
@@ -170,7 +170,7 @@ namespace edm {
   
   bool FreshErrorsExist(unsigned int iStreamID) {
     assert(iStreamID<errorSummaryMaps.size());
-    return  errorSummaryMaps[iStreamID].size()>0;
+    return  !errorSummaryMaps[iStreamID].empty();
   }
   
   std::vector<ErrorSummaryEntry> LoggedErrorsSummary(unsigned int iStreamID) {

@@ -14,7 +14,7 @@ from EventFilter.L1TRawToDigi.caloStage2Digis_cfi import *
 from EventFilter.L1TRawToDigi.bmtfDigis_cfi import *
 
 # OMTF
-#from EventFilter.L1TRawToDigi.omtfStage2Digis_cfi import *
+from EventFilter.L1TRawToDigi.omtfStage2Digis_cfi import *
 
 # EMTF
 from EventFilter.L1TRawToDigi.emtfStage2Digis_cfi import *
@@ -33,7 +33,7 @@ l1tStage2Unpack = cms.Sequence(
 l1tStage2UnpackValidationEvents = cms.Sequence(
     caloStage2Digis +
     bmtfDigis  +
-    #omtfStage2Digis +
+    omtfStage2Digis +
     emtfStage2Digis +
     gtStage2Digis
 )
@@ -63,10 +63,10 @@ valBmtfDigis.DTDigi_Theta_Source = cms.InputTag("bmtfDigis")
 # OMTF
 from L1Trigger.L1TMuonOverlap.simOmtfDigis_cfi import *
 valOmtfDigis = simOmtfDigis.clone()
-valOmtfDigis.srcDTPh = cms.InputTag('bmtfDigis')
-valOmtfDigis.srcDTTh = cms.InputTag('bmtfDigis')
-valOmtfDigis.srcCSC = cms.InputTag('emtfStage2Digis')
-valOmtfDigis.srcRPC = cms.InputTag('muonRPCDigis')
+valOmtfDigis.srcDTPh = cms.InputTag('omtfStage2Digis')
+valOmtfDigis.srcDTTh = cms.InputTag('omtfStage2Digis')
+valOmtfDigis.srcCSC = cms.InputTag('omtfStage2Digis')
+valOmtfDigis.srcRPC = cms.InputTag('omtfStage2Digis')
 
 # EMTF
 from L1Trigger.L1TMuonEndCap.simEmtfDigis_cfi import *
@@ -119,6 +119,7 @@ Stage2L1HardwareValidationForValidationEvents = cms.Sequence(
 from DQM.L1TMonitor.L1TdeStage2CaloLayer1_cfi import *
 
 # CaloLayer2
+from DQM.L1TMonitor.L1TdeStage2CaloLayer2_cfi import *
 from DQM.L1TMonitor.L1TStage2CaloLayer2_cfi import *
 from DQM.L1TMonitor.L1TStage2CaloLayer2Emul_cfi import *
 
@@ -150,6 +151,7 @@ l1tStage2EmulatorOnlineDQMValidationEvents = cms.Sequence(
     l1tdeStage2CaloLayer1 +
     # We process both layer2 and layer2emu in same sourceclient
     # to be able to divide them in the MonitorClient
+    l1tdeStage2CaloLayer2 +
     l1tStage2CaloLayer2 + l1tStage2CaloLayer2Emul +
     l1tdeStage2Bmtf +
     l1tdeStage2Omtf +

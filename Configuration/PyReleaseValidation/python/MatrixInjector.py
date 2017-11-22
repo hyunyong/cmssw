@@ -192,24 +192,26 @@ class MatrixInjector(object):
             wmsplit['RECODR2_2016reHLT']=5
             wmsplit['RECODR2_50nsreHLT_HIPM']=5
             wmsplit['RECODR2_25nsreHLT_HIPM']=5
-            wmsplit['RECODR2_2016reHLT_HIPM']=5
-            wmsplit['RECODR2_2016reHLT_skimSingleMu']=5
-            wmsplit['RECODR2_2016reHLT_skimDoubleEG']=5
-            wmsplit['RECODR2_2016reHLT_skimMuonEG']=5
-            wmsplit['RECODR2_2016reHLT_skimJetHT']=5
-            wmsplit['RECODR2_2016reHLT_skimMET']=5
-            wmsplit['RECODR2_2016reHLT_skimSinglePh']=5
-            wmsplit['RECODR2_2016reHLT_skimMuOnia']=5
-            wmsplit['RECODR2_2016reHLT_skimSingleMu_HIPM']=5
-            wmsplit['RECODR2_2016reHLT_skimDoubleEG_HIPM']=5
-            wmsplit['RECODR2_2016reHLT_skimMuonEG_HIPM']=5
-            wmsplit['RECODR2_2016reHLT_skimJetHT_HIPM']=5
-            wmsplit['RECODR2_2016reHLT_skimMET_HIPM']=5
-            wmsplit['RECODR2_2016reHLT_skimSinglePh_HIPM']=5
-            wmsplit['RECODR2_2016reHLT_skimMuOnia_HIPM']=5
+            wmsplit['RECODR2_2016reHLT_HIPM']=1
+            wmsplit['RECODR2_2016reHLT_skimSingleMu']=1
+            wmsplit['RECODR2_2016reHLT_skimDoubleEG']=1
+            wmsplit['RECODR2_2016reHLT_skimMuonEG']=1
+            wmsplit['RECODR2_2016reHLT_skimJetHT']=1
+            wmsplit['RECODR2_2016reHLT_skimMET']=1
+            wmsplit['RECODR2_2016reHLT_skimSinglePh']=1
+            wmsplit['RECODR2_2016reHLT_skimMuOnia']=1
+            wmsplit['RECODR2_2016reHLT_skimSingleMu_HIPM']=1
+            wmsplit['RECODR2_2016reHLT_skimDoubleEG_HIPM']=1
+            wmsplit['RECODR2_2016reHLT_skimMuonEG_HIPM']=1
+            wmsplit['RECODR2_2016reHLT_skimJetHT_HIPM']=1
+            wmsplit['RECODR2_2016reHLT_skimMET_HIPM']=1
+            wmsplit['RECODR2_2016reHLT_skimSinglePh_HIPM']=1
+            wmsplit['RECODR2_2016reHLT_skimMuOnia_HIPM']=1
+            wmsplit['RECODR2_2017reHLT_skimSingleMu_Prompt_Lumi']=1
             wmsplit['HLTDR2_50ns']=1
             wmsplit['HLTDR2_25ns']=1
             wmsplit['HLTDR2_2016']=1
+            wmsplit['HLTDR2_2017']=1
             wmsplit['Hadronizer']=1
             wmsplit['DIGIUP15']=1 
             wmsplit['RECOUP15']=1 
@@ -219,6 +221,15 @@ class MatrixInjector(object):
             wmsplit['RecoFull']=5
             wmsplit['DigiFullPU']=1
             wmsplit['RecoFullPU']=1
+            wmsplit['RECOHID11']=1
+            wmsplit['DigiFullTriggerPU_2023D17PU'] = 1 
+            wmsplit['RecoFullGlobalPU_2023D17PU']=1
+            wmsplit['DIGIUP17']=1
+            wmsplit['RECOUP17']=1
+            wmsplit['DIGIUP17_PU25']=1
+            wmsplit['RECOUP17_PU25']=1
+            wmsplit['DIGICOS_UP17']=1
+            wmsplit['RECOCOS_UP17']=1
 
                                     
             #import pprint
@@ -348,11 +359,11 @@ class MatrixInjector(object):
                             if acqEra:
                                 #chainDict['AcquisitionEra'][step]=(chainDict['CMSSWVersion']+'-PU_'+chainDict['nowmTasklist'][-1]['GlobalTag']).replace('::All','')+thisLabel
                                 chainDict['AcquisitionEra'][step]=chainDict['CMSSWVersion']
-                                chainDict['ProcessingString'][step]=processStrPrefix+chainDict['nowmTasklist'][-1]['GlobalTag'].replace('::All','')+thisLabel
+                                chainDict['ProcessingString'][step]=processStrPrefix+chainDict['nowmTasklist'][-1]['GlobalTag'].replace('::All','').replace('-','_')+thisLabel
                             else:
                                 #chainDict['nowmTasklist'][-1]['AcquisitionEra']=(chainDict['CMSSWVersion']+'-PU_'+chainDict['nowmTasklist'][-1]['GlobalTag']).replace('::All','')+thisLabel
                                 chainDict['nowmTasklist'][-1]['AcquisitionEra']=chainDict['CMSSWVersion']
-                                chainDict['nowmTasklist'][-1]['ProcessingString']=processStrPrefix+chainDict['nowmTasklist'][-1]['GlobalTag'].replace('::All','')+thisLabel
+                                chainDict['nowmTasklist'][-1]['ProcessingString']=processStrPrefix+chainDict['nowmTasklist'][-1]['GlobalTag'].replace('::All','').replace('-','_')+thisLabel
 
                             if (self.batchName):
                                 chainDict['nowmTasklist'][-1]['Campaign'] = chainDict['nowmTasklist'][-1]['AcquisitionEra']+self.batchName
