@@ -123,6 +123,7 @@ void GEMDQMSourceDigi::bookHistograms(DQMStore::IBooker &ibooker, edm::Run const
     int n_lay = sch->nChambers();
     for (int l=0;l<n_lay;l++){
       gemChambers.push_back(*sch->chamber(l+1));
+      //mapChIdx[*sch->chamber(l+1)] = gemChambers.size() - 1;
     }
   }
   nCh = gemChambers.size();
@@ -156,12 +157,16 @@ void GEMDQMSourceDigi::analyze(edm::Event const& event, edm::EventSetup const& e
   event.getByToken( this->tagDigi, gemDigis);
   for (auto ch : gemChambers){
     GEMDetId cId = ch.id();
+    int arrnVFATFired[ 24 ] = {0, };
     for(auto roll : ch.etaPartitions()){
       GEMDetId rId = roll->id();      
       const auto& digis_in_det = gemDigis->get(rId);
       for (auto d = digis_in_det.first; d != digis_in_det.second; ++d){
 	Digi_2D[ cId ]->Fill(d->strip(), rId.roll());
-        Digi_1D[ cId ]->Fill(findVFAT(1, roll->nstrips(), d->strip(), rId.roll()));
+        int nVFAT = findVFAT(1, roll->nstrips(), d->strip(), rId.roll());
+        if ( arrnVFATFired[ nVFAT ] != 0 ) continue;
+        Digi_1D[ cId ]->Fill(nVFAT);
+        arrnVFATFired[ nVFAT ] = 1;
       }
     }
   }
