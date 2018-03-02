@@ -16,7 +16,7 @@ options.register( 'runNumber',
                   VarParsing.VarParsing.varType.int,
                   "Run number to be uploaded." )
 options.register( 'destinationConnection',
-                  'sqlite_file:GEMEMap.db', #default value
+                  'sqlite_file:GEMELMap.db', #default value
                   VarParsing.VarParsing.multiplicity.singleton,
                   VarParsing.VarParsing.varType.string,
                   "Connection string to the DB where payloads will be possibly written." )
