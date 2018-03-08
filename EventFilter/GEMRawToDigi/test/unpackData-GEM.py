@@ -69,11 +69,17 @@ options.register('evtDisp',
                  VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.bool,
                  'Produce histos for individual events')
+options.register('inputPath',
+                 '',
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.string,
+                 "input files path")
+
 
 options.parseArguments()
 
 
-pname="Raw2Digi"
+pname="GEMRECO"
 if (options.process!=""):
     pname=options.process
 #process = cms.Process(pname)
@@ -82,7 +88,7 @@ if (options.process!=""):
 #process = cms.Process(pname, eras.Run2_2017, eras.run2_GEM_2017_MCTest)
 from Configuration.StandardSequences.Eras import eras
 
-process = cms.Process('RECO',eras.Run2_2017,eras.run2_GEM_2017_MCTest)
+process = cms.Process(pname,eras.Run2_2017)
 
 process.load('Configuration.StandardSequences.L1Reco_cff')
 process.load('Configuration.StandardSequences.Reconstruction_cff')
@@ -118,6 +124,12 @@ else :
         fileNames = cms.untracked.vstring (options.inputFiles),
         skipEvents=cms.untracked.uint32(options.skipEvents)
     )
+    import os
+    tPath = options.inputPath+"/"
+    for f in [x for x in os.listdir(tPath) if x.endswith(".root")]:
+      process.source.fileNames.append('file:'+tPath+f)
+    print process.source.fileNames
+
 
 if (options.json):
     import FWCore.PythonUtilities.LumiList as LumiList
@@ -147,7 +159,7 @@ if (options.debug):
 
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase1_2017_realistic', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, '101X_dataRun2_HLT_Candidate_2018_03_07_17_38_52')
 #process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:startup', '')
 
 # validation event filter
@@ -167,29 +179,18 @@ process.dumpRaw = cms.EDAnalyzer(
 
 # raw to digi
 process.load('EventFilter.GEMRawToDigi.muonGEMDigis_cfi')
-process.load('EventFilter.GEMRawToDigi.GEMSQLiteCabling_cfi')
-process.muonGEMDigis.InputLabel = cms.InputTag('rawDataCollector')
+#process.muonGEMDigis.InputLabel = cms.InputTag('rawDataCollector')
 process.muonGEMDigis.useDBEMap = True
 
 #process.load('Geometry.GEMGeometryBuilder.gemGeometry_cfi')
 process.load('RecoLocalMuon.GEMRecHit.gemRecHits_cfi')
 
-process.gemRecHits = cms.EDProducer("GEMRecHitProducer",
-    recAlgoConfig = cms.PSet(),
-    recAlgo = cms.string('GEMRecHitStandardAlgo'),
-    gemDigiLabel = cms.InputTag("muonGEMDigis"),
-    # maskSource = cms.string('File'),
-    # maskvecfile = cms.FileInPath('RecoLocalMuon/GEMRecHit/data/GEMMaskVec.dat'),
-    # deadSource = cms.string('File'),
-    # deadvecfile = cms.FileInPath('RecoLocalMuon/GEMRecHit/data/GEMDeadVec.dat')
-)
 
 
 # Path and EndPath definitions
 process.path = cms.Path(
     #process.validationEventFilter
-    process.dumpRaw
-    +process.muonGEMDigis
+    process.muonGEMDigis
     +process.gemRecHits
 )
 
@@ -219,3 +220,5 @@ if (options.edm):
     process.out = cms.EndPath(
         process.output
     )
+
+process.MessageLogger.cerr.FwkReport.reportEvery = 1000
