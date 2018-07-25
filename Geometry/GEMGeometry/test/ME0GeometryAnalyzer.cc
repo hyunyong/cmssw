@@ -157,14 +157,16 @@ ME0GeometryAnalyzer::analyze( const edm::Event& /*iEvent*/, const edm::EventSetu
     int nLayers(ch->nLayers());
     ofos << "\tME0Chamber " << i << ", ME0DetId = " << chId.rawId() << ", " << chId << " has " << nLayers << " layers." << endl;
     int j = 1;
-    for (auto la : ch->layers()){
+    //for (auto la : ch->layers()){
+      auto la = ch->layers()[0];
       ME0DetId laId(la->id());
       int nRolls(la->nEtaPartitions());
       ofos << "\t\tME0Layer " << j << ", ME0DetId = " << laId.rawId() << ", " << laId << " has " << nRolls << " eta partitions." << endl;
 
       int k = 1;
       auto& rolls(la->etaPartitions());
-      for (auto roll : rolls){
+      //for (auto roll : rolls){
+        auto roll = rolls[0];
 	// for (auto roll : pDD->etaPartitions()){
 	ME0DetId rId(roll->id());
 	ofos<<"\t\t\tME0EtaPartition " << k << " , ME0DetId = " << rId.rawId() << ", " << rId << endl;
@@ -239,10 +241,12 @@ ME0GeometryAnalyzer::analyze( const edm::Event& /*iEvent*/, const edm::EventSetu
 	       << "\t\t\t\tcenter(x,y,z) = (" << cx << ", " << cy << ", " << cz << "), center(eta,phi) = (" << ceta << ", " << cphi << ")" << endl
 	       << "\t\t\t\tbottom(x,y,z) = (" << bx << ", " << by << ", " << bz << "), bottom(eta,phi) = (" << beta << ", " << bphi << ")" << endl
 	       << "\t\t\t\tpitch (top,center,bottom) = " << topPitch << " " << pitch << " " << bottomPitch << ", dEta = " << deta << ", dPhi = " << dphi << endl
-	       << "\t\t\t\tlocal pos at strip 1 " << lEdge1 << " strip N " << lEdgeN << endl;
+	       << "\t\t\t\tlocal pos at strip 1 " << lEdge1 << " strip N " << lEdgeN << endl
+	       << "\t\t\t\tGlobal pos at strip 1 " << cstrip1 << " strip N " << cstripN << endl;
+             
 	++k;
-      } ++j;
-    } ++i;
+      //} ++j;
+    //} ++i;
   }
   ofos << dashedLine_ << " end" << endl;
 }

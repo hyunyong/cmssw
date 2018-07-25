@@ -136,10 +136,11 @@ GEMGeometryAnalyzer::analyze( const edm::Event& /*iEvent*/, const edm::EventSetu
 	  ofos << "        GEMSuperChamber " << i << ", GEMDetId = " << schId.rawId() << ", " << schId << " has " << sch->nChambers() << " chambers." << endl;
 	  // checking the dimensions of each partition & chamber
 	  int j = 1;
-	  for (auto ch : sch->chambers()){
+	  //for (auto ch : sch->chambers()){
+	    auto ch = sch->chambers()[0];
 	    GEMDetId chId(ch->id());
-	    int nRolls(ch->nEtaPartitions());
-	    ofos << "          GEMChamber " << j << ", GEMDetId = " << chId.rawId() << ", " << chId << " has " << nRolls << " eta partitions." << endl;
+	    //int nRolls(ch->nEtaPartitions());
+	    //ofos << "          GEMChamber " << j << ", GEMDetId = " << chId.rawId() << ", " << chId << " has " << nRolls << " eta partitions." << endl;
 	    
 	    int k = 1;
 	    auto& rolls(ch->etaPartitions());
@@ -156,7 +157,8 @@ GEMGeometryAnalyzer::analyze( const edm::Event& /*iEvent*/, const edm::EventSetu
 	     *   sum of all dx + gap = chamber height
 	     */      
 	    
-	    for (auto roll : rolls){
+	    //for (auto roll : rolls){
+              auto roll = rolls[0];
 	      GEMDetId rId(roll->id());
 	      ofos<<"            GEMEtaPartition " << k << ", GEMDetId = " << rId.rawId() << ", " << rId << endl;
 	      
@@ -228,12 +230,13 @@ GEMGeometryAnalyzer::analyze( const edm::Event& /*iEvent*/, const edm::EventSetu
 		     << "    \t\tcenter(x,y,z)[cm] = (" << cx << ", " << cy << ", " << cz << "), center(eta,phi) = (" << ceta << ", " << cphi << ")" << endl
 		     << "    \t\tbottom(x,y,z)[cm] = (" << bx << ", " << by << ", " << bz << "), bottom(eta,phi) = (" << beta << ", " << bphi << ")" << endl
 		     << "    \t\tpitch (top,center,bottom) = (" << topPitch << ", " << pitch << ", " << bottomPitch << "), dEta = " << deta 
-		     << ", dPhi = " << dphi << endl;
+		     << ", dPhi = " << dphi << endl
+                     << "    \t\tGlobal pos at strip 1 " << cstrip1 << " strip N " << cstripN << endl;
 	      }
 	      ++k;
-	    }
+	    //}
 	    ++j;
-	  }
+	  //}
 	  ++i;
 	}
       }

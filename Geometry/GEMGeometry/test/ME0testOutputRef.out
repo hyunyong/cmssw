@@ -1,0 +1,449 @@
+======================== Opening output file
+ME0GeometryAnalyzer: Analyzer...
+start --------------------------------------------------------------------------------------------------------
+ Geometry node for ME0Geom is  0x7f8d4a095b00
+ detTypes       	1944
+ GeomDetUnit       	1728
+ GeomDet           	1980
+ GeomDetUnit DetIds	1728
+ eta partitions 	1728
+ layers         	216
+ chambers       	36
+ total number of strips	663552
+ total number of pads  	331776
+ME0GeometryAnalyzer: Begin iteration over geometry...
+iter --------------------------------------------------------------------------------------------------------
+ME0GeometryAnalyzerBegin ME0Geometry TEST
+	ME0Chamber 1, ME0DetId = 704643078,  Region 1 Layer 0 Chamber 1 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643334,  Region 1 Layer 1 Chamber 1 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651526,  Region 1 Layer 1 Chamber 1 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (149.512, -2.48538e-13, 527), top (eta,phi) = (1.97251, 0)
+				center(x,y,z) = (142.132, -2.45827e-13, 527), center(eta,phi) = (2.0213, 0)
+				bottom(x,y,z) = (134.752, -2.43116e-13, 527), bottom(eta,phi) = (2.07287, 0)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 10 strip N -10
+	ME0Chamber 1, ME0DetId = 704643082,  Region 1 Layer 0 Chamber 2 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643338,  Region 1 Layer 1 Chamber 2 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651530,  Region 1 Layer 1 Chamber 2 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (140.496, 51.1362, 527), top (eta,phi) = (1.97251, 20)
+				center(x,y,z) = (133.56, 48.612, 527), center(eta,phi) = (2.0213, 20)
+				bottom(x,y,z) = (126.625, 46.0878, 527), bottom(eta,phi) = (2.07287, 20)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 30 strip N 10
+	ME0Chamber 1, ME0DetId = 704643086,  Region 1 Layer 0 Chamber 3 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643342,  Region 1 Layer 1 Chamber 3 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651534,  Region 1 Layer 1 Chamber 3 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (114.533, 96.1046, 527), top (eta,phi) = (1.97251, 40)
+				center(x,y,z) = (108.879, 91.3606, 527), center(eta,phi) = (2.0213, 40)
+				bottom(x,y,z) = (103.226, 86.6167, 527), bottom(eta,phi) = (2.07287, 40)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 50 strip N 30
+	ME0Chamber 1, ME0DetId = 704643090,  Region 1 Layer 0 Chamber 4 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643346,  Region 1 Layer 1 Chamber 4 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651538,  Region 1 Layer 1 Chamber 4 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (74.7561, 129.481, 527), top (eta,phi) = (1.97251, 60)
+				center(x,y,z) = (71.066, 123.09, 527), center(eta,phi) = (2.0213, 60)
+				bottom(x,y,z) = (67.3758, 116.698, 527), bottom(eta,phi) = (2.07287, 60)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 70 strip N 50
+	ME0Chamber 1, ME0DetId = 704643094,  Region 1 Layer 0 Chamber 5 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643350,  Region 1 Layer 1 Chamber 5 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651542,  Region 1 Layer 1 Chamber 5 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (25.9625, 147.241, 527), top (eta,phi) = (1.97251, 80)
+				center(x,y,z) = (24.6809, 139.973, 527), center(eta,phi) = (2.0213, 80)
+				bottom(x,y,z) = (23.3994, 132.704, 527), bottom(eta,phi) = (2.07287, 80)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 90 strip N 70
+	ME0Chamber 1, ME0DetId = 704643098,  Region 1 Layer 0 Chamber 6 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643354,  Region 1 Layer 1 Chamber 6 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651546,  Region 1 Layer 1 Chamber 6 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-25.9625, 147.241, 527), top (eta,phi) = (1.97251, 100)
+				center(x,y,z) = (-24.6809, 139.973, 527), center(eta,phi) = (2.0213, 100)
+				bottom(x,y,z) = (-23.3994, 132.704, 527), bottom(eta,phi) = (2.07287, 100)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 110 strip N 90
+	ME0Chamber 1, ME0DetId = 704643102,  Region 1 Layer 0 Chamber 7 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643358,  Region 1 Layer 1 Chamber 7 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651550,  Region 1 Layer 1 Chamber 7 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-74.7561, 129.481, 527), top (eta,phi) = (1.97251, 120)
+				center(x,y,z) = (-71.066, 123.09, 527), center(eta,phi) = (2.0213, 120)
+				bottom(x,y,z) = (-67.3758, 116.698, 527), bottom(eta,phi) = (2.07287, 120)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 130 strip N 110
+	ME0Chamber 1, ME0DetId = 704643106,  Region 1 Layer 0 Chamber 8 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643362,  Region 1 Layer 1 Chamber 8 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651554,  Region 1 Layer 1 Chamber 8 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-114.533, 96.1046, 527), top (eta,phi) = (1.97251, 140)
+				center(x,y,z) = (-108.879, 91.3606, 527), center(eta,phi) = (2.0213, 140)
+				bottom(x,y,z) = (-103.226, 86.6167, 527), bottom(eta,phi) = (2.07287, 140)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 150 strip N 130
+	ME0Chamber 1, ME0DetId = 704643110,  Region 1 Layer 0 Chamber 9 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643366,  Region 1 Layer 1 Chamber 9 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651558,  Region 1 Layer 1 Chamber 9 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-140.496, 51.1362, 527), top (eta,phi) = (1.97251, 160)
+				center(x,y,z) = (-133.56, 48.612, 527), center(eta,phi) = (2.0213, 160)
+				bottom(x,y,z) = (-126.625, 46.0878, 527), bottom(eta,phi) = (2.07287, 160)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 170 strip N 150
+	ME0Chamber 1, ME0DetId = 704643114,  Region 1 Layer 0 Chamber 10 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643370,  Region 1 Layer 1 Chamber 10 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651562,  Region 1 Layer 1 Chamber 10 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-149.512, -1.20373e-13, 527), top (eta,phi) = (1.97251, 179)
+				center(x,y,z) = (-142.132, -1.23988e-13, 527), center(eta,phi) = (2.0213, 179)
+				bottom(x,y,z) = (-134.752, -1.27603e-13, 527), bottom(eta,phi) = (2.07287, 179)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -170 strip N 170
+	ME0Chamber 1, ME0DetId = 704643118,  Region 1 Layer 0 Chamber 11 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643374,  Region 1 Layer 1 Chamber 11 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651566,  Region 1 Layer 1 Chamber 11 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-140.496, -51.1362, 527), top (eta,phi) = (1.97251, 200)
+				center(x,y,z) = (-133.56, -48.612, 527), center(eta,phi) = (2.0213, 200)
+				bottom(x,y,z) = (-126.625, -46.0878, 527), bottom(eta,phi) = (2.07287, 200)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -150 strip N -170
+	ME0Chamber 1, ME0DetId = 704643122,  Region 1 Layer 0 Chamber 12 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643378,  Region 1 Layer 1 Chamber 12 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651570,  Region 1 Layer 1 Chamber 12 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-114.533, -96.1046, 527), top (eta,phi) = (1.97251, 220)
+				center(x,y,z) = (-108.879, -91.3606, 527), center(eta,phi) = (2.0213, 220)
+				bottom(x,y,z) = (-103.226, -86.6167, 527), bottom(eta,phi) = (2.07287, 220)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -130 strip N -150
+	ME0Chamber 1, ME0DetId = 704643126,  Region 1 Layer 0 Chamber 13 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643382,  Region 1 Layer 1 Chamber 13 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651574,  Region 1 Layer 1 Chamber 13 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-74.7561, -129.481, 527), top (eta,phi) = (1.97251, 240)
+				center(x,y,z) = (-71.066, -123.09, 527), center(eta,phi) = (2.0213, 240)
+				bottom(x,y,z) = (-67.3758, -116.698, 527), bottom(eta,phi) = (2.07287, 240)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -110 strip N -130
+	ME0Chamber 1, ME0DetId = 704643130,  Region 1 Layer 0 Chamber 14 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643386,  Region 1 Layer 1 Chamber 14 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651578,  Region 1 Layer 1 Chamber 14 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-25.9625, -147.241, 527), top (eta,phi) = (1.97251, 260)
+				center(x,y,z) = (-24.6809, -139.973, 527), center(eta,phi) = (2.0213, 260)
+				bottom(x,y,z) = (-23.3994, -132.704, 527), bottom(eta,phi) = (2.07287, 260)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -90 strip N -110
+	ME0Chamber 1, ME0DetId = 704643134,  Region 1 Layer 0 Chamber 15 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643390,  Region 1 Layer 1 Chamber 15 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651582,  Region 1 Layer 1 Chamber 15 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (25.9625, -147.241, 527), top (eta,phi) = (1.97251, 280)
+				center(x,y,z) = (24.6809, -139.973, 527), center(eta,phi) = (2.0213, 280)
+				bottom(x,y,z) = (23.3994, -132.704, 527), bottom(eta,phi) = (2.07287, 280)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -70 strip N -90
+	ME0Chamber 1, ME0DetId = 704643138,  Region 1 Layer 0 Chamber 16 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643394,  Region 1 Layer 1 Chamber 16 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651586,  Region 1 Layer 1 Chamber 16 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (74.7561, -129.481, 527), top (eta,phi) = (1.97251, 300)
+				center(x,y,z) = (71.066, -123.09, 527), center(eta,phi) = (2.0213, 300)
+				bottom(x,y,z) = (67.3758, -116.698, 527), bottom(eta,phi) = (2.07287, 300)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -50 strip N -70
+	ME0Chamber 1, ME0DetId = 704643142,  Region 1 Layer 0 Chamber 17 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643398,  Region 1 Layer 1 Chamber 17 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651590,  Region 1 Layer 1 Chamber 17 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (114.533, -96.1046, 527), top (eta,phi) = (1.97251, 320)
+				center(x,y,z) = (108.879, -91.3606, 527), center(eta,phi) = (2.0213, 320)
+				bottom(x,y,z) = (103.226, -86.6167, 527), bottom(eta,phi) = (2.07287, 320)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -30 strip N -50
+	ME0Chamber 1, ME0DetId = 704643146,  Region 1 Layer 0 Chamber 18 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643402,  Region 1 Layer 1 Chamber 18 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651594,  Region 1 Layer 1 Chamber 18 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (140.496, -51.1362, 527), top (eta,phi) = (1.97251, 340)
+				center(x,y,z) = (133.56, -48.612, 527), center(eta,phi) = (2.0213, 340)
+				bottom(x,y,z) = (126.625, -46.0878, 527), bottom(eta,phi) = (2.07287, 340)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 340
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -10 strip N -30
+	ME0Chamber 1, ME0DetId = 704643076,  Region -1 Layer 0 Chamber 1 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643332,  Region -1 Layer 1 Chamber 1 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651524,  Region -1 Layer 1 Chamber 1 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (149.512, 1.75301e-13, -527), top (eta,phi) = (-1.97251, 0)
+				center(x,y,z) = (142.132, 1.76205e-13, -527), center(eta,phi) = (-2.0213, 0)
+				bottom(x,y,z) = (134.752, 1.77108e-13, -527), bottom(eta,phi) = (-2.07287, 0)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -10 strip N 10
+	ME0Chamber 1, ME0DetId = 704643080,  Region -1 Layer 0 Chamber 2 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643336,  Region -1 Layer 1 Chamber 2 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651528,  Region -1 Layer 1 Chamber 2 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (140.496, 51.1362, -527), top (eta,phi) = (-1.97251, 20)
+				center(x,y,z) = (133.56, 48.612, -527), center(eta,phi) = (-2.0213, 20)
+				bottom(x,y,z) = (126.625, 46.0878, -527), bottom(eta,phi) = (-2.07287, 20)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 10 strip N 30
+	ME0Chamber 1, ME0DetId = 704643084,  Region -1 Layer 0 Chamber 3 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643340,  Region -1 Layer 1 Chamber 3 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651532,  Region -1 Layer 1 Chamber 3 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (114.533, 96.1046, -527), top (eta,phi) = (-1.97251, 40)
+				center(x,y,z) = (108.879, 91.3606, -527), center(eta,phi) = (-2.0213, 40)
+				bottom(x,y,z) = (103.226, 86.6167, -527), bottom(eta,phi) = (-2.07287, 40)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 30 strip N 50
+	ME0Chamber 1, ME0DetId = 704643088,  Region -1 Layer 0 Chamber 4 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643344,  Region -1 Layer 1 Chamber 4 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651536,  Region -1 Layer 1 Chamber 4 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (74.7561, 129.481, -527), top (eta,phi) = (-1.97251, 60)
+				center(x,y,z) = (71.066, 123.09, -527), center(eta,phi) = (-2.0213, 60)
+				bottom(x,y,z) = (67.3758, 116.698, -527), bottom(eta,phi) = (-2.07287, 60)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 50 strip N 70
+	ME0Chamber 1, ME0DetId = 704643092,  Region -1 Layer 0 Chamber 5 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643348,  Region -1 Layer 1 Chamber 5 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651540,  Region -1 Layer 1 Chamber 5 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (25.9625, 147.241, -527), top (eta,phi) = (-1.97251, 80)
+				center(x,y,z) = (24.6809, 139.973, -527), center(eta,phi) = (-2.0213, 80)
+				bottom(x,y,z) = (23.3994, 132.704, -527), bottom(eta,phi) = (-2.07287, 80)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 70 strip N 90
+	ME0Chamber 1, ME0DetId = 704643096,  Region -1 Layer 0 Chamber 6 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643352,  Region -1 Layer 1 Chamber 6 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651544,  Region -1 Layer 1 Chamber 6 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-25.9625, 147.241, -527), top (eta,phi) = (-1.97251, 100)
+				center(x,y,z) = (-24.6809, 139.973, -527), center(eta,phi) = (-2.0213, 100)
+				bottom(x,y,z) = (-23.3994, 132.704, -527), bottom(eta,phi) = (-2.07287, 100)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 90 strip N 110
+	ME0Chamber 1, ME0DetId = 704643100,  Region -1 Layer 0 Chamber 7 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643356,  Region -1 Layer 1 Chamber 7 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651548,  Region -1 Layer 1 Chamber 7 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-74.7561, 129.481, -527), top (eta,phi) = (-1.97251, 120)
+				center(x,y,z) = (-71.066, 123.09, -527), center(eta,phi) = (-2.0213, 120)
+				bottom(x,y,z) = (-67.3758, 116.698, -527), bottom(eta,phi) = (-2.07287, 120)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 110 strip N 130
+	ME0Chamber 1, ME0DetId = 704643104,  Region -1 Layer 0 Chamber 8 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643360,  Region -1 Layer 1 Chamber 8 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651552,  Region -1 Layer 1 Chamber 8 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-114.533, 96.1046, -527), top (eta,phi) = (-1.97251, 140)
+				center(x,y,z) = (-108.879, 91.3606, -527), center(eta,phi) = (-2.0213, 140)
+				bottom(x,y,z) = (-103.226, 86.6167, -527), bottom(eta,phi) = (-2.07287, 140)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 130 strip N 150
+	ME0Chamber 1, ME0DetId = 704643108,  Region -1 Layer 0 Chamber 9 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643364,  Region -1 Layer 1 Chamber 9 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651556,  Region -1 Layer 1 Chamber 9 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-140.496, 51.1362, -527), top (eta,phi) = (-1.97251, 160)
+				center(x,y,z) = (-133.56, 48.612, -527), center(eta,phi) = (-2.0213, 160)
+				bottom(x,y,z) = (-126.625, 46.0878, -527), bottom(eta,phi) = (-2.07287, 160)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 150 strip N 170
+	ME0Chamber 1, ME0DetId = 704643112,  Region -1 Layer 0 Chamber 10 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643368,  Region -1 Layer 1 Chamber 10 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651560,  Region -1 Layer 1 Chamber 10 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-149.512, 2.30229e-13, -527), top (eta,phi) = (-1.97251, 181)
+				center(x,y,z) = (-142.132, 2.28421e-13, -527), center(eta,phi) = (-2.0213, 181)
+				bottom(x,y,z) = (-134.752, 2.26614e-13, -527), bottom(eta,phi) = (-2.07287, 181)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 170 strip N -170
+	ME0Chamber 1, ME0DetId = 704643116,  Region -1 Layer 0 Chamber 11 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643372,  Region -1 Layer 1 Chamber 11 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651564,  Region -1 Layer 1 Chamber 11 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-140.496, -51.1362, -527), top (eta,phi) = (-1.97251, 200)
+				center(x,y,z) = (-133.56, -48.612, -527), center(eta,phi) = (-2.0213, 200)
+				bottom(x,y,z) = (-126.625, -46.0878, -527), bottom(eta,phi) = (-2.07287, 200)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -170 strip N -150
+	ME0Chamber 1, ME0DetId = 704643120,  Region -1 Layer 0 Chamber 12 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643376,  Region -1 Layer 1 Chamber 12 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651568,  Region -1 Layer 1 Chamber 12 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-114.533, -96.1046, -527), top (eta,phi) = (-1.97251, 220)
+				center(x,y,z) = (-108.879, -91.3606, -527), center(eta,phi) = (-2.0213, 220)
+				bottom(x,y,z) = (-103.226, -86.6167, -527), bottom(eta,phi) = (-2.07287, 220)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -150 strip N -130
+	ME0Chamber 1, ME0DetId = 704643124,  Region -1 Layer 0 Chamber 13 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643380,  Region -1 Layer 1 Chamber 13 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651572,  Region -1 Layer 1 Chamber 13 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-74.7561, -129.481, -527), top (eta,phi) = (-1.97251, 240)
+				center(x,y,z) = (-71.066, -123.09, -527), center(eta,phi) = (-2.0213, 240)
+				bottom(x,y,z) = (-67.3758, -116.698, -527), bottom(eta,phi) = (-2.07287, 240)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -130 strip N -110
+	ME0Chamber 1, ME0DetId = 704643128,  Region -1 Layer 0 Chamber 14 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643384,  Region -1 Layer 1 Chamber 14 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651576,  Region -1 Layer 1 Chamber 14 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (-25.9625, -147.241, -527), top (eta,phi) = (-1.97251, 260)
+				center(x,y,z) = (-24.6809, -139.973, -527), center(eta,phi) = (-2.0213, 260)
+				bottom(x,y,z) = (-23.3994, -132.704, -527), bottom(eta,phi) = (-2.07287, 260)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -110 strip N -90
+	ME0Chamber 1, ME0DetId = 704643132,  Region -1 Layer 0 Chamber 15 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643388,  Region -1 Layer 1 Chamber 15 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651580,  Region -1 Layer 1 Chamber 15 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (25.9625, -147.241, -527), top (eta,phi) = (-1.97251, 280)
+				center(x,y,z) = (24.6809, -139.973, -527), center(eta,phi) = (-2.0213, 280)
+				bottom(x,y,z) = (23.3994, -132.704, -527), bottom(eta,phi) = (-2.07287, 280)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -90 strip N -70
+	ME0Chamber 1, ME0DetId = 704643136,  Region -1 Layer 0 Chamber 16 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643392,  Region -1 Layer 1 Chamber 16 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651584,  Region -1 Layer 1 Chamber 16 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (74.7561, -129.481, -527), top (eta,phi) = (-1.97251, 300)
+				center(x,y,z) = (71.066, -123.09, -527), center(eta,phi) = (-2.0213, 300)
+				bottom(x,y,z) = (67.3758, -116.698, -527), bottom(eta,phi) = (-2.07287, 300)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -70 strip N -50
+	ME0Chamber 1, ME0DetId = 704643140,  Region -1 Layer 0 Chamber 17 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643396,  Region -1 Layer 1 Chamber 17 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651588,  Region -1 Layer 1 Chamber 17 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (114.533, -96.1046, -527), top (eta,phi) = (-1.97251, 320)
+				center(x,y,z) = (108.879, -91.3606, -527), center(eta,phi) = (-2.0213, 320)
+				bottom(x,y,z) = (103.226, -86.6167, -527), bottom(eta,phi) = (-2.07287, 320)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -50 strip N -30
+	ME0Chamber 1, ME0DetId = 704643144,  Region -1 Layer 0 Chamber 18 EtaPartition 0  has 6 layers.
+		ME0Layer 1, ME0DetId = 704643400,  Region -1 Layer 1 Chamber 18 EtaPartition 0  has 8 eta partitions.
+			ME0EtaPartition 1 , ME0DetId = 704651592,  Region -1 Layer 1 Chamber 18 EtaPartition 1 
+				Type: GHA001
+				Dimensions[cm]: b = 47.5207, B = 52.7261, H  = 14.7606
+				nStrips = 384, nPads =  192
+				top(x,y,z)[cm] = (140.496, -51.1362, -527), top (eta,phi) = (-1.97251, 340)
+				center(x,y,z) = (133.56, -48.612, -527), center(eta,phi) = (-2.0213, 340)
+				bottom(x,y,z) = (126.625, -46.0878, -527), bottom(eta,phi) = (-2.07287, 340)
+				pitch (top,center,bottom) = 0.137307 0.13053 0.123752, dEta = 0.100363, dPhi = 20
+				local pos at strip 1  (-25.0617,0,0)  strip N  (25.0617,0,0) 
+				Global pos at strip 1 -30 strip N -10
+-------------------------------------------------------------------------------------------------------- end
