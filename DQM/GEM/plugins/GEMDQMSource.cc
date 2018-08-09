@@ -29,6 +29,16 @@ public:
   GEMDQMSource(const edm::ParameterSet& cfg);
   ~GEMDQMSource() override {};
   static void fillDescriptions(edm::ConfigurationDescriptions & descriptions);  
+
+  static bool sortCh(const GEMChamber &a, const GEMChamber &b){
+    if (a.id().region() == b.id().region()){
+      if (a.id().chamber() == b.id().chamber()){
+        return a.id().layer() < b.id().layer();
+      }
+      else{ return a.id().chamber() < b.id().chamber();}
+    }else{ return a.id().region() < b.id().region();}
+  };
+
 protected:
   void dqmBeginRun(edm::Run const &, edm::EventSetup const &) override {};
   void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
@@ -42,26 +52,32 @@ private:
 
   const GEMGeometry* initGeometry(edm::EventSetup const & iSetup);
   int findVFAT(float min_, float max_, float x_, int roll_);
-     
+  const char* findDetName(GEMDetId gid_);   
   const GEMGeometry* GEMGeometry_; 
-
+  
   std::vector<GEMChamber> gemChambers_;
 
   std::unordered_map<UInt_t,  MonitorElement*> recHitME_;
   std::unordered_map<UInt_t,  MonitorElement*> VFAT_vs_ClusterSize_;
   std::unordered_map<UInt_t,  MonitorElement*> StripsFired_vs_eta_;
   std::unordered_map<UInt_t,  MonitorElement*> rh_vs_eta_;
+ 
+  MonitorElement* recHitFullOcc_;
 
 };
 
 using namespace std;
 using namespace edm;
-
 int GEMDQMSource::findVFAT(float min_, float max_, float x_, int roll_) {
   float step = abs(max_-min_)/3.0;
   if ( x_ < (min(min_,max_)+step) ) { return 8 - roll_;}
   else if ( x_ < (min(min_,max_)+2.0*step) ) { return 16 - roll_;}
   else { return 24 - roll_;}
+}
+
+const char* GEMDQMSource::findDetName(GEMDetId gid_){
+  string tmp = "Re"+to_string(gid_.region())+"Ch"+to_string(gid_.chamber())+"La"+to_string(gid_.layer());
+  return tmp.data();
 }
 
 const GEMGeometry* GEMDQMSource::initGeometry(edm::EventSetup const & iSetup) {
@@ -102,8 +118,12 @@ void GEMDQMSource::bookHistograms(DQMStore::IBooker &ibooker, edm::Run const &, 
       gemChambers_.push_back(*sch->chamber(l+1));
     }
   }
+  sort(gemChambers_.begin(),gemChambers_.end(),sortCh);
   ibooker.cd();
   ibooker.setCurrentFolder("GEM/recHit");
+
+  recHitFullOcc_ = ibooker.book2D("GEMFullOcc","GEMFullOcc",gemChambers_.size(),0,gemChambers_.size(),8,1,9);
+  int chIndex = 0;
   for (auto ch : gemChambers_){
     GEMDetId gid = ch.id();
     string hName = "recHit_Gemini_"+to_string(gid.chamber())+"_la_"+to_string(gid.layer());
@@ -121,6 +141,9 @@ void GEMDQMSource::bookHistograms(DQMStore::IBooker &ibooker, edm::Run const &, 
     string hName_rh = "recHit_x_Gemini_"+to_string(gid.chamber())+"_la_"+to_string(gid.layer());
     string hTitle_rh = "recHit local x Gemini chamber : "+to_string(gid.chamber())+", layer : "+to_string(gid.layer());
     rh_vs_eta_[ ch.id() ] = ibooker.book2D(hName_rh, hTitle_rh, 50, -25, 25, 8, 1,9);
+    std::cout << findDetName(gid) << std::endl;
+    ( (TH2F *)recHitFullOcc_->getTH2F() )->GetXaxis()->SetBinLabel(chIndex+1,findDetName(gid));
+    chIndex++;
   }
 }
 
@@ -134,7 +157,8 @@ void GEMDQMSource::analyze(edm::Event const& event, edm::EventSetup const& event
   if (!gemRecHits.isValid()) {
     edm::LogError("GEMDQMSource") << "GEM recHit is not valid.\n";
     return ;
-  }  
+  }
+  int chIndex = 0;   
   for (auto ch : gemChambers_){
     GEMDetId cId = ch.id();
     for(auto roll : ch.etaPartitions()){
@@ -149,8 +173,10 @@ void GEMDQMSource::analyze(edm::Event const& event, edm::EventSetup const& event
         for(int i = hit->firstClusterStrip(); i < (hit->firstClusterStrip() + hit->clusterSize()); i++){
 	  StripsFired_vs_eta_[ cId ]->Fill(i, rId.roll());
         }
+        recHitFullOcc_->Fill(chIndex,rId.roll());
       }  
-    }   
+    }
+    chIndex++;   
   }
 }
 

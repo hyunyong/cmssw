@@ -22,18 +22,24 @@ process.dqmEnv.eventInfoFolder = "EventInfo"
 process.dqmSaver.path = ""
 process.dqmSaver.tag = "GEM"
 
+import os
+pathT = "/xrootd/store/data/Run2018C/SingleMuon/RAW/v1/000/319/347/00000/"
+rootL = [x for x in os.listdir(pathT) if x.endswith(".root")] 
+
 process.source = cms.Source("PoolSource",
   fileNames = cms.untracked.vstring(
-    'file:/eos/cms/store/express/Commissioning2018/ExpressCosmics/FEVT/Express-v1/000/310/292/00000/6C23251D-4F18-E811-AEC5-02163E01A41D.root'    
+    #'file:/eos/cms/store/express/Commissioning2018/ExpressCosmics/FEVT/Express-v1/000/310/292/00000/6C23251D-4F18-E811-AEC5-02163E01A41D.root'    
   ),
-  inputCommands = cms.untracked.vstring(
-    'drop *',
-    'keep FEDRawDataCollection_*_*_*'
-  )
+  #inputCommands = cms.untracked.vstring(
+  #  'drop *',
+  #  'keep FEDRawDataCollection_*_*_*'
+  #)
 )
+for x in rootL:
+  process.source.fileNames.append("file:"+pathT+x)
 
 process.maxEvents = cms.untracked.PSet(
-  input = cms.untracked.int32(8000)
+  input = cms.untracked.int32(-1)
 )
 
 process.load("EventFilter.GEMRawToDigi.muonGEMDigis_cfi")
@@ -42,7 +48,7 @@ process.load("DQM.GEM.GEMDQM_cff")
 
 process.muonGEMDigis.useDBEMap = True
 process.muonGEMDigis.unPackStatusDigis = True
-
+"""
 ############## DB file ################# 
 from CondCore.CondDB.CondDB_cfi import *
 CondDB.DBParameters.authenticationPath = cms.untracked.string('/afs/cern.ch/cms/DB/conddb')
@@ -56,6 +62,7 @@ process.GEMCabling = cms.ESSource("PoolDBESSource",
     )),
 )
 ####################################
+"""
 process.path = cms.Path(
   process.muonGEMDigis *
   process.gemRecHits *
