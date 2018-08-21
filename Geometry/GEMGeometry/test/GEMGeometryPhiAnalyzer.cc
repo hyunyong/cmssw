@@ -130,6 +130,7 @@ GEMGeometryAnalyzer::analyze( const edm::Event& /*iEvent*/, const edm::EventSetu
       }
     }
   }
+  sort(gemChambers_.begin(),gemChambers_.end(),sortCh);
   if (flagNonUniqueChID or flagNonUniqueChRawID)
     ofos << " -- WARNING: non unique chamber Ids!!!" << endl;
 
