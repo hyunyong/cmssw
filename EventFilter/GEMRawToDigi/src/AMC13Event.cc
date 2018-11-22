@@ -1,74 +1,55 @@
 #include <cstdint>
 #include "EventFilter/GEMRawToDigi/interface/AMC13Event.h"
+#include <sstream>
 
 using namespace gem;
 
-uint64_t AMC13Event::getCDFHeader() const
+void AMC13Event::setCDFHeader(uint8_t Evt_ty, uint32_t LV1_id, uint16_t BX_id, uint16_t Source_id)
 {
-  // CDF Header word 
-  // 63 - 60 | 59 - 56 | 55 - 32 | 31 - 20 | 19 - 8    |
-  // cb5     | Evt_ty  | LV1_id  | BX_id   | Source_id |
-  return (static_cast<uint64_t>(m_cb5 & 0x0f) << 60) |
-    (static_cast<uint64_t>(m_Evt_ty & 0x0f) << 56) |
-    (static_cast<uint64_t>(m_LV1_id & 0x00ffffff) << 32) |
-    (static_cast<uint64_t>(m_BX_id & 0x0fff) << 20) |
-    (static_cast<uint64_t>(m_Source_id & 0x0fff) << 8);
+  cdfh_.cb5 = 0x5;
+  cdfh_.eventType = Evt_ty;
+  cdfh_.lv1Id = LV1_id;
+  cdfh_.bxId = BX_id;
+  cdfh_.sourceId = Source_id;
+  cdfh_.fov = 0; // not used
 }
 
-void AMC13Event::setCDFHeader(uint64_t word)
+void AMC13Event::setAMC13Header(uint8_t CalTyp, uint8_t nAMC, uint32_t OrN)
 {
-  m_cb5 = 0x0f & (word >> 60);
-  m_Evt_ty = 0x0f & (word >> 56);
-  m_LV1_id = 0x00ffffff & (word >> 32);
-  m_BX_id = 0x0fff & (word >> 20);
-  m_Source_id = 0x0fff & (word >> 8);
+  amc13h_.uFov = 0; // format version # FIX ME
+  amc13h_.calType = CalTyp;
+  amc13h_.nAMC = nAMC;
+  amc13h_.reserved0 = 0;
+  amc13h_.orbitN = OrN;
+  amc13h_.cb0 = 0x0;
 }
 
-void AMC13Event::setCDFHeader(uint8_t cb5, uint8_t Evt_ty, uint32_t LV1_id, uint16_t BX_id, uint16_t Source_id)
+void AMC13Event::setAMC13Trailer(uint8_t Blk_NoT, uint8_t LV1_idT, uint16_t BX_idT)
 {
-  m_cb5 = cb5;
-  m_Evt_ty = Evt_ty;
-  m_LV1_id = LV1_id;
-  m_BX_id = BX_id;
-  m_Source_id = Source_id;
+  amc13t_.crc32 = 0; // FIX ME
+  amc13t_.blkN = Blk_NoT;
+  amc13t_.lv1IdT = LV1_idT;
+  amc13t_.bxIdT = BX_idT;
 }
 
-uint64_t AMC13Event::getAMC13header() const
+void AMC13Event::setCDFTrailer(uint32_t EvtLength)
 {
-  // AMC13 Header word 
-  // 63 - 60 | 59 - 56 | 55 - 52 | 51 - 36 | 35 - 4 | 4 - 0 |
-  // uFOV    | CalTyp  | nAMC    | Reserved| OrN    | cb0   |
-  return (static_cast<uint64_t>(m_CalTyp & 0x0f) << 56) |
-    (static_cast<uint64_t>(m_nAMC & 0x0f) << 52) |
-    (static_cast<uint64_t>(m_OrN) << 4) |
-    (static_cast<uint64_t>(m_cb0 & 0x0f));
-}
-
-void AMC13Event::setAMC13header(uint64_t word)
-{
-  m_CalTyp = 0x0f & (word >> 56);
-  m_nAMC = 0x0f & (word >> 52);
-  m_OrN = word >> 4;
-  m_cb0 = 0x0f & word;
-}
-
-void AMC13Event::setAMC13header(uint8_t CalTyp, uint8_t nAMC, uint32_t OrN, uint8_t cb0)
-{
-  m_CalTyp = CalTyp;
-  m_nAMC = nAMC;
-  m_OrN = OrN;
-  m_cb0 = cb0;
+  cdft_.cbA = 0xA;
+  cdft_.evtType = 0; // FIX ME
+  cdft_.evtLength = EvtLength;
+  cdft_.crcCDF = 0; // FIX ME
+  cdft_.cfxx = 0; // FIX ME
+  cdft_.evtStat = 0; // event status # FIX ME
+  cdft_.tts = 0;
+  cdft_.trdd = 0;
 }
 
 void AMC13Event::addAMCheader(uint64_t word)
 {
-  // m_AMC_size.push_back(0x00ffffff&(word>>32));
-  // m_Blk_No.push_back(0xff&(word>>20));
-  // m_AMC_No.push_back(0x0f&(word>>16));
-  // m_BoardID.push_back(0xffff&word);
-  m_amcHeaders.push_back(word);
+  amcHeaders_.push_back(word);
 }
 
+// FIX ME: not verified wrt to AMC13DataDef
 void AMC13Event::addAMCheader(uint32_t AMC_size, uint8_t Blk_No, uint8_t AMC_No, uint16_t BoardID)
 {
   // AMC Header word 
@@ -79,56 +60,41 @@ void AMC13Event::addAMCheader(uint32_t AMC_size, uint8_t Blk_No, uint8_t AMC_No,
     (static_cast<uint64_t>(Blk_No & 0xff) << 20) |
     (static_cast<uint64_t>(AMC_No & 0x0f) << 16) |
     (static_cast<uint64_t>(BoardID & 0xffff));
-  m_amcHeaders.push_back(word);
+  amcHeaders_.push_back(word);
 }
 
-uint64_t AMC13Event::getAMC13trailer() const
+std::string AMC13Event::getCDFHeader_str() const
 {
-  // AMC13 trailer word 
-  // 63 - 32   | 27 - 20 | 19 - 12 | 11 - 0 |
-  // CRC_amc13 | Blk_No  | LV1_idT | BX_idT |  
-  return (static_cast<uint64_t>(m_CRC_amc13) << 32) |
-    (static_cast<uint64_t>(m_Blk_NoT & 0xff) << 20) |
-    (static_cast<uint64_t>(m_LV1_idT & 0xff) << 12) |
-    (static_cast<uint64_t>(m_BX_idT & 0x0fff));
+  std::stringstream ss;
+  ss << "CDFHeader: fov=" << (uint32_t)(cdfh_.fov) << " sourceId=" << (uint32_t)(cdfh_.sourceId) << " bxId=" << (uint32_t)(cdfh_.bxId) << " lv1Id=" << (uint32_t)(cdfh_.lv1Id) << " eventType=" << (uint32_t)(cdfh_.eventType) << " cb5=" << (uint32_t)(cdfh_.cb5);
+  return ss.str();
 }
 
-void AMC13Event::setAMC13trailer(uint64_t word)
+std::string AMC13Event::getCDFTrailer_str() const
 {
-  m_CRC_amc13 = word >> 32;
-  m_Blk_NoT = 0xff & (word >> 20);
-  m_LV1_idT = 0xff & (word >> 12);
-  m_BX_idT = 0x0fff & word;
+  std::stringstream ss;
+  ss << "CDFTrailer: trdd=" << (uint32_t)(cdft_.trdd) << " tts=" << (uint32_t)(cdft_.tts) << " evtStat=" << (uint32_t)(cdft_.evtStat) << " cfxx=" << (uint32_t)(cdft_.cfxx) << " crcCDF=" << (uint32_t)(cdft_.crcCDF) << " evtLength=" << (uint32_t)(cdft_.evtLength) << " evtType=" << (uint32_t)(cdft_.evtType) << " cbA=" << (uint32_t)(cdft_.cbA);
+  return ss.str();
 }
 
-void AMC13Event::setAMC13trailer(uint32_t CRC_amc13, uint8_t Blk_NoT, uint8_t LV1_idT, uint16_t BX_idT)
+std::string AMC13Event::getAMC13Header_str() const
 {
-  m_CRC_amc13 = CRC_amc13;
-  m_Blk_NoT = Blk_NoT;
-  m_LV1_idT = LV1_idT;
-  m_BX_idT = BX_idT;
+  std::stringstream ss;
+  ss << "AMC13Header: cb0=" << (uint32_t)(amc13h_.cb0) << " orbitN=" << (uint32_t)(amc13h_.orbitN) << " reserved0=" << (uint32_t)(amc13h_.reserved0) << " nAMC=" << (uint32_t)(amc13h_.nAMC) << " calType=" << (uint32_t)(amc13h_.calType) << " uFov=" << (uint32_t)(amc13h_.uFov);
+  return ss.str();
 }
 
-uint64_t AMC13Event::getCDFTrailer() const
+std::string AMC13Event::getAMC13Trailer_str() const
 {
-  // CDF trailer word 
-  // 63 - 60 | 55 - 32   | 31 - 16 |
-  // cbA     | EvtLength | CRC_cdf |
-  return (static_cast<uint64_t>(m_cbA & 0x0f) << 60) |
-    (static_cast<uint64_t>(m_EvtLength & 0x00ffffff) << 32) |
-    (static_cast<uint64_t>(m_CRC_cdf & 0xffff) << 16);
+  std::stringstream ss;
+  ss << "AMC13Trailer: bxIdT=" << (uint32_t)(amc13t_.bxIdT) << " lv1IdT=" << (uint32_t)(amc13t_.lv1IdT) << " blkN=" << (uint32_t)(amc13t_.blkN) << " crc32=" << (uint32_t)(amc13t_.crc32);
+  return ss.str();
 }
 
-void AMC13Event::setCDFTrailer(uint64_t word)
+std::string AMC13Event::getAMC13DataDef_str(int i) const
 {
-  m_cbA = 0x0f & (word >> 60);
-  m_EvtLength = 0x00ffffff & (word >> 32);
-  m_CRC_cdf = 0xffff & (word >> 16);
-}
-
-void AMC13Event::setCDFTrailer(uint8_t cbA, uint32_t EvtLength, uint16_t CRC_cdf)
-{
-  m_cbA = cbA;
-  m_EvtLength = EvtLength;
-  m_CRC_cdf = CRC_cdf;
+  AMC13DataDef d = amcHeaders_.at(i);
+  std::stringstream ss;
+  ss << "AMC13DataDef: boardId=" << (uint32_t)(d.boardId) << " amcNr=" << (uint32_t)(d.amcNr) << " blkSeqNo=" << (uint32_t)(d.blkSeqNo) << " cb0=" << (uint32_t)(d.cb0) << " dataSize=" << (uint32_t)(d.dataSize) << " endBits8" << (uint32_t)(d.endBits8);
+  return ss.str();
 }
