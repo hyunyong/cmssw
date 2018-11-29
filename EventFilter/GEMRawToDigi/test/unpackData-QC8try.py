@@ -226,7 +226,12 @@ process.reader_elmap = cms.EDAnalyzer( "GEMELMapRcdReader",
   #dumpFileName = cms.untracked.string( "" ) # no dump
 )
 
-
+process.load("DQM.GEM.GEMDQM_cff")
+process.load("DQM.Integration.config.environment_cfi")
+process.dqmEnv.subSystemFolder = "GEM"
+process.dqmEnv.eventInfoFolder = "EventInfo"
+process.dqmSaver.path = ""
+process.dqmSaver.tag = "GEM"
 
 # Path and EndPath definitions
 process.path = cms.Path(
@@ -236,7 +241,19 @@ process.path = cms.Path(
     #+process.reader_elmap
     #+process.reader_qc8conf
     +process.gemRecHits
+    +process.GEMDQM
 )
+
+process.end_path = cms.EndPath(
+  process.dqmEnv +
+  process.dqmSaver
+)
+
+process.schedule = cms.Schedule(
+  process.path,
+  process.end_path
+)
+
 
 # enable validation event filtering
 if (not options.valEvents):
