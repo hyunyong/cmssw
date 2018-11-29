@@ -27,7 +27,7 @@
 <use   name="TrackingTools/TrackRefitter"/>
 <use   name="TrackingTools/TrajectoryState"/>
 <use   name="TrackingTools/TransientTrackingRecHit"/>
-<use name="RecoTracker/TrackProducer"/>
+<use   name="RecoTracker/TrackProducer"/>
 
 <export>
    <lib name="1"/>

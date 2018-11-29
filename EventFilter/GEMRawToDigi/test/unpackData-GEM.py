@@ -196,8 +196,8 @@ process.path = cms.Path(
     #process.validationEventFilter
     process.dumpRaw
     +process.muonGEMDigis
-    +process.reader_elmap
-    +process.gemRecHits
+    #+process.reader_elmap
+    #+process.gemRecHits
 )
 
 # enable validation event filtering

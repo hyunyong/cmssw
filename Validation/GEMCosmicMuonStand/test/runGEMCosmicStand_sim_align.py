@@ -75,7 +75,7 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('EventFilter.GEMRawToDigi.gemPacker_cfi')
 process.load('EventFilter.RawDataCollector.rawDataCollector_cfi')
 process.load('EventFilter.GEMRawToDigi.muonGEMDigis_cfi')
-process.load('SimMuon.GEMCosmicMuon.muonGEMDigi_cff')
+process.load('SimMuon.GEMDigitizer.muonGEMDigi_cff')
 process.load('RecoLocalMuon.GEMRecHit.gemLocalReco_cff')
 
 # DEFINITION OF THE SUPERCHAMBERS INSIDE THE STAND
@@ -192,7 +192,7 @@ process.AlignmentTrackRecoQC8 = cms.EDProducer("AlignmentTrackRecoQC8",
                                        trackResX = cms.double(runConfig.trackResX),
                                        trackResY = cms.double(runConfig.trackResY),
                                        MulSigmaOnWindow = cms.double(runConfig.MulSigmaOnWindow),
-                                       #SuperChamberType = cms.vstring(SuperChType),
+                                       SuperChamberType = cms.vstring(SuperChType),
                                        MuonSmootherParameters = cms.PSet(
                                            PropagatorAlong = cms.string('SteppingHelixPropagatorAny'),
                                            PropagatorOpposite = cms.string('SteppingHelixPropagatorAny'),
@@ -242,7 +242,7 @@ process.AlignmentValidationQC8 = cms.EDProducer('AlignmentValidationQC8',
     trackResX = cms.double(runConfig.trackResX),
     trackResY = cms.double(runConfig.trackResY),
     MulSigmaOnWindow = cms.double(runConfig.MulSigmaOnWindow),
-    #SuperChamberType = cms.vstring(SuperChType),
+    SuperChamberType = cms.vstring(SuperChType),
     MuonSmootherParameters = cms.PSet(
                       PropagatorAlong = cms.string('SteppingHelixPropagatorAny'),
                       PropagatorOpposite = cms.string('SteppingHelixPropagatorAny'),

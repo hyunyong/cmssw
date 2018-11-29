@@ -1,4 +1,3 @@
-
 #include "Validation/GEMCosmicMuonStand/interface/gemcrValidation.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -62,7 +61,7 @@ gemcrValidation::gemcrValidation(const edm::ParameterSet& cfg): GEMBaseValidatio
   minCLS = cfg.getParameter<double>("minClusterSize"); 
   maxCLS = cfg.getParameter<double>("maxClusterSize");
   maxRes = cfg.getParameter<double>("maxResidual");
-  //SuperChamType = cfg.getParameter<vector<string>>("SuperChamberType");
+  SuperChamType = cfg.getParameter<vector<string>>("SuperChamberType");
   vecChamType = cfg.getParameter<vector<double>>("SuperChamberSeedingLayers");
   edm::ParameterSet smootherPSet = cfg.getParameter<edm::ParameterSet>("MuonSmootherParameters");
   theSmoother = new CosmicMuonSmoother(smootherPSet, theService);

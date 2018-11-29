@@ -14,4 +14,4 @@ error = res_1/job_$(Process).err
 transfer_input_files = job.tar.gz
 transfer_output_files =  gemcr/src/Validation/GEMCosmicMuonStand/test/temp_out_reco_MC.root
 transfer_output_remaps = "temp_out_reco_MC.root=res_1/out_MC_$(Process).root"
-queue 1000
+queue 400

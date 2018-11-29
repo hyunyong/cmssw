@@ -61,3 +61,4 @@ using edm::RandomMultiParticlePGunProducer;
 DEFINE_FWK_MODULE(RandomMultiParticlePGunProducer);
 using edm::CosmicGun;
 DEFINE_FWK_MODULE(CosmicGun);
+

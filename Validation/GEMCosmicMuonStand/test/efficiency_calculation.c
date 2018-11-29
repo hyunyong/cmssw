@@ -46,6 +46,7 @@ void efficiency_calculation(int run, string configDir)
 	// Generating 1D histograms (num, denom, eff) for the 30 chambers
 	
 	char *name = new char[40];
+    string namename = "";
 	
 	TH1D *num1D[30];
 	TH1D *denom1D[30];
@@ -68,6 +69,32 @@ void efficiency_calculation(int run, string configDir)
 			}
 		}
 		eff1D[ch]->Divide(num1D[ch],denom1D[ch]);
+	}
+	
+	// Generating 2D histograms for the 5*2 rows
+    
+	TH2D *eff2D[10];
+	for (int row=0; row<5; row++)
+	{
+		namename = "Efficiency_row_" + to_string(row+1) + "_B";
+    	eff2D[row*2] = new TH2D(namename.c_str(),"",9,0,9,8,0,8);
+    	namename = "Efficiency_row_" + to_string(row+1) + "_T";
+    	eff2D[(row*2)+1] = new TH2D(namename.c_str(),"",9,0,9,8,0,8);
+	}
+	for (int layer=0; layer<10; layer++)
+	{
+		for (int eta=1; eta<=8; eta++)
+		{
+			for (int phi=1; phi<=3; phi++)
+			{
+				eff2D[layer]->SetBinContent(phi  ,eta,double(num3D->GetBinContent(phi,eta,layer+1))/
+												     double(denom3D->GetBinContent(phi,eta,layer+1)));
+				eff2D[layer]->SetBinContent(phi+3,eta,double(num3D->GetBinContent(phi,eta,layer+11))/
+												     double(denom3D->GetBinContent(phi,eta,layer+11)));
+				eff2D[layer]->SetBinContent(phi+6,eta,double(num3D->GetBinContent(phi,eta,layer+21))/
+												     double(denom3D->GetBinContent(phi,eta,layer+21)));
+			}
+		}
 	}
 	
 	// Open stand configuration file for present run & get names + positions of chambers
@@ -131,19 +158,40 @@ void efficiency_calculation(int run, string configDir)
 	
 	// Results for the 30 chambers
 	
-	TCanvas *Canvas = new TCanvas("Canvas","Canvas",0,0,1000,1000);
+	TCanvas *Canvas = new TCanvas("Canvas","Canvas",0,0,1000,800);
 	TF1 *target97 = new TF1("target97","0.97",0,24);
 	target97->SetLineColor(kRed);
     
-    string namename = "";
     ofstream outfile;
     
     for (int i=0; i<chamberPos.size(); i++)
 	{
 		int c = chamberPos[i];
 		
-		// Plot efficiency per chamber
+		// Plot num e denom per chamber
 		
+		namename = "Num_" + chamberName[i] + "_in_position_" + to_string(chamberPos[i]);
+		num1D[c]->SetTitle(namename.c_str());
+		num1D[c]->GetXaxis()->SetTitle("VFAT");
+		num1D[c]->GetYaxis()->SetTitle("Counts");
+		num1D[c]->Write(namename.c_str());
+		num1D[c]->SetLineColor(kBlue);
+		num1D[c]->Draw();
+		namename = "Denom_" + chamberName[i] + "_in_position_" + to_string(chamberPos[i]);
+		denom1D[c]->SetTitle(namename.c_str());
+		denom1D[c]->GetXaxis()->SetTitle("VFAT");
+		denom1D[c]->GetYaxis()->SetTitle("Counts");
+		denom1D[c]->Write(namename.c_str());
+		namename = "Num_Denom_" + chamberName[i] + "_in_position_" + to_string(chamberPos[i]);
+		denom1D[c]->SetTitle(namename.c_str());
+		denom1D[c]->SetLineColor(kRed);
+		denom1D[c]->Draw("SAME");
+		namename = "outPlots_Chamber_Pos_" + to_string(chamberPos[i]) + "/Num_Denom_Ch_Pos_" + to_string(chamberPos[i]) + ".png";
+		Canvas->SaveAs(namename.c_str());
+		Canvas->Clear();
+		
+		// Plot efficiency per chamber
+
 		namename = "Efficiency_" + chamberName[i] + "_in_position_" + to_string(chamberPos[i]);
 		eff1D[c]->SetTitle(namename.c_str());
 		eff1D[c]->GetXaxis()->SetTitle("VFAT");
@@ -153,7 +201,7 @@ void efficiency_calculation(int run, string configDir)
 		eff1D[c]->Draw();
 		eff1D[c]->Write(namename.c_str());
 		target97->Draw("SAME");
-		namename = "Efficiency_Ch_Pos_" + to_string(chamberPos[i]) + ".png";
+		namename = "outPlots_Chamber_Pos_" + to_string(chamberPos[i]) + "/Efficiency_Ch_Pos_" + to_string(chamberPos[i]) + ".png";
 		Canvas->SaveAs(namename.c_str());
 		Canvas->Clear();
 		
@@ -179,9 +227,39 @@ void efficiency_calculation(int run, string configDir)
 		digi2D[c]->GetYaxis()->SetTitle("ieta");
 		digi2D[c]->Draw("colz");
 		digi2D[c]->Write(namename.c_str());
-		namename = "Digi_Ch_Pos_" + to_string(chamberPos[i]) + ".png";
+		namename = "outPlots_Chamber_Pos_" + to_string(chamberPos[i]) + "/Digi_Ch_Pos_" + to_string(chamberPos[i]) + ".png";
 		Canvas->SaveAs(namename.c_str());
 		Canvas->Clear();
+	}
+	
+	// Plot of efficiency per layer
+	
+	for (int row=0; row<5; row++)
+	{
+		TLine *col_1_2 = new TLine(3,0,3,8);
+		TLine *col_2_3 = new TLine(6,0,6,8);
+		namename = "Efficiency_Row_" + to_string(row+1) + "_B";
+    	eff2D[row*2]->SetTitle(namename.c_str());
+    	eff2D[row*2]->SetMinimum(0.95);
+    	eff2D[row*2]->SetMaximum(1.0);
+    	eff2D[row*2]->SetStats(0);
+    	eff2D[row*2]->Draw("colz TEXT0");
+    	col_1_2->Draw("SAME");
+    	col_2_3->Draw("SAME");
+    	namename = "Efficiency_Row_" + to_string(row+1) + "_B.png";
+    	Canvas->SaveAs(namename.c_str());
+    	Canvas->Clear();
+    	namename = "Efficiency_Row_" + to_string(row+1) + "_T";
+    	eff2D[(row*2)+1]->SetTitle(namename.c_str());
+    	eff2D[row*2+1]->SetMinimum(0.95);
+    	eff2D[row*2+1]->SetMaximum(1.0);
+    	eff2D[row*2+1]->SetStats(0);
+    	eff2D[(row*2)+1]->Draw("colz TEXT0");
+    	col_1_2->Draw("SAME");
+    	col_2_3->Draw("SAME");
+    	namename = "Efficiency_Row_" + to_string(row+1) + "_T.png";
+    	Canvas->SaveAs(namename.c_str());
+    	Canvas->Clear();
 	}
 	
 	standConfigFile.close();
