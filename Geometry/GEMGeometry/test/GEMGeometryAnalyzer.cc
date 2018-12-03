@@ -140,12 +140,28 @@ GEMGeometryAnalyzer::analyze( const edm::Event& /*iEvent*/, const edm::EventSetu
   ofos << myName() << "Begin GEMGeometry structure TEST" << endl;
   
   for(auto ch:gemChambers_){
-    const BoundPlane& bSurface(ch.surface());
+    for (auto roll:ch.etaPartitions()){
+      const BoundPlane& bSurface(roll->surface());
     //const StripTopology* topology(&(roll->specificTopology()));
-    LocalPoint  lCentre( 0., 0., 0. );
-    GlobalPoint gCentre(bSurface.toGlobal(lCentre));
-    auto roll = ch.etaPartitions()[1];
-    ofos << ch.id() << ", z: " << gCentre.z() << ", 1stStrip: " << roll->toGlobal(roll->centreOfStrip(1)).phi().degrees()<< ", lastStrip: " << roll->toGlobal(roll->centreOfStrip(roll->nstrips())).phi().degrees() << std::endl;
+      auto& parameters(roll->specs()->parameters());
+      float bottomEdge(parameters[0]);
+      float topEdge(parameters[1]);
+      float height(parameters[2]);
+      float nStrips(parameters[3]);
+      float nPads(parameters[4]);
+
+
+      LocalPoint  lCentre( 0., 0., 0. );
+      GlobalPoint gCentre(bSurface.toGlobal(lCentre));
+      LocalPoint  lTop( 0.,height, 0.);
+      GlobalPoint gTop(bSurface.toGlobal(lTop));
+      LocalPoint  lBottom( 0., -height,0.);
+      GlobalPoint gBottom(bSurface.toGlobal(lBottom));
+
+      //auto roll = ch.etaPartitions()[1];
+      ofos << ch.id() <<", x: "<<gCentre.x() <<", y: "<< gCentre.y() <<", z: " << gCentre.z() << ", 1stStrip: " << roll->toGlobal(roll->centreOfStrip(1)).phi().degrees()<< ", lastStrip: " << roll->toGlobal(roll->centreOfStrip(roll->nstrips())).phi().degrees() << std::endl;
+      ofos << roll->id() << ", height: "<< height  <<", top: "<< gTop.z() << ", center: " << gCentre.z() <<", bottom: "<< gBottom.z() <<std::endl;
+    }
   }
   ofos << dashedLine_ << " end" << std::endl;
 }
