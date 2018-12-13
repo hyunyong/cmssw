@@ -7,39 +7,84 @@ class GEMROmap{
  public:
   
   struct eCoord{
-    uint16_t amcId;
-    uint16_t gebId;
-    uint16_t vfatId;
+    unsigned int fedId;
+    uint8_t amcNum;
+    uint8_t gebId;
     bool operator < (const eCoord& r) const{
-      if (amcId == r.amcId){
-        if ( gebId == r.gebId){
-          return vfatId < r.vfatId;
+      if (fedId == r.fedId){
+        if ( amcNum == r.amcNum){
+          return gebId < r.gebId;
         }
 	else{
-          return gebId < r.gebId;
+          return amcNum < r.amcNum;
 	}
       }
       else{
-	return amcId < r.amcId;
+	return fedId < r.fedId;
       }
     }
   };
   
   struct dCoord{
-    int vfatType;
     GEMDetId gemDetId;
-    int locPhi;
+    int vfatVer;
+    int chamberType;
     bool operator < (const dCoord& r) const{
-      if (vfatType == r.vfatType){
-        if (gemDetId == r.gemDetId){
-	  return locPhi < r.locPhi;
+      if (gemDetId == r.gemDetId){
+        if (vfatVer == r.vfatVer){
+	  return chamberType < r.chamberType;
         }
 	else{
-          return gemDetId < r.gemDetId;
+          return vfatVer < r.vfatVer;
         }
       }
       else{
-	return vfatType < r.vfatType;
+	return gemDetId < r.gemDetId;
+      }
+    }
+  };
+
+
+  struct vfatEC{
+    uint16_t vfatAdd;
+    int vfatVer;
+    int chamberType;
+    bool operator < (const vfatEC& r) const{
+      if (vfatAdd == r.vfatAdd){
+        if (vfatVer  == r.vfatVer){
+          return chamberType < r.chamberType;  
+        }
+        else{
+          return vfatVer < r.vfatVer;
+        }
+      }
+      else{
+        return vfatAdd < r.vfatAdd;
+      }
+    }
+  };
+
+  struct vfatDC{
+    int vfatType;
+    int vfatPos;
+    int iEta;
+    int localPhi;
+    bool operator < (const vfatDC& r)  const{
+      if (vfatType == r.vfatType){
+        if (vfatPos == r.vfatPos){
+          if (iEta == r.iEta){
+            return localPhi < r.localPhi;
+          }
+          else{
+            return iEta < r.iEta;
+          }
+        }
+        else{
+          return vfatPos < r.vfatPos;
+        }
+      }
+      else{
+        return vfatType < r.vfatType;
       }
     }
   };
@@ -79,6 +124,12 @@ class GEMROmap{
   
   const std::map<eCoord, dCoord> * getRoMap() const {return &roMapED_;}
 
+  void add(vfatEC e,vfatDC d) {vMapED_[e]=d;}
+  void add(vfatDC d,vfatEC e) {vMapDE_[d]=e;}
+
+  const vfatDC& hitPosition(const vfatEC& r) const {return vMapED_.at(r);}
+  const vfatEC& hitPosition(const vfatDC& r) const {return vMapDE_.at(r);}
+
   void add(channelNum c, stripNum s) {chStMap_[c]=s;} 
   void add(stripNum s, channelNum c) {stChMap_[s]=c;} 
  
@@ -88,6 +139,9 @@ class GEMROmap{
  private:
   std::map<eCoord,dCoord> roMapED_;
   std::map<dCoord,eCoord> roMapDE_;
+
+  std::map<vfatEC, vfatDC> vMapED_;
+  std::map<vfatDC, vfatEC> vMapDE_;
 
   std::map<channelNum, stripNum> chStMap_;
   std::map<stripNum, channelNum> stChMap_;
