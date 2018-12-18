@@ -18,18 +18,28 @@ class GEMELMap {
   void convert(GEMROmap & romap);
   void convertDummy(GEMROmap & romap);
 
+  struct GEMChamberMap{
+    std::vector<unsigned int> fedId;
+    std::vector<uint8_t> amcNum;
+    std::vector<uint8_t> gebId;
+    std::vector<int> region;
+    std::vector<int> station; 
+    std::vector<int> layer;
+    std::vector<int> chamberSec; 
+    std::vector<int> vfatVer; 
+    std::vector<int> chamberType;
+
+    COND_SERIALIZABLE;
+  };
+
   struct GEMVFatMap {
-    int VFATmapTypeId;
-    std::vector<int> vfat_position;
-    std::vector<int> z_direction;
-    std::vector<int> iEta;
-    std::vector<int> iPhi;
-    std::vector<int> depth;
+    std::vector<uint16_t> vfatAdd;
     std::vector<int> vfatType;
-    std::vector<uint16_t> vfatId;
-    std::vector<uint16_t> amcId;
-    std::vector<uint16_t> gebId;
-    std::vector<int> sec; 
+    std::vector<int> vfatVer;
+    std::vector<int> chamberType;
+    std::vector<int> vfatPos;
+    std::vector<int> iEta;
+    std::vector<int> localPhi;
 
     COND_SERIALIZABLE;
   };
@@ -41,6 +51,7 @@ class GEMELMap {
     COND_SERIALIZABLE;
   };
 
+  std::vector<GEMChamberMap>  theChamberMap_;
   std::vector<GEMVFatMap>  theVFatMap_;
   std::vector<GEMStripMap> theStripMap_;
   
@@ -51,6 +62,8 @@ class GEMELMap {
   
  public:
   // size of ID bits
+  static const int vfatVerV3_ = 3;       // VFAT v3
+  static const int vfatTypeV3_ = 11;       // VFAT v3
   static const int chipIdBits_ = 12;     // ID size from VFat
   static const int chipIdMask_ = 0xfff;  // chipId mask for 12 bits
   static const int gebIdBits_  = 5;      // ID size from GEB
@@ -60,5 +73,7 @@ class GEMELMap {
   static const int maxVFatGE21_= 6;      // vFat per eta partition in GE21
   static const int maxChan_    = 128;    // channels per vFat
   static const int amcBX_      = 25;     // amc BX to get strip bx
+  static const int maxEtaPartition_ = 8; // etaPartitions in chamber
+
 };
 #endif // GEMELMap_H
