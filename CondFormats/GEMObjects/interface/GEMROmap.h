@@ -26,36 +26,30 @@ class GEMROmap{
   };
   
   struct dCoord{
-    GEMDetId gemDetId;
+    GEMDetId detId;
     int vfatVer;
-    int chamberType;
     bool operator < (const dCoord& r) const{
-      if (gemDetId == r.gemDetId){
-        if (vfatVer == r.vfatVer){
-	  return chamberType < r.chamberType;
-        }
-	else{
-          return vfatVer < r.vfatVer;
-        }
+      if (detId == r.detId){
+        return  vfatVer < r.vfatVer;
       }
       else{
-	return gemDetId < r.gemDetId;
-      }
+        return  detId <  r.detId;
+      } 
     }
   };
 
 
   struct vfatEC{
     uint16_t vfatAdd;
+    GEMDetId detId;
     int vfatVer;
-    int chamberType;
     bool operator < (const vfatEC& r) const{
       if (vfatAdd == r.vfatAdd){
-        if (vfatVer  == r.vfatVer){
-          return chamberType < r.chamberType;  
+        if (detId == r.detId){
+          return  vfatVer < r.vfatVer;
         }
         else{
-          return vfatVer < r.vfatVer;
+          return detId < r.detId;  
         }
       }
       else{
@@ -66,21 +60,15 @@ class GEMROmap{
 
   struct vfatDC{
     int vfatType;
-    int vfatPos;
-    int iEta;
+    GEMDetId detId;
     int localPhi;
     bool operator < (const vfatDC& r)  const{
       if (vfatType == r.vfatType){
-        if (vfatPos == r.vfatPos){
-          if (iEta == r.iEta){
-            return localPhi < r.localPhi;
-          }
-          else{
-            return iEta < r.iEta;
-          }
+        if (detId == r.detId){
+           return localPhi < r.localPhi;
         }
         else{
-          return vfatPos < r.vfatPos;
+          return detId < r.detId;
         }
       }
       else{

@@ -24,9 +24,8 @@ void GEMELMap::convert(GEMROmap & romap) {
       ec.gebId = imap.gebId[ix];
 
       GEMROmap::dCoord dc;
-      dc.gemDetId = GEMDetId(imap.region[ix], 1, imap.station[ix], imap.layer[ix], imap.chamberSec[ix], 0);
+      dc.detId = GEMDetId((imap.gemNum[ix] > 0) ? 1:-1, 1, imap.gemNum[ix]/1000, imap.gemNum[ix]/100%10, imap.gemNum[ix]%100, 0);
       dc.vfatVer = imap.vfatVer[ix];
-      dc.chamberType = imap.chamberType[ix];
       
       romap.add(ec, dc);
       romap.add(dc, ec);
@@ -36,15 +35,14 @@ void GEMELMap::convert(GEMROmap & romap) {
   for (auto imap : theVFatMap_) {
     for (unsigned int ix=0;ix<imap.vfatAdd.size();ix++) {
       GEMROmap::vfatEC ec;
+      ec.detId = GEMDetId((imap.gemNum[ix] > 0) ? 1:-1, 1, imap.gemNum[ix]/1000, imap.gemNum[ix]/100%10, imap.gemNum[ix]%100, 0);
       ec.vfatVer = imap.vfatVer[ix];
       if (ec.vfatVer == 2) ec.vfatAdd = imap.vfatAdd[ix] & chipIdMask_;
       else ec.vfatAdd = imap.vfatAdd[ix];
-      ec.chamberType = imap.chamberType[ix];
       
       GEMROmap::vfatDC dc;
       dc.vfatType = imap.vfatType[ix];
-      dc.vfatPos = imap.vfatPos[ix];
-      dc.iEta = imap.iEta[ix];
+      dc.detId = GEMDetId(ec.detId.region(), 1, ec.detId.station(), ec.detId.layer(), ec.detId.chamber(), imap.iEta[ix]);
       dc.localPhi = imap.localPhi[ix];
   
       romap.add(ec, dc);
@@ -90,14 +88,36 @@ void GEMELMap::convertDummy(GEMROmap & romap) {
           ec.amcNum = amcNum;
 
           GEMROmap::dCoord dc;
-          dc.gemDetId = gemId;
+          dc.detId = gemId;
           dc.vfatVer = vfatVerV3_;
-          dc.chamberType = st;
      
           romap.add(ec, dc);
           romap.add(dc, ec);
           // 1 geb per chamber
           gebId++;
+
+          uint16_t chipPos = 0;
+          for (int lphi = 0; lphi < maxVFat; ++lphi) {
+            for (int roll = 1; roll<=maxEtaPartition_; ++roll) {
+              GEMROmap::vfatEC vec;
+              vec.vfatVer = vfatVerV3_;
+              vec.vfatAdd = chipPos;
+              vec.detId = gemId;
+      
+              GEMROmap::vfatDC vdc;
+              vdc.vfatType = vfatTypeV3_;// > 10 is vfat v3
+              vdc.detId = GEMDetId(re, 1, st, ly, ch, roll);
+              vdc.localPhi = lphi;
+    
+              romap.add(vec,vdc);
+              romap.add(vdc,vec);
+              chipPos++;
+            }
+          }
+
+
+
+
           // 5 bits for gebId 
           if (gebId == maxGEBs_) {
             // 24 gebs per amc
@@ -106,26 +126,6 @@ void GEMELMap::convertDummy(GEMROmap & romap) {
           }
         }
       }
-      uint16_t chipPos = 0;
-      for (int lphi = 0; lphi < maxVFat; ++lphi) {
-        for (int roll = 1; roll<=maxEtaPartition_; ++roll) {
-          GEMROmap::vfatEC ec;
-          ec.vfatVer = vfatVerV3_;
-          ec.vfatAdd = chipPos;
-          ec.chamberType = st;
-  
-          GEMROmap::vfatDC dc;
-          dc.vfatType = vfatTypeV3_;// > 10 is vfat v3
-          dc.vfatPos = chipPos;
-          dc.iEta = roll;
-          dc.localPhi = lphi;
-
-          romap.add(ec,dc);
-          romap.add(dc,ec);
-          chipPos++;
-        }
-      }
-
 
 
 

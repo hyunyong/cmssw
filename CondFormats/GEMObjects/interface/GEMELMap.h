@@ -22,22 +22,17 @@ class GEMELMap {
     std::vector<unsigned int> fedId;
     std::vector<uint8_t> amcNum;
     std::vector<uint8_t> gebId;
-    std::vector<int> region;
-    std::vector<int> station; 
-    std::vector<int> layer;
-    std::vector<int> chamberSec; 
+    std::vector<int> gemNum;
     std::vector<int> vfatVer; 
-    std::vector<int> chamberType;
 
     COND_SERIALIZABLE;
   };
 
   struct GEMVFatMap {
+    std::vector<int> gemNum;
+    std::vector<int> vfatVer; 
     std::vector<uint16_t> vfatAdd;
     std::vector<int> vfatType;
-    std::vector<int> vfatVer;
-    std::vector<int> chamberType;
-    std::vector<int> vfatPos;
     std::vector<int> iEta;
     std::vector<int> localPhi;
 

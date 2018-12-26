@@ -111,7 +111,7 @@ void GEMRawToDigiModule::produce(edm::StreamID iID, edm::Event & iEvent, edm::Ev
 	uint8_t gebId = gebData->inputID();
 	GEMROmap::eCoord geb_ec = {id, amcNum, gebId};
 	GEMROmap::dCoord geb_dc = gemROMap->hitPosition(geb_ec);
-	GEMDetId gemId = geb_dc.gemDetId;
+	GEMDetId gemId = geb_dc.detId;
 
 	for (uint16_t k = 0; k < gebData->vfatWordCnt()/3; k++) {
 	  auto vfatData = std::make_unique<VFATdata>();
@@ -126,10 +126,10 @@ void GEMRawToDigiModule::produce(edm::StreamID iID, edm::Event & iEvent, edm::Ev
             vfatId  = vfatData->position();
           }
           vfatData->setVersion(geb_dc.vfatVer);
-          GEMROmap::vfatEC vfat_ec = {vfatId, geb_dc.vfatVer, geb_dc.chamberType};
+          GEMROmap::vfatEC vfat_ec = {vfatId, gemId, geb_dc.vfatVer};
           GEMROmap::vfatDC vfat_dc = gemROMap->hitPosition(vfat_ec);
 	  vfatData->setPhi(vfat_dc.localPhi);
-          GEMDetId gemIdRoll = GEMDetId(gemId.region(), 1, gemId.station(), gemId.layer(), gemId.chamber(), vfat_dc.iEta);
+          GEMDetId gemId = vfat_dc.detId;
 	  uint16_t bc=vfatData->bc();
 	  // strip bx = vfat bx - amc bx
 	  int bx = bc-amcBx;
@@ -175,7 +175,7 @@ void GEMRawToDigiModule::produce(edm::StreamID iID, edm::Event & iEvent, edm::Ev
 					   <<" strip "<< stripId
 					   <<" bx "<< digi.bx();
 	    
-	    outGEMDigis.get()->insertDigi(gemIdRoll,digi);
+	    outGEMDigis.get()->insertDigi(gemId,digi);
 	    
 	  }// end of channel loop
 	  
