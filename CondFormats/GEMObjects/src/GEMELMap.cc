@@ -36,9 +36,7 @@ void GEMELMap::convert(GEMROmap & romap) {
     for (unsigned int ix=0;ix<imap.vfatAdd.size();ix++) {
       GEMROmap::vfatEC ec;
       ec.detId = GEMDetId((imap.gemNum[ix] > 0) ? 1:-1, 1, imap.gemNum[ix]/1000, imap.gemNum[ix]/100%10, imap.gemNum[ix]%100, 0);
-      ec.vfatVer = imap.vfatVer[ix];
-      if (ec.vfatVer == 2) ec.vfatAdd = imap.vfatAdd[ix] & chipIdMask_;
-      else ec.vfatAdd = imap.vfatAdd[ix];
+      ec.vfatAdd = imap.vfatAdd[ix] & chipIdMask_;
       
       GEMROmap::vfatDC dc;
       dc.vfatType = imap.vfatType[ix];
@@ -100,7 +98,6 @@ void GEMELMap::convertDummy(GEMROmap & romap) {
           for (int lphi = 0; lphi < maxVFat; ++lphi) {
             for (int roll = 1; roll<=maxEtaPartition_; ++roll) {
               GEMROmap::vfatEC vec;
-              vec.vfatVer = vfatVerV3_;
               vec.vfatAdd = chipPos;
               vec.detId = gemId;
       

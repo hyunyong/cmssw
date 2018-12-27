@@ -42,18 +42,12 @@ class GEMROmap{
   struct vfatEC{
     uint16_t vfatAdd;
     GEMDetId detId;
-    int vfatVer;
     bool operator < (const vfatEC& r) const{
       if (vfatAdd == r.vfatAdd){
-        if (detId == r.detId){
-          return  vfatVer < r.vfatVer;
-        }
-        else{
-          return detId < r.detId;  
-        }
+        return detId < r.detId;
       }
       else{
-        return vfatAdd < r.vfatAdd;
+        return vfatAdd  < r.vfatAdd;
       }
     }
   };

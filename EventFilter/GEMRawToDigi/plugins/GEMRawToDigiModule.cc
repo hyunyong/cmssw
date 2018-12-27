@@ -126,7 +126,7 @@ void GEMRawToDigiModule::produce(edm::StreamID iID, edm::Event & iEvent, edm::Ev
             vfatId  = vfatData->position();
           }
           vfatData->setVersion(geb_dc.vfatVer);
-          GEMROmap::vfatEC vfat_ec = {vfatId, gemId, geb_dc.vfatVer};
+          GEMROmap::vfatEC vfat_ec = {vfatId, gemId};
           GEMROmap::vfatDC vfat_dc = gemROMap->hitPosition(vfat_ec);
 	  vfatData->setPhi(vfat_dc.localPhi);
           GEMDetId gemId = vfat_dc.detId;

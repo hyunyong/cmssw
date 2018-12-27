@@ -30,7 +30,6 @@ class GEMELMap {
 
   struct GEMVFatMap {
     std::vector<int> gemNum;
-    std::vector<int> vfatVer; 
     std::vector<uint16_t> vfatAdd;
     std::vector<int> vfatType;
     std::vector<int> iEta;
