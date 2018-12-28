@@ -24,7 +24,7 @@ void GEMELMap::convert(GEMROmap & romap) {
       ec.gebId = imap.gebId[ix];
 
       GEMROmap::dCoord dc;
-      dc.detId = GEMDetId((imap.gemNum[ix] > 0) ? 1:-1, 1, imap.gemNum[ix]/1000, imap.gemNum[ix]/100%10, imap.gemNum[ix]%100, 0);
+      dc.detId = GEMDetId((imap.gemNum[ix] > 0) ? 1:-1, 1, abs(imap.gemNum[ix]/1000), abs(imap.gemNum[ix]/100%10), abs(imap.gemNum[ix]%100), 0);
       dc.vfatVer = imap.vfatVer[ix];
       
       romap.add(ec, dc);
@@ -35,7 +35,7 @@ void GEMELMap::convert(GEMROmap & romap) {
   for (auto imap : theVFatMap_) {
     for (unsigned int ix=0;ix<imap.vfatAdd.size();ix++) {
       GEMROmap::vfatEC ec;
-      ec.detId = GEMDetId((imap.gemNum[ix] > 0) ? 1:-1, 1, imap.gemNum[ix]/1000, imap.gemNum[ix]/100%10, imap.gemNum[ix]%100, 0);
+      ec.detId = GEMDetId((imap.gemNum[ix] > 0) ? 1:-1, 1, abs(imap.gemNum[ix]/1000), abs(imap.gemNum[ix]/100%10), abs(imap.gemNum[ix]%100), 0);
       ec.vfatAdd = imap.vfatAdd[ix] & chipIdMask_;
       
       GEMROmap::vfatDC dc;
