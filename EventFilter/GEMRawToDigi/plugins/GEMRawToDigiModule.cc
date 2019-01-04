@@ -71,7 +71,6 @@ void GEMRawToDigiModule::produce(edm::StreamID iID, edm::Event & iEvent, edm::Ev
   // Take raw from the event
   edm::Handle<FEDRawDataCollection> fed_buffers;
   iEvent.getByToken( fed_token, fed_buffers );
-  
   auto gemROMap = runCache(iEvent.getRun().index());
   
   for (unsigned int id=FEDNumbering::MINGEMFEDID; id<=FEDNumbering::MAXGEMFEDID; ++id) { 
@@ -100,37 +99,38 @@ void GEMRawToDigiModule::produce(edm::StreamID iID, edm::Event & iEvent, edm::Ev
       amcData->setAMCheader1(*(++word));      
       amcData->setAMCheader2(*(++word));
       amcData->setGEMeventHeader(*(++word));
-      uint16_t amcId = amcData->boardId();
       uint16_t amcBx = amcData->bx();
-
+      uint8_t amcNum = amcData->amcNum();
       // Fill GEB
       for (uint8_t j = 0; j < amcData->davCnt(); ++j) {
 	auto gebData = std::make_unique<GEBdata>();
+        uint16_t vfatId=0;
 	gebData->setChamberHeader(*(++word));
 	
-	uint16_t gebId = gebData->inputID();
-	uint16_t vfatId=0;
-	GEMROmap::eCoord geb_ec = {amcId, gebId, vfatId};
+	uint8_t gebId = gebData->inputID();
+	GEMROmap::eCoord geb_ec = {id, amcNum, gebId};
+        std::cout << "geb EMap" <<" id: " << id << ",  amcNum: " << unsigned(amcNum) << ", gebId: " << unsigned(gebId) << std::endl;
 	GEMROmap::dCoord geb_dc = gemROMap->hitPosition(geb_ec);
-	GEMDetId gemId = geb_dc.gemDetId;
+	GEMDetId gemId = geb_dc.detId;
 
 	for (uint16_t k = 0; k < gebData->vfatWordCnt()/3; k++) {
 	  auto vfatData = std::make_unique<VFATdata>();
 	  vfatData->read_fw(*(++word));
 	  vfatData->read_sw(*(++word));
 	  vfatData->read_tw(*(++word));
-	  
-	  if (geb_dc.vfatType < 10) {
-	    // vfat v2
-	    vfatId = vfatData->chipID();
-	    vfatData->setVersion(2);
-	  }
-	  else {
-	    // vfat v3
-	    vfatId = vfatData->position();
-	    vfatData->setVersion(3);
-	  }
-	  
+	 
+          if (geb_dc.vfatVer == 2){
+            vfatId = vfatData->chipID();
+          }
+          else{
+            vfatId  = vfatData->position();
+          }
+          vfatData->setVersion(geb_dc.vfatVer);
+          GEMROmap::vfatEC vfat_ec = {vfatId, gemId};
+          std::cout << "vfatId: " << vfatId  << ", detID:" << gemId << std::endl;
+          GEMROmap::vfatDC vfat_dc = gemROMap->hitPosition(vfat_ec);
+	  vfatData->setPhi(vfat_dc.localPhi);
+          GEMDetId gemId = vfat_dc.detId;
 	  uint16_t bc=vfatData->bc();
 	  // strip bx = vfat bx - amc bx
 	  int bx = bc-amcBx;
@@ -145,7 +145,7 @@ void GEMRawToDigiModule::produce(edm::StreamID iID, edm::Event & iEvent, edm::Ev
 						    <<vfatData->crc()<<"   "<<vfatData->checkCRC();	      
 	    }
 	  }
-	  
+	 /* 
 	  //check if ChipID exists.
 	  GEMROmap::eCoord ec = {amcId, gebId, vfatId};
 	  if (!gemROMap->isValidChipID(ec)) {
@@ -154,10 +154,7 @@ void GEMRawToDigiModule::produce(edm::StreamID iID, edm::Event & iEvent, edm::Ev
 						  << " vfatId "<< ec.vfatId;
 	    continue;
 	  }
-
-	  GEMROmap::dCoord dc = gemROMap->hitPosition(ec);
-	  gemId = dc.gemDetId;
-	  vfatData->setPhi(dc.locPhi);
+          */
 
 	  for (int chan = 0; chan < VFATdata::nChannels; ++chan) {
 	    uint8_t chan0xf = 0;
@@ -167,13 +164,14 @@ void GEMRawToDigiModule::produce(edm::StreamID iID, edm::Event & iEvent, edm::Ev
 	    // no hits
 	    if (chan0xf==0) continue;
 	    	             
-            GEMROmap::channelNum chMap = {dc.vfatType, chan};
+            GEMROmap::channelNum chMap = {vfat_dc.vfatType, chan};
+            std::cout << "vfatType: " << vfat_dc.vfatType << ", channel: " << chan << std::endl;
             GEMROmap::stripNum stMap = gemROMap->hitPosition(chMap);
 
             int stripId = stMap.stNum + vfatData->phi()*GEMELMap::maxChan_;    
 
 	    GEMDigi digi(stripId,bx);
-	    LogDebug("GEMRawToDigiModule") <<" vfatId "<<ec.vfatId
+	    LogDebug("GEMRawToDigiModule") <<" vfatId "<<vfat_ec.vfatAdd
 					   <<" gemDetId "<< gemId
 					   <<" chan "<< chMap.chNum
 					   <<" strip "<< stripId
