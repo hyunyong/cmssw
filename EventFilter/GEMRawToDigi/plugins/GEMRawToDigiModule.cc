@@ -127,6 +127,13 @@ void GEMRawToDigiModule::produce(edm::StreamID iID, edm::Event & iEvent, edm::Ev
           }
           vfatData->setVersion(geb_dc.vfatVer);
           GEMROmap::vfatEC vfat_ec = {vfatId, gemId};
+	  //check if ChipID exists.
+	  if (!gemROMap->isValidChipID(vfat_ec)) {
+	    edm::LogWarning("GEMRawToDigiModule") << "InValid: amcId "<<ec.amcId
+						  << " gebId "<< ec.gebId
+						  << " vfatId "<< ec.vfatId;
+	    continue;
+	  }
           GEMROmap::vfatDC vfat_dc = gemROMap->hitPosition(vfat_ec);
 	  vfatData->setPhi(vfat_dc.localPhi);
           GEMDetId gemId = vfat_dc.detId;
@@ -144,16 +151,6 @@ void GEMRawToDigiModule::produce(edm::StreamID iID, edm::Event & iEvent, edm::Ev
 						    <<vfatData->crc()<<"   "<<vfatData->checkCRC();	      
 	    }
 	  }
-	 /* 
-	  //check if ChipID exists.
-	  GEMROmap::eCoord ec = {amcId, gebId, vfatId};
-	  if (!gemROMap->isValidChipID(ec)) {
-	    edm::LogWarning("GEMRawToDigiModule") << "InValid: amcId "<<ec.amcId
-						  << " gebId "<< ec.gebId
-						  << " vfatId "<< ec.vfatId;
-	    continue;
-	  }
-          */
 
 	  for (int chan = 0; chan < VFATdata::nChannels; ++chan) {
 	    uint8_t chan0xf = 0;
