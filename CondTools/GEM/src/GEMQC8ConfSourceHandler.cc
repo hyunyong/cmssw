@@ -124,8 +124,45 @@ void popcon::GEMQC8ConfSourceHandler::getNewObjects()
     float flow=121. + 1e-3*m_runNumber;
     qc8conf->run_number_ = m_runNumber;
     qc8conf->chSerialNums_.push_back("GE11-X-S-BARI-0010");
+    qc8conf->chPositions_.push_back("1/2/B");
+    qc8conf->chGasFlow_.push_back(flow);
+
+    qc8conf->chSerialNums_.push_back("GE11-X-S-BARI-0011");
+    qc8conf->chPositions_.push_back("1/2/T");
+    qc8conf->chGasFlow_.push_back(flow);
+
+    qc8conf->chSerialNums_.push_back("GE11-X-S-BARI-0012");
+    qc8conf->chPositions_.push_back("2/2/B");
+    qc8conf->chGasFlow_.push_back(flow);
+
+    qc8conf->chSerialNums_.push_back("GE11-X-S-BARI-0013");
+    qc8conf->chPositions_.push_back("2/2/T");
+    qc8conf->chGasFlow_.push_back(flow);
+
+    qc8conf->chSerialNums_.push_back("GE11-X-S-BARI-0014");
     qc8conf->chPositions_.push_back("3/2/B");
     qc8conf->chGasFlow_.push_back(flow);
+
+    qc8conf->chSerialNums_.push_back("GE11-X-S-BARI-0015");
+    qc8conf->chPositions_.push_back("3/2/T");
+    qc8conf->chGasFlow_.push_back(flow);
+    
+    qc8conf->chSerialNums_.push_back("GE11-X-S-BARI-0016");
+    qc8conf->chPositions_.push_back("4/2/B");
+    qc8conf->chGasFlow_.push_back(flow);
+
+    qc8conf->chSerialNums_.push_back("GE11-X-S-BARI-0017");
+    qc8conf->chPositions_.push_back("4/2/T");
+    qc8conf->chGasFlow_.push_back(flow);
+ 
+    qc8conf->chSerialNums_.push_back("GE11-X-S-BARI-0018");
+    qc8conf->chPositions_.push_back("5/2/B");
+    qc8conf->chGasFlow_.push_back(flow);
+ 
+    qc8conf->chSerialNums_.push_back("GE11-X-S-BARI-0019");
+    qc8conf->chPositions_.push_back("5/2/T");
+    qc8conf->chGasFlow_.push_back(flow);
+
 
     qc8conf->print(std::cout,0);
 
@@ -434,7 +471,10 @@ void popcon::GEMQC8ConfSourceHandler::readGEMQC8EMap_specDummy()
 
   GEMELMapHelper elMapAid; // an object to fill GEMEMap
 
+  GEMELMap elmap;
+  GEMELMap::GEMVFatMap vfats;
   //std::cout << "there are " << qc8conf->chSerNums().size() << " chambers\n";
+  uint16_t gebId=2;
   for (unsigned int ich=0; ich<qc8conf->chSerNums().size(); ich++) {
     std::cout << " readGEMQC8EMap chamber " << qc8conf->chSerNum(ich) << "\n";
     std::string chamberPos= qc8conf->chPos(ich);
@@ -447,16 +487,12 @@ void popcon::GEMQC8ConfSourceHandler::readGEMQC8EMap_specDummy()
       sector = (ir*2-1) + (ic-1)*10;
     }
 
-    GEMELMap elmap;
-    GEMELMap::GEMVFatMap vfats;
     vfats.VFATmapTypeId=GEMELMap::vfatTypeV3_;
+    int dep=1;
     for (int vfatPos=0; vfatPos<24; vfatPos++) {
       //int iSector=-1; // would be obtained from a DB
-      int dep=1;
       int vfatType=GEMELMap::vfatTypeV3_;
       uint16_t vfatId=vfatPos; // VFAT3
-      uint16_t gebId=0;
-
       vfats.vfat_position.push_back(vfatPos);
       vfats.z_direction.push_back(zdir);
       vfats.depth.push_back(dep);
@@ -466,14 +502,20 @@ void popcon::GEMQC8ConfSourceHandler::readGEMQC8EMap_specDummy()
       vfats.amcId.push_back(48879); // amcId for QC8?
       vfats.gebId.push_back(gebId);
       vfats.sec.push_back(sector); // value based on QC8 configuration
-
       if (m_printValues) {
 	std::cout <<"    - hard-coded specDummy " << sector << " zdir=" << zdir
 		  << dep << " " << gebId << " 0x"
 		  << std::hex << vfatId << std::dec << " vfatType="
 		  << vfatType << " " << vfatPos << "\n";
       }
-    } // for vfatPos
+    }
+
+ // for vfatPos
+      gebId++;
+      dep++;
+      if(gebId>11) gebId=2;
+      if(dep>2) dep=1;
+
 
     GEMELMap::GEMStripMap stripMap;
     if (vfats.size()) {
@@ -483,11 +525,10 @@ void popcon::GEMQC8ConfSourceHandler::readGEMQC8EMap_specDummy()
 	return;
       }
     }
-
     // store the entry
-    elmap.theVFatMap_.push_back(vfats);
-    elmap.theStripMap_.push_back(stripMap);
-    qc8conf->elMap_.push_back(elmap);
+    //elmap.theStripMap_.push_back(stripMap);
+    //elmap.theVFatMap_.push_back(vfats);
+    
     if (vfats.size()) {
       qc8elMap->theVFatMap_.push_back(vfats);
       if (qc8elMap->theStripMap_.size()==0) qc8elMap->theStripMap_.push_back(stripMap);
@@ -498,8 +539,8 @@ void popcon::GEMQC8ConfSourceHandler::readGEMQC8EMap_specDummy()
 	return;
       }
     }
-
   }
+  qc8conf->elMap_.push_back(elmap);
 
   std::cout << "\nGEMQC8ConfSourceHandler readGEMQC8EMap_specDummy done" << std::endl;
 }
@@ -548,7 +589,7 @@ int popcon::GEMQC8ConfSourceHandler::gemELMap_vfat_autoFill(const std::string &c
   // update information about vfats
   for (unsigned int i=0; i<vfats.size(); i++) {
     int pos= vfats.vfat_position[i];
-    vfats.vfatType.push_back( elMapAid.vfat2mapId()[pos] ); // strip2ch map no
+    vfats.vfatType.push_back( elMapAid.vfat2mapId()[pos]-1 ); // strip2ch map no
     int ieta= 8-pos%8;
     int iphi= pos/8;
     if (confP5) {

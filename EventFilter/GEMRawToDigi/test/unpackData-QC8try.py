@@ -230,15 +230,25 @@ process.reader_elmap = cms.EDAnalyzer( "GEMELMapRcdReader",
 )
 
 
+process.load("DQM.Integration.config.environment_cfi")
+process.dqmEnv.subSystemFolder = "GEM"
+process.dqmEnv.eventInfoFolder = "EventInfo"
+process.dqmSaver.path = ""
+process.dqmSaver.tag = "GEM"
+
+
+
+process.load("DQM.GEM.GEMDQM_cff")
 
 # Path and EndPath definitions
 process.path = cms.Path(
     #process.validationEventFilter
     process.dumpRaw
     +process.muonGEMDigis
-    #+process.reader_elmap
-    #+process.reader_qc8conf
+    +process.reader_elmap
+    +process.reader_qc8conf
     +process.gemRecHits
+    +process.GEMDQM
 )
 
 # enable validation event filtering
@@ -265,7 +275,9 @@ if (options.edm):
     )
 
     process.out = cms.EndPath(
-        process.output
+        process.output+
+        process.dqmEnv +
+        process.dqmSaver
     )
 
 
