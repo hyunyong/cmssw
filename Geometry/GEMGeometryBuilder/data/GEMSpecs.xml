@@ -3,11 +3,13 @@
   <SpecParSection label="GEMSpecs.xml">
     <SpecPar name="nStripsGE11" eval="true">
       <PartSelector path="//GHA1.."/>
-      <Parameter name="nStrips" value="384"/>
+      <Parameter name="nStrips" value="128"/>
+      <Parameter name="dPhi" value="10.15"/>
     </SpecPar>
     <SpecPar name="nPadsGE11" eval="true">
       <PartSelector path="//GHA1.."/>
       <Parameter name="nPads" value="192"/>
+      <Parameter name="dPhi" value="10.15"/>
     </SpecPar>
   </SpecParSection>
 </DDDefinition>

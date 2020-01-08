@@ -1,6 +1,6 @@
 #include "Geometry/GEMGeometry/interface/GEMEtaPartition.h"
 #include "Geometry/GEMGeometry/interface/GEMEtaPartitionSpecs.h"
-#include "Geometry/CommonTopologies/interface/TrapezoidalStripTopology.h"
+#include "Geometry/CommonTopologies/interface/GEMStripTopology.h"
 
 GEMEtaPartition::GEMEtaPartition(GEMDetId id, const BoundPlane::BoundPlanePointer& bp, GEMEtaPartitionSpecs* rrs)
     : GeomDet(bp), id_(id), specs_(rrs) {
@@ -13,11 +13,11 @@ GEMEtaPartition::~GEMEtaPartition() {
 
 const Topology& GEMEtaPartition::topology() const { return specs_->topology(); }
 
-const StripTopology& GEMEtaPartition::specificTopology() const { return specs_->specificTopology(); }
+const GEMStripTopology& GEMEtaPartition::specificTopology() const { return specs_->specificTopology(); }
 
 const Topology& GEMEtaPartition::padTopology() const { return specs_->padTopology(); }
 
-const StripTopology& GEMEtaPartition::specificPadTopology() const { return specs_->specificPadTopology(); }
+const GEMStripTopology& GEMEtaPartition::specificPadTopology() const { return specs_->specificPadTopology(); }
 
 const GeomDetType& GEMEtaPartition::type() const { return (*specs_); }
 
@@ -38,7 +38,7 @@ float GEMEtaPartition::strip(const LocalPoint& lp) const { return this->specific
 
 float GEMEtaPartition::localPitch(const LocalPoint& lp) const { return this->specificTopology().localPitch(lp); }
 
-float GEMEtaPartition::pitch() const { return this->specificTopology().pitch(); }
+float GEMEtaPartition::pitch() const { return this->specificTopology().phiPitch(); }
 
 int GEMEtaPartition::npads() const { return specificPadTopology().nstrips(); }
 

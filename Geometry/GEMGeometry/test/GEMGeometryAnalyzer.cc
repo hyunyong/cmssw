@@ -15,6 +15,7 @@
 #include "Geometry/Records/interface/MuonGeometryRecord.h"
 #include "Geometry/GEMGeometry/interface/GEMEtaPartitionSpecs.h"
 #include "Geometry/CommonTopologies/interface/StripTopology.h"
+#include "Geometry/CommonTopologies/interface/GEMStripTopology.h"
 
 #include "DataFormats/Math/interface/deltaPhi.h"
 
@@ -206,7 +207,7 @@ void GEMGeometryAnalyzer::analyze(const edm::Event& /*iEvent*/, const edm::Event
                 bphi += 360;
 
               // pitch bottom, pitch top, pitch centre
-              float pitch(roll->pitch());
+              float pitch(roll->localPitch(lCentre));
               float topPitch(roll->localPitch(lTop));
               float bottomPitch(roll->localPitch(lBottom));
 

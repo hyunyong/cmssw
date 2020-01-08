@@ -11,7 +11,7 @@
 #include <vector>
 #include <string>
 
-class StripTopology;
+class GEMStripTopology;
 
 #include "Geometry/CommonDetUnit/interface/GeomDetType.h"
 
@@ -25,11 +25,11 @@ public:
 
   const Topology& topology() const override;
 
-  const StripTopology& specificTopology() const;
+  const GEMStripTopology& specificTopology() const;
 
   const Topology& padTopology() const;
 
-  const StripTopology& specificPadTopology() const;
+  const GEMStripTopology& specificPadTopology() const;
 
   const std::string& detName() const;
 
@@ -37,10 +37,10 @@ public:
 
 private:
   /// topology of strips
-  StripTopology* _top;
+  GEMStripTopology* _top;
 
   /// topology of trigger pads (pad = bundle of strips, basically, a "fat" strip)
-  StripTopology* _top_pad;
+  GEMStripTopology* _top_pad;
 
   std::vector<float> _p;
   std::string _n;
