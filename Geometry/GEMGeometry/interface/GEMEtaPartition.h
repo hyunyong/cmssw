@@ -6,7 +6,7 @@
 #include "DataFormats/MuonDetId/interface/GEMDetId.h"
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 
-class StripTopology;
+class GEMStripTopology;
 class GEMEtaPartitionSpecs;
 
 class GEMEtaPartition : public GeomDet {
@@ -18,10 +18,10 @@ public:
   GEMDetId id() const { return id_; }
 
   const Topology& topology() const override;
-  const StripTopology& specificTopology() const;
+  const GEMStripTopology& specificTopology() const;
 
   const Topology& padTopology() const;
-  const StripTopology& specificPadTopology() const;
+  const GEMStripTopology& specificPadTopology() const;
 
   const GeomDetType& type() const override;
 

@@ -33,6 +33,7 @@
 #include "Geometry/CommonTopologies/interface/StripTopology.h"
 #include "Geometry/CommonTopologies/interface/RectangularStripTopology.h"
 #include "Geometry/CommonTopologies/interface/TrapezoidalStripTopology.h"
+#include "Geometry/CommonTopologies/interface/GEMStripTopology.h"
 
 #include "TNamed.h"
 #include "FWCore/ParameterSet/interface/FileInPath.h"
@@ -298,7 +299,7 @@ void FWRecoGeometryESProducer::addGEMGeometry(FWRecoGeometry& fwRecoGeometry) {
         unsigned int current = insert_id(rawid, fwRecoGeometry);
         fillShapeAndPlacement(current, roll, fwRecoGeometry);
 
-        const StripTopology& topo = roll->specificTopology();
+        const GEMStripTopology& topo = roll->specificTopology();
         fwRecoGeometry.idToName[current].topology[0] = topo.nstrips();
         fwRecoGeometry.idToName[current].topology[1] = topo.stripLength();
         fwRecoGeometry.idToName[current].topology[2] = topo.pitch();

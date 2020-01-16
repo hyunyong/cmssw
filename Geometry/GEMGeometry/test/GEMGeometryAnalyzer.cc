@@ -15,6 +15,7 @@
 #include "Geometry/Records/interface/MuonGeometryRecord.h"
 #include "Geometry/GEMGeometry/interface/GEMEtaPartitionSpecs.h"
 #include "Geometry/CommonTopologies/interface/StripTopology.h"
+#include "Geometry/CommonTopologies/interface/GEMStripTopology.h"
 
 #include "DataFormats/Math/interface/deltaPhi.h"
 
@@ -161,7 +162,7 @@ void GEMGeometryAnalyzer::analyze(const edm::Event& /*iEvent*/, const edm::Event
               ofos << "            GEMEtaPartition " << k << ", GEMDetId = " << rId.rawId() << ", " << rId << endl;
 
               const BoundPlane& bSurface(roll->surface());
-              const StripTopology* topology(&(roll->specificTopology()));
+              const GEMStripTopology* topology(&(roll->specificTopology()));
 
               // base_bottom, base_top, height, strips, pads (all half length)
               auto& parameters(roll->specs()->parameters());
@@ -235,7 +236,7 @@ void GEMGeometryAnalyzer::analyze(const edm::Event& /*iEvent*/, const edm::Event
                      << ceta << ", " << cphi << ")" << endl
                      << "    \t\tbottom(x,y,z)[cm] = (" << bx << ", " << by << ", " << bz << "), bottom(eta,phi) = ("
                      << beta << ", " << bphi << ")" << endl
-                     << "    \t\tpitch (top,center,bottom) = (" << topPitch << ", " << pitch << ", " << bottomPitch
+                     << "    \t\tpitch (top,center,bottom) = (" << topPitch << ", " << pitch <<", " << bottomPitch
                      << "), dEta = " << deta << ", dPhi = " << dphi << endl;
               }
               ++k;

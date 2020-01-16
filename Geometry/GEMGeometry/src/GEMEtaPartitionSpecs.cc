@@ -1,6 +1,6 @@
 #include "Geometry/GEMGeometry/interface/GEMEtaPartitionSpecs.h"
-#include "Geometry/CommonTopologies/interface/RectangularStripTopology.h"
-#include "Geometry/CommonTopologies/interface/TrapezoidalStripTopology.h"
+//#include "Geometry/CommonTopologies/interface/RectangularStripTopology.h"
+#include "Geometry/CommonTopologies/interface/GEMStripTopology.h"
 
 using namespace GeomDetEnumerators;
 
@@ -13,14 +13,16 @@ GEMEtaPartitionSpecs::GEMEtaPartitionSpecs(SubDetector rss, const std::string& n
     float r0 = h * (B + b) / (B - b);
     float striplength = h * 2;
     float strips = _p[3];
-    float pitch = (b + B) / strips;
+    //float pitch = (b + B) / strips;
     int nstrip = static_cast<int>(strips);
-    _top = new TrapezoidalStripTopology(nstrip, pitch, striplength, r0);
+    float phiPitch = _p[5] / strips;
+    _top = new GEMStripTopology(nstrip, phiPitch, striplength, r0);
 
     float pads = _p[4];
-    float pad_pitch = (b + B) / pads;
+    //float pad_pitch = (b + B) / pads;
     int npad = static_cast<int>(pads);
-    _top_pad = new TrapezoidalStripTopology(npad, pad_pitch, striplength, r0);
+    float padPhiPitch = _p[5] / pads;
+    _top_pad = new GEMStripTopology(npad, padPhiPitch, striplength, r0);
   } else {
     _top = nullptr;
     _top_pad = nullptr;
@@ -36,11 +38,11 @@ GEMEtaPartitionSpecs::~GEMEtaPartitionSpecs() {
 
 const Topology& GEMEtaPartitionSpecs::topology() const { return *_top; }
 
-const StripTopology& GEMEtaPartitionSpecs::specificTopology() const { return *_top; }
+const GEMStripTopology& GEMEtaPartitionSpecs::specificTopology() const { return *_top; }
 
 const Topology& GEMEtaPartitionSpecs::padTopology() const { return *_top_pad; }
 
-const StripTopology& GEMEtaPartitionSpecs::specificPadTopology() const { return *_top_pad; }
+const GEMStripTopology& GEMEtaPartitionSpecs::specificPadTopology() const { return *_top_pad; }
 
 const std::string& GEMEtaPartitionSpecs::detName() const { return _n; }
 
