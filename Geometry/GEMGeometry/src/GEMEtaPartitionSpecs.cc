@@ -1,6 +1,7 @@
 #include "Geometry/GEMGeometry/interface/GEMEtaPartitionSpecs.h"
 //#include "Geometry/CommonTopologies/interface/RectangularStripTopology.h"
 #include "Geometry/CommonTopologies/interface/GEMStripTopology.h"
+#include "TMath.h"
 
 using namespace GeomDetEnumerators;
 
@@ -15,13 +16,14 @@ GEMEtaPartitionSpecs::GEMEtaPartitionSpecs(SubDetector rss, const std::string& n
     float strips = _p[3];
     //float pitch = (b + B) / strips;
     int nstrip = static_cast<int>(strips);
-    float phiPitch = _p[5] / strips;
+    float dphi = _p[5]*TMath::Pi()/180.;
+    float phiPitch = dphi / strips;
     _top = new GEMStripTopology(nstrip, phiPitch, striplength, r0);
 
     float pads = _p[4];
     //float pad_pitch = (b + B) / pads;
     int npad = static_cast<int>(pads);
-    float padPhiPitch = _p[5] / pads;
+    float padPhiPitch = dphi / pads;
     _top_pad = new GEMStripTopology(npad, padPhiPitch, striplength, r0);
   } else {
     _top = nullptr;
