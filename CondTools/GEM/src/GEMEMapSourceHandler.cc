@@ -62,9 +62,9 @@ void popcon::GEMEMapSourceHandler::getNewObjects()
   std::string baseCMS = std::string(getenv("CMSSW_BASE"))+std::string("/src/CondTools/GEM/data/");  
   std::vector<std::string> mapfiles;
 
-  mapfiles.push_back("chamberMapQC8.csv");
-  mapfiles.push_back(m_conf_type);
-  mapfiles.push_back("HV3b_V3_chMap.csv");
+  mapfiles.push_back("chamberMapFull.csv");
+  mapfiles.push_back("vfatTypeListFull.csv");
+  mapfiles.push_back("HV3bV3ChMapFull.csv");
   // VFAT Postion Map 
   GEMeMap::GEMChamberMap cMap;
   std::string field, line;
