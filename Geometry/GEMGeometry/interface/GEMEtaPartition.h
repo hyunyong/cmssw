@@ -5,8 +5,8 @@
 #include "Geometry/CommonDetUnit/interface/GeomDetType.h"
 #include "DataFormats/MuonDetId/interface/GEMDetId.h"
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
-
-class GEMStripTopology;
+#include "Geometry/CommonTopologies/interface/GEMStripTopology.h"
+//class GEMStripTopology;
 class GEMEtaPartitionSpecs;
 
 class GEMEtaPartition : public GeomDet {
