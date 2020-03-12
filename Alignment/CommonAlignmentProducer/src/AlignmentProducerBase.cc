@@ -24,7 +24,7 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
 #include "Geometry/CSCGeometryBuilder/src/CSCGeometryBuilderFromDDD.h"
-#include "Geometry/DTGeometryBuilder/src/DTGeometryBuilderFromDDD.h"
+#include "Geometry/DTGeometryBuilder/plugins/dd4hep/DTGeometryBuilder.h"
 #include "Geometry/MuonNumbering/interface/MuonDDDConstants.h"
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeomBuilderFromGeometricDet.h"
 #include "Geometry/Records/interface/MuonNumberingRecord.h"
@@ -426,16 +426,21 @@ void AlignmentProducerBase::createGeometries(const edm::EventSetup& iSetup, cons
   }
 
   if (doMuon_) {
-    edm::ESTransientHandle<DDCompactView> cpv;
+    edm::ESTransientHandle<cms::DDDetector> cpv;
     iSetup.get<IdealGeometryRecord>().get(cpv);
-    edm::ESHandle<MuonDDDConstants> mdc;
+    edm::ESTransientHandle<DDCompactView> cpv_csc;
+    iSetup.get<IdealGeometryRecord>().get(cpv_csc);
+    edm::ESHandle<MuonDDDConstants> mdc_csc;
+    iSetup.get<MuonNumberingRecord>().get(mdc_csc);
+    edm::ESTransientHandle<cms::MuonNumbering> mdc;
     iSetup.get<MuonNumberingRecord>().get(mdc);
-    DTGeometryBuilderFromDDD DTGeometryBuilder;
+    cms::DDSpecParRefs myReg;
+    cms::DTGeometryBuilder DTGeometryBuilder;
     CSCGeometryBuilderFromDDD CSCGeometryBuilder;
     muonDTGeometry_ = std::make_shared<DTGeometry>();
-    DTGeometryBuilder.build(*muonDTGeometry_, &(*cpv), *mdc);
+    DTGeometryBuilder.build(*muonDTGeometry_, cpv.product(), *mdc, myReg);
     muonCSCGeometry_ = std::make_shared<CSCGeometry>();
-    CSCGeometryBuilder.build(*muonCSCGeometry_, &(*cpv), *mdc);
+    CSCGeometryBuilder.build(*muonCSCGeometry_, &(*cpv_csc), *mdc_csc);
   }
 }
 
