@@ -22,9 +22,7 @@
 #include "DataFormats/MuonDetId/interface/DTSuperLayerId.h"
 #include "DataFormats/MuonDetId/interface/DTLayerId.h"
 #include "DataFormats/MuonDetId/interface/CSCDetId.h"
-#include "Geometry/Records/interface/MuonNumberingRecord.h"
-#include "Geometry/DTGeometryBuilder/src/DTGeometryBuilderFromDDD.h"
-#include "Geometry/CSCGeometryBuilder/src/CSCGeometryBuilderFromDDD.h"
+#include "Geometry/Records/interface/MuonGeometryRecord.h"
 #include "Geometry/DTGeometry/interface/DTGeometry.h"
 #include "Geometry/CSCGeometry/interface/CSCGeometry.h"
 #include "Alignment/CommonAlignment/interface/SurveyDet.h"
@@ -120,21 +118,12 @@ void MuonAlignmentOutputXML::write(AlignableMuon *alignableMuon, const edm::Even
   align::Alignables endcaps = alignableMuon->CSCEndcaps();
 
   if (m_relativeto == 1) {
-    edm::ESTransientHandle<DDCompactView> cpv;
-    iSetup.get<IdealGeometryRecord>().get(cpv);
+    edm::ESHandle<DTGeometry> dtGeometry;
+    iSetup.get<MuonGeometryRecord>().get(dtGeometry);
+    edm::ESHandle<CSCGeometry> cscGeometry;
+    iSetup.get<MuonGeometryRecord>().get(cscGeometry);
 
-    edm::ESHandle<MuonDDDConstants> mdc;
-    iSetup.get<MuonNumberingRecord>().get(mdc);
-    DTGeometryBuilderFromDDD DTGeometryBuilder;
-    CSCGeometryBuilderFromDDD CSCGeometryBuilder;
-
-    auto dtGeometry = std::make_shared<DTGeometry>();
-    DTGeometryBuilder.build(*dtGeometry, &(*cpv), *mdc);
-
-    auto boost_cscGeometry = std::make_shared<CSCGeometry>();
-    CSCGeometryBuilder.build(*boost_cscGeometry, &(*cpv), *mdc);
-
-    AlignableMuon ideal_alignableMuon(&(*dtGeometry), &(*boost_cscGeometry));
+    AlignableMuon ideal_alignableMuon(&(*dtGeometry), &(*cscGeometry));
 
     align::Alignables ideal_barrels = ideal_alignableMuon.DTBarrel();
     align::Alignables ideal_endcaps = ideal_alignableMuon.CSCEndcaps();

@@ -64,8 +64,8 @@ MuonAlignmentInputDB::~MuonAlignmentInputDB() {}
 //
 
 AlignableMuon* MuonAlignmentInputDB::newAlignableMuon(const edm::EventSetup& iSetup) const {
-  std::shared_ptr<DTGeometry> dtGeometry = idealDTGeometry(iSetup);
-  std::shared_ptr<CSCGeometry> cscGeometry = idealCSCGeometry(iSetup);
+  edm::ESHandle<DTGeometry> dtGeometry = idealDTGeometry(iSetup);
+  edm::ESHandle<CSCGeometry> cscGeometry = idealCSCGeometry(iSetup);
 
   edm::ESHandle<Alignments> dtAlignments;
   edm::ESHandle<AlignmentErrorsExtended> dtAlignmentErrorsExtended;
