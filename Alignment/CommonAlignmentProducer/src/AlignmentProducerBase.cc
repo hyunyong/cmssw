@@ -24,7 +24,7 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
 #include "Geometry/CSCGeometryBuilder/src/CSCGeometryBuilderFromDDD.h"
-#include "Geometry/DTGeometryBuilder/src/DTGeometryBuilderFromDDD.h"
+#include "Geometry/DTGeometryBuilder/plugins/dd4hep/DTGeometryBuilder.h"
 #include "Geometry/MuonNumbering/interface/MuonDDDConstants.h"
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeomBuilderFromGeometricDet.h"
 #include "Geometry/Records/interface/MuonNumberingRecord.h"
@@ -426,16 +426,8 @@ void AlignmentProducerBase::createGeometries(const edm::EventSetup& iSetup, cons
   }
 
   if (doMuon_) {
-    edm::ESTransientHandle<DDCompactView> cpv;
-    iSetup.get<IdealGeometryRecord>().get(cpv);
-    edm::ESHandle<MuonDDDConstants> mdc;
-    iSetup.get<MuonNumberingRecord>().get(mdc);
-    DTGeometryBuilderFromDDD DTGeometryBuilder;
-    CSCGeometryBuilderFromDDD CSCGeometryBuilder;
-    muonDTGeometry_ = std::make_shared<DTGeometry>();
-    DTGeometryBuilder.build(*muonDTGeometry_, &(*cpv), *mdc);
-    muonCSCGeometry_ = std::make_shared<CSCGeometry>();
-    CSCGeometryBuilder.build(*muonCSCGeometry_, &(*cpv), *mdc);
+    iSetup.get<MuonGeometryRecord>().get(muonDTGeometry_);
+    iSetup.get<MuonGeometryRecord>().get(muonCSCGeometry_);
   }
 }
 
@@ -459,10 +451,10 @@ void AlignmentProducerBase::applyAlignmentsToDB(const edm::EventSetup& setup) {
 
     if (doMuon_) {
       applyDB<DTGeometry, DTAlignmentRcd, DTAlignmentErrorExtendedRcd>(
-          muonDTGeometry_.get(), setup, align::DetectorGlobalPosition(*globalPositions_, DetId(DetId::Muon)));
+          &*muonDTGeometry_, setup, align::DetectorGlobalPosition(*globalPositions_, DetId(DetId::Muon)));
 
       applyDB<CSCGeometry, CSCAlignmentRcd, CSCAlignmentErrorExtendedRcd>(
-          muonCSCGeometry_.get(), setup, align::DetectorGlobalPosition(*globalPositions_, DetId(DetId::Muon)));
+          &*muonCSCGeometry_, setup, align::DetectorGlobalPosition(*globalPositions_, DetId(DetId::Muon)));
     }
   }
 }
@@ -479,9 +471,9 @@ void AlignmentProducerBase::createAlignables(const TrackerTopology* tTopo, bool 
 
   if (doMuon_) {
     if (update) {
-      alignableMuon_->update(muonDTGeometry_.get(), muonCSCGeometry_.get());
+      alignableMuon_->update(&*muonDTGeometry_, &*muonCSCGeometry_);
     } else {
-      alignableMuon_ = std::make_unique<AlignableMuon>(muonDTGeometry_.get(), muonCSCGeometry_.get());
+      alignableMuon_ = std::make_unique<AlignableMuon>(&*muonDTGeometry_, &*muonCSCGeometry_);
     }
   }
 
@@ -661,8 +653,8 @@ void AlignmentProducerBase::applyAlignmentsToGeometry() {
     std::unique_ptr<AlignmentErrorsExtended> dtAlignmentErrExt{alignableMuon_->dtAlignmentErrorsExtended()};
     std::unique_ptr<AlignmentErrorsExtended> cscAlignmentErrExt{alignableMuon_->cscAlignmentErrorsExtended()};
 
-    aligner.applyAlignments(muonDTGeometry_.get(), dtAlignments.get(), dtAlignmentErrExt.get(), AlignTransform());
-    aligner.applyAlignments(muonCSCGeometry_.get(), cscAlignments.get(), cscAlignmentErrExt.get(), AlignTransform());
+    aligner.applyAlignments(&*muonDTGeometry_, dtAlignments.get(), dtAlignmentErrExt.get(), AlignTransform());
+    aligner.applyAlignments(&*muonCSCGeometry_, cscAlignments.get(), cscAlignmentErrExt.get(), AlignTransform());
   }
 }
 

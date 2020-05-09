@@ -1,13 +1,23 @@
 import FWCore.ParameterSet.Config as cms
 
-process = cms.Process("TEST")
+from Configuration.Eras.Era_Run3_cff import Run3
+
+process = cms.Process("TEST", Run3)
+
 # -- Load default module/services configurations -- //
 # Message logger service
 process.load("FWCore.MessageService.MessageLogger_cfi")
-
 # Ideal DT & CSC geometry 
-process.load("Geometry.MuonCommonData.muonIdealGeometryXML_cfi")
-process.load("Geometry.MuonNumbering.muonNumberingInitialization_cfi")
+process.load('Configuration.StandardSequences.Services_cff')
+process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
+process.load('Configuration.StandardSequences.Reconstruction_cff')
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+
+from Configuration.AlCa.GlobalTag import GlobalTag
+process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase1_2021_realistic', '')
+
+#process.load("Geometry.MuonCommonData.muonIdealGeometryXML_cfi")
+#process.load("Geometry.MuonNumbering.muonNumberingInitialization_cfi")
 
 # Misalignment example scenario producer
 import Alignment.MuonAlignment.Scenarios_cff as _MuonScenarios
@@ -15,16 +25,25 @@ import Alignment.MuonAlignment.Scenarios_cff as _MuonScenarios
 #process.load("Alignment.MuonAlignment.MisalignedMuon_cfi")
 #process.MisalignedMuon.saveToDbase = True # to store to DB
 #process.MisalignedMuon.scenario = _MuonScenarios.Muon0inversePbScenario2008
-process.MisalignedMuon = cms.ESProducer("MisalignedMuonESProducer",
+process.MisalignedMuon = cms.EDAnalyzer("MuonMisalignedProducer",
                                         _MuonScenarios.ExampleScenario,
                                         saveToDbase = cms.untracked.bool(True)
                                         )
+
+process.MisalignedMuon.scenario = _MuonScenarios.Muon100InversepbScenario
+#process.load("Geometry.CSCGeometryBuilder.idealForDigiCscGeometry_cff")
+#process.load("Geometry.DTGeometryBuilder.idealForDigiDtGeometry_cff")
+
 
 # or standard stuff 
 # Reco geometry producer
 #process.load("Geometry.DTGeometry.dtGeometry_cfi")
 #process.load("Geometry.CSCGeometry.cscGeometry_cfi")
-
+process.DTGeometryESModule.applyAlignment = cms.bool(False)
+process.CSCGeometryESModule.applyAlignment = cms.bool(False)
+#process.espDT = cms.ESPrefer("RPCGeometryESModule","")
+#process.espDT = cms.ESPrefer("DTGeometryESModule","")
+#process.espCSC = cms.ESPrefer("CSCGeometryESModule","")
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(1)
 )
@@ -57,7 +76,8 @@ process.prod = cms.EDAnalyzer("TestMisalign",
     fileName = cms.untracked.string('misaligment.root')
 )
 
-process.p1 = cms.Path(process.prod)
+process.p1 = cms.Path(process.MisalignedMuon+process.prod)
+"""
 process.MessageLogger.cout = cms.untracked.PSet(
     threshold = cms.untracked.string('INFO'),
     default = cms.untracked.PSet(
@@ -65,4 +85,4 @@ process.MessageLogger.cout = cms.untracked.PSet(
     )
 )
 
-
+"""

@@ -252,8 +252,8 @@ void MuonAlignmentInputXML::fillAliToIdeal(std::map<Alignable *, Alignable *> &a
 }
 
 AlignableMuon *MuonAlignmentInputXML::newAlignableMuon(const edm::EventSetup &iSetup) const {
-  std::shared_ptr<DTGeometry> dtGeometry = idealDTGeometry(iSetup);
-  std::shared_ptr<CSCGeometry> cscGeometry = idealCSCGeometry(iSetup);
+  edm::ESHandle<DTGeometry> dtGeometry = idealDTGeometry(iSetup);
+  edm::ESHandle<CSCGeometry> cscGeometry = idealCSCGeometry(iSetup);
 
   AlignableMuon *alignableMuon = new AlignableMuon(&(*dtGeometry), &(*cscGeometry));
   std::map<unsigned int, Alignable *> alignableNavigator;  // real AlignableNavigators don't have const methods

@@ -45,8 +45,8 @@ public:
   virtual AlignableMuon *newAlignableMuon(const edm::EventSetup &iSetup) const;
 
 protected:
-  std::shared_ptr<DTGeometry> idealDTGeometry(const edm::EventSetup &iSetup) const;
-  std::shared_ptr<CSCGeometry> idealCSCGeometry(const edm::EventSetup &iSetup) const;
+  edm::ESHandle<DTGeometry> idealDTGeometry(const edm::EventSetup &iSetup) const;
+  edm::ESHandle<CSCGeometry> idealCSCGeometry(const edm::EventSetup &iSetup) const;
 
 private:
   MuonAlignmentInputMethod(const MuonAlignmentInputMethod &) = delete;  // stop default

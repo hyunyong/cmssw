@@ -29,9 +29,7 @@
 #include "CondFormats/AlignmentRecord/interface/DTAlignmentErrorExtendedRcd.h"
 #include "CondFormats/AlignmentRecord/interface/CSCAlignmentErrorExtendedRcd.h"
 
-#include "Geometry/Records/interface/MuonNumberingRecord.h"
-#include "Geometry/DTGeometryBuilder/src/DTGeometryBuilderFromDDD.h"
-#include "Geometry/CSCGeometryBuilder/src/CSCGeometryBuilderFromDDD.h"
+#include "Geometry/Records/interface/MuonGeometryRecord.h"
 #include "Geometry/DTGeometry/interface/DTGeometry.h"
 #include "Geometry/CSCGeometry/interface/CSCGeometry.h"
 
@@ -97,19 +95,10 @@ align::EulerAngles TestMuonReader::toPhiXYZ(const align::RotationType& rot) {
 void TestMuonReader::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
   // first, get chamber alignables from ideal geometry:
 
-  edm::ESTransientHandle<DDCompactView> cpv;
-  iSetup.get<IdealGeometryRecord>().get(cpv);
-
-  edm::ESHandle<MuonDDDConstants> mdc;
-  iSetup.get<MuonNumberingRecord>().get(mdc);
-
-  DTGeometryBuilderFromDDD DTGeometryBuilder;
-  CSCGeometryBuilderFromDDD CSCGeometryBuilder;
-
-  auto dtGeometry = std::make_shared<DTGeometry>();
-  DTGeometryBuilder.build(*dtGeometry, &(*cpv), *mdc);
-  auto cscGeometry = std::make_shared<CSCGeometry>();
-  CSCGeometryBuilder.build(*cscGeometry, &(*cpv), *mdc);
+  edm::ESHandle<DTGeometry> dtGeometry;
+  edm::ESHandle<CSCGeometry> cscGeometry;
+  iSetup.get<MuonGeometryRecord>().get(dtGeometry);
+  iSetup.get<MuonGeometryRecord>().get(cscGeometry);
 
   AlignableMuon ideal_alignableMuon(&(*dtGeometry), &(*cscGeometry));
 
