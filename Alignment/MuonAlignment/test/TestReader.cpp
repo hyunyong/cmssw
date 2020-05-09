@@ -97,8 +97,8 @@ void TestMuonReader::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 
   edm::ESHandle<DTGeometry> dtGeometry;
   edm::ESHandle<CSCGeometry> cscGeometry;
-  iSetup.get<MuonGeometryRecord>().get(dtGeometry);
-  iSetup.get<MuonGeometryRecord>().get(cscGeometry);
+  iSetup.get<MuonGeometryRecord>().get("idealForAl", dtGeometry);
+  iSetup.get<MuonGeometryRecord>().get("idealForAl", cscGeometry);
 
   AlignableMuon ideal_alignableMuon(&(*dtGeometry), &(*cscGeometry));
 

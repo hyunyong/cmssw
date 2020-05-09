@@ -119,9 +119,9 @@ void MuonAlignmentOutputXML::write(AlignableMuon *alignableMuon, const edm::Even
 
   if (m_relativeto == 1) {
     edm::ESHandle<DTGeometry> dtGeometry;
-    iSetup.get<MuonGeometryRecord>().get(dtGeometry);
+    iSetup.get<MuonGeometryRecord>().get("idealForAl", dtGeometry);
     edm::ESHandle<CSCGeometry> cscGeometry;
-    iSetup.get<MuonGeometryRecord>().get(cscGeometry);
+    iSetup.get<MuonGeometryRecord>().get("idealForAl", cscGeometry);
 
     AlignableMuon ideal_alignableMuon(&(*dtGeometry), &(*cscGeometry));
 

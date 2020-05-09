@@ -426,8 +426,8 @@ void AlignmentProducerBase::createGeometries(const edm::EventSetup& iSetup, cons
   }
 
   if (doMuon_) {
-    iSetup.get<MuonGeometryRecord>().get(muonDTGeometry_);
-    iSetup.get<MuonGeometryRecord>().get(muonCSCGeometry_);
+    iSetup.get<MuonGeometryRecord>().get("idealForAl", muonDTGeometry_);
+    iSetup.get<MuonGeometryRecord>().get("idealForAl", muonCSCGeometry_);
   }
 }
 

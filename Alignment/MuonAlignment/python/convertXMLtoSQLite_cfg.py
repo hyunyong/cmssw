@@ -8,6 +8,16 @@ process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1))
 process.load("Configuration.Geometry.GeometryIdeal_cff")
 process.load("Geometry.MuonNumbering.muonNumberingInitialization_cfi")
 
+import Geometry.DTGeometryBuilder.dtGeometry_cfi
+process.idealForAlDTGeometry = Geometry.DTGeometryBuilder.dtGeometry_cfi.DTGeometryESModule.clone()
+process.idealForAlDTGeometry.applyAlignment = False
+process.idealForAlDTGeometry.appendToDataLabel = 'idealForAl'
+import Geometry.CSCGeometryBuilder.cscGeometry_cfi
+process.idealForAlCSCGeometry = Geometry.CSCGeometryBuilder.cscGeometry_cfi.CSCGeometryESModule.clone()
+process.idealForAlCSCGeometry.appendToDataLabel = 'idealForAl'
+process.idealForAlCSCGeometry.applyAlignment = False
+
+
 process.MuonGeometryDBConverter = cms.EDAnalyzer("MuonGeometryDBConverter",
     input = cms.string("xml"),
     fileName = cms.string(str(sys.argv[2])),

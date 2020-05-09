@@ -134,8 +134,8 @@ void AlignmentMonitorAsAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
 
     edm::ESHandle<DTGeometry> theMuonDT;
     edm::ESHandle<CSCGeometry> theMuonCSC;
-    iSetup.get<MuonGeometryRecord>().get(theMuonDT);
-    iSetup.get<MuonGeometryRecord>().get(theMuonCSC);
+    iSetup.get<MuonGeometryRecord>().get("idealForAl", theMuonDT);
+    iSetup.get<MuonGeometryRecord>().get("idealForAl", theMuonCSC);
 
     edm::ESHandle<Alignments> globalPositionRcd;
     iSetup.get<GlobalPositionRcd>().get(globalPositionRcd);
