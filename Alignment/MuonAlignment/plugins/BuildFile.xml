@@ -1,5 +1,7 @@
-<library name="MisalignedMuonESProducer" file="MisalignedMuonESProducer.cc">
+<library name="MuonMisalignedProducer" file="MuonMisalignedProducer.cc">
   <use name="Alignment/MuonAlignment" />
+  <use name="Geometry/DTGeometry" />
+  <use name="Geometry/CSCGeometry" />
   <flags EDM_PLUGIN="1" />
 </library>
 
