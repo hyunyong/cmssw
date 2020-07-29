@@ -8,32 +8,30 @@
 #include <algorithm>
 
 GEMStripTopology::GEMStripTopology(int ns, float aw, float dh, float r0)
-    : theNumberOfStrips(ns), 
-      theAngularWidth(aw), 
-      theDetHeight(dh), 
-      theCentreToIntersection(r0){
+    : theNumberOfStrips(ns), theAngularWidth(aw), theDetHeight(dh), theCentreToIntersection(r0) {
   theYAxisOrientation = 1;
   thePhiOfOneEdge = -(0.5 * theNumberOfStrips) * theAngularWidth * theYAxisOrientation;
   yCentre = 0;
 #ifdef VERBOSE
   cout << "Constructing GEMStripTopology with"
-       << " nstrips = " << ns << " angular width = " << aw << " det. height = " << dh << " r0 = " << r0 << << " yAxOrientation = " << yAx << endl;
-#endif  
+       << " nstrips = " << ns << " angular width = " << aw << " det. height = " << dh << " r0 = " << r0 < < < <
+      " yAxOrientation = " << yAx << endl;
+#endif
 }
 
 GEMStripTopology::GEMStripTopology(int ns, float aw, float dh, float r0, float yAx)
-    : theNumberOfStrips(ns), 
-      theAngularWidth(aw), 
-      theDetHeight(dh), 
-      theCentreToIntersection(r0), 
+    : theNumberOfStrips(ns),
+      theAngularWidth(aw),
+      theDetHeight(dh),
+      theCentreToIntersection(r0),
       theYAxisOrientation(yAx) {
-
   thePhiOfOneEdge = -(0.5 * theNumberOfStrips) * theAngularWidth * theYAxisOrientation;
   yCentre = 0;
 #ifdef VERBOSE
   cout << "Constructing GEMStripTopology with"
-       << " nstrips = " << ns << " angular width = " << aw << " det. height = " << dh << " r0 = " << r0 << << " yAxOrientation = " << yAx << endl;
-#endif  
+       << " nstrips = " << ns << " angular width = " << aw << " det. height = " << dh << " r0 = " << r0 < < < <
+      " yAxOrientation = " << yAx << endl;
+#endif
 }
 
 LocalPoint GEMStripTopology::localPosition(float strip) const {
@@ -84,7 +82,6 @@ int GEMStripTopology::nearestStrip(const LocalPoint& lp) const {
   return std::min(nstrips(), static_cast<int>(std::max(float(0), strip(lp))) + 1);
 }
 
-
 MeasurementPoint GEMStripTopology::measurementPosition(const LocalPoint& lp) const {
   const float  // phi is [pi/2 - conventional local phi], use atan2(x,y) rather than atan2(y,x)
       phi(yAxisOrientation() * std::atan2(lp.x(), yDistanceToIntersection(lp.y())));
@@ -107,13 +104,9 @@ MeasurementError GEMStripTopology::measurementError(const LocalPoint& p, const L
   return MeasurementError(uu, uv, vv);
 }
 
-int GEMStripTopology::channel(const LocalPoint& lp) const {
-  return std::min(int(strip(lp)), theNumberOfStrips - 1);
-}
+int GEMStripTopology::channel(const LocalPoint& lp) const { return std::min(int(strip(lp)), theNumberOfStrips - 1); }
 
-float GEMStripTopology::pitch() const {
-  return localPitch(LocalPoint(0,0));
-}
+float GEMStripTopology::pitch() const { return localPitch(LocalPoint(0, 0)); }
 
 float GEMStripTopology::localPitch(const LocalPoint& lp) const {
   const int istrip = std::min(nstrips(), static_cast<int>(strip(lp)) + 1);  // which strip number
@@ -137,4 +130,3 @@ float GEMStripTopology::yDistanceToIntersection(float y) const {
 float GEMStripTopology::xOfStrip(int strip, float y) const {
   return yAxisOrientation() * yDistanceToIntersection(y) * std::tan(stripAngle(static_cast<float>(strip) - 0.5));
 }
-

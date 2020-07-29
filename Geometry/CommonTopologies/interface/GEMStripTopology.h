@@ -8,14 +8,13 @@
 
 #include "Geometry/CommonTopologies/interface/StripTopology.h"
 
-
 class GEMStripTopology final : public StripTopology {
 public:
   GEMStripTopology(int ns, float aw, float dh, float r0);
   GEMStripTopology(int ns, float aw, float dh, float r0, float yAx);
   ~GEMStripTopology() override {}
 
-  using StripTopology::localPosition; 
+  using StripTopology::localPosition;
   LocalPoint localPosition(float strip) const override;
 
   LocalPoint localPosition(const MeasurementPoint&) const override;
@@ -52,7 +51,7 @@ public:
   float detHeight() const { return theDetHeight; }
   float yExtentOfStripPlane() const { return theDetHeight; }
   float centreToIntersection() const { return theCentreToIntersection; }
-  float radius() const {return theCentreToIntersection; }
+  float radius() const { return theCentreToIntersection; }
   float originToIntersection() const { return (theCentreToIntersection - yCentre); }
 
   float yDistanceToIntersection(float y) const;
@@ -60,6 +59,7 @@ public:
   float yAxisOrientation() const { return theYAxisOrientation; }
   float phiOfOneEdge() const { return thePhiOfOneEdge; }
   float yCentreOfStripPlane() const { return yCentre; }
+
 private:
   int theNumberOfStrips;          // total no. of strips in plane of strips
   float theAngularWidth;          // angle subtended by each strip = phi pitch

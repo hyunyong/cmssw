@@ -45,8 +45,8 @@ GEMGeometryBuilder::~GEMGeometryBuilder() {}
 
 // DDD
 void GEMGeometryBuilder::build(GEMGeometry& theGeometry,
-			       const DDCompactView* cview,
-			       const MuonGeometryConstants& muonConstants) {
+                               const DDCompactView* cview,
+                               const MuonGeometryConstants& muonConstants) {
   std::string attribute = "MuStructure";
   std::string value = "MuonEndCapGEM";
 
@@ -320,8 +320,8 @@ GEMEtaPartition* GEMGeometryBuilder::buildEtaPartition(DDFilteredView& fv, GEMDe
 }
 
 GEMGeometryBuilder::RCPBoundPlane GEMGeometryBuilder::boundPlane(const DDFilteredView& fv,
-								 Bounds* bounds,
-								 bool isOddChamber) const {
+                                                                 Bounds* bounds,
+                                                                 bool isOddChamber) const {
   // extract the position
   const DDTranslation& trans(fv.translation());
   const Surface::PositionType posResult(float(trans.x() / cm), float(trans.y() / cm), float(trans.z() / cm));
@@ -354,8 +354,8 @@ GEMGeometryBuilder::RCPBoundPlane GEMGeometryBuilder::boundPlane(const DDFiltere
 // DD4HEP
 
 void GEMGeometryBuilder::build(GEMGeometry& theGeometry,
-			       const cms::DDCompactView* cview,
-			       const MuonGeometryConstants& muonConstants) {
+                               const cms::DDCompactView* cview,
+                               const MuonGeometryConstants& muonConstants) {
   std::string attribute = "MuStructure";
   std::string value = "MuonEndCapGEM";
   cms::DDFilteredView fv(cview->detector(), cview->detector()->worldVolume());
@@ -527,8 +527,8 @@ GEMEtaPartition* GEMGeometryBuilder::buildEtaPartition(cms::DDFilteredView& fv, 
 }
 
 GEMGeometryBuilder::RCPBoundPlane GEMGeometryBuilder::boundPlane(const cms::DDFilteredView& fv,
-								 Bounds* bounds,
-								 bool isOddChamber) const {
+                                                                 Bounds* bounds,
+                                                                 bool isOddChamber) const {
   // extract the position
   const Double_t* tran = fv.trans();
   Surface::PositionType posResult(tran[0], tran[1], tran[2]);
