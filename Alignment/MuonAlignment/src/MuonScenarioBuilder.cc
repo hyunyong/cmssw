@@ -49,9 +49,12 @@ void MuonScenarioBuilder::applyScenario(const edm::ParameterSet& scenario) {
   // CSC Endcap
   const auto& cscEndcaps = theAlignableMuon->CSCEndcaps();
   this->decodeMovements_(theScenario, cscEndcaps, "CSCEndcap");
+  const auto& gemEndcaps = theAlignableMuon->GEMEndcaps();
+  this->decodeMovements_(theScenario, gemEndcaps, "GEMEndcap");
 
   this->moveDTSectors(theScenario);
   this->moveCSCSectors(theScenario);
+  this->moveGEMSectors(theScenario);
   this->moveMuon(theScenario);
 
   edm::LogInfo("TrackerScenarioBuilder") << "Applied modifications to " << theModifierCounter << " alignables";
@@ -321,6 +324,7 @@ void MuonScenarioBuilder::moveCSCSectors(const edm::ParameterSet& pSet) {
 void MuonScenarioBuilder::moveMuon(const edm::ParameterSet& pSet) {
   const auto& DTbarrel = theAlignableMuon->DTBarrel();
   const auto& CSCendcaps = theAlignableMuon->CSCEndcaps();
+  const auto& GEMendcaps = theAlignableMuon->GEMEndcaps();
   //Take Parameters
   align::Scalars param = this->extractParameters(pSet, "Muon");
   double scale_ = param[0];
@@ -385,6 +389,13 @@ void MuonScenarioBuilder::moveMuon(const edm::ParameterSet& pSet) {
     theMuonModifier.addAlignmentPositionError(iter, errorx, errory, errorz);
     theMuonModifier.addAlignmentPositionErrorFromRotation(iter, errorphix, errorphiy, errorphiz);
   }
+  for (const auto& iter : GEMendcaps) {
+    theMuonModifier.moveAlignable(iter, false, true, disp[0], disp[1], disp[2]);
+    theMuonModifier.rotateAlignable(iter, false, true, rotation[0], rotation[1], rotation[2]);
+    theMuonModifier.addAlignmentPositionError(iter, errorx, errory, errorz);
+    theMuonModifier.addAlignmentPositionErrorFromRotation(iter, errorphix, errorphiy, errorphiz);
+  }
+
 }
 
 //______________________________________________________________________________________________________
