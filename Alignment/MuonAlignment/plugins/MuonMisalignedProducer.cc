@@ -79,11 +79,13 @@ void MuonMisalignedProducer::analyze(const edm::Event& event, const edm::EventSe
   // Create the Muon geometry from ideal geometry
   edm::ESHandle<DTGeometry> theDTGeometry;
   edm::ESHandle<CSCGeometry> theCSCGeometry;
+  edm::ESHandle<GEMGeometry> theGEMGeometry;
   eventSetup.get<MuonGeometryRecord>().get(theIdealGeometryLabel, theDTGeometry);
   eventSetup.get<MuonGeometryRecord>().get(theIdealGeometryLabel, theCSCGeometry);
+  eventSetup.get<MuonGeometryRecord>().get(theIdealGeometryLabel, theGEMGeometry);
 
   // Create the alignable hierarchy
-  AlignableMuon* theAlignableMuon = new AlignableMuon(&(*theDTGeometry), &(*theCSCGeometry));
+  AlignableMuon* theAlignableMuon = new AlignableMuon(&(*theDTGeometry), &(*theCSCGeometry), &(*theGEMGeometry));
 
   // Create misalignment scenario
   MuonScenarioBuilder scenarioBuilder(theAlignableMuon);
