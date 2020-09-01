@@ -1,25 +1,20 @@
-#include "Alignment/MuonAlignment/interface/AlignableGEMSuperChamber.h"
 #include "Alignment/MuonAlignment/interface/AlignableGEMChamber.h"
 
-AlignableGEMSuperChamber::AlignableGEMSuperChamber(const GeomDet* geomDet) : AlignableDet(geomDet,false) {
-  theStructureType = align::AlignableGEMSuperChamber;
-  const std::vector<const GeomDet*>& geomDets = geomDet->components();
-  for (std::vector<const GeomDet*>::const_iterator idet = geomDets.begin(); idet != geomDets.end(); ++idet) {
-    addComponent(new AlignableGEMChamber(*idet));
-  }
-  this->theSurface = geomDet->surface();
+AlignableGEMChamber::AlignableGEMChamber(const GeomDet* geomDet) : AlignableDet(geomDet) {
+  theStructureType = align::AlignableGEMChamber;
+  theSurface = geomDet->surface();
 }
 
-void AlignableGEMSuperChamber::update(const GeomDet* geomDet) {
+void AlignableGEMChamber::update(const GeomDet* geomDet) {
   AlignableDet::update(geomDet);
   theSurface = geomDet->surface();
 }
 
 /// Printout the DetUnits in the CSC chamber
-std::ostream& operator<<(std::ostream& os, const AlignableGEMSuperChamber& r) {
+std::ostream& operator<<(std::ostream& os, const AlignableGEMChamber& r) {
   const auto& theDets = r.components();
 
-  os << "    This GEMSuperChamber contains " << theDets.size() << " units" << std::endl;
+  os << "    This GEMChamber contains " << theDets.size() << " units" << std::endl;
   os << "    position = " << r.globalPosition() << std::endl;
   os << "    (phi, r, z)= (" << r.globalPosition().phi() << "," << r.globalPosition().perp() << ","
      << r.globalPosition().z();
