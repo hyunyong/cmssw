@@ -74,7 +74,7 @@ MuonMisalignedProducer::MuonMisalignedProducer(const edm::ParameterSet& p)
       theDTErrorRecordName("DTAlignmentErrorExtendedRcd"),
       theCSCAlignRecordName("CSCAlignmentRcd"),
       theCSCErrorRecordName("CSCAlignmentErrorExtendedRcd"),
-      theGEMAlignRecordName("CSCAlignmentRcd"),
+      theGEMAlignRecordName("GEMAlignmentRcd"),
       theGEMErrorRecordName("GEMAlignmentErrorExtendedRcd"),
       theIdealGeometryLabel("idealForMuonMisalignedProducer"){}
 
@@ -110,9 +110,12 @@ void MuonMisalignedProducer::analyze(const edm::Event& event, const edm::EventSe
 
   // Misalign the EventSetup geometry
   GeometryAligner aligner;
-
-  aligner.applyAlignments<DTGeometry>(&(*theDTGeometry), dt_Alignments, dt_AlignmentErrorsExtended, AlignTransform());
-  aligner.applyAlignments<CSCGeometry>(&(*theCSCGeometry), csc_Alignments, csc_AlignmentErrorsExtended, AlignTransform());
+  std::sort(gem_Alignments->m_align.begin(), gem_Alignments->m_align.end());
+  for (const auto i : gem_Alignments->m_align) { std::cout << i.rawId() << std::endl;}
+  //auto  const vc = &(*theGEMGeometry).superChambers();
+  //for (auto ch : *vc) {std::cout << ch->id().rawId() << std::endl;} 
+  //aligner.applyAlignments<DTGeometry>(&(*theDTGeometry), dt_Alignments, dt_AlignmentErrorsExtended, AlignTransform());
+  //aligner.applyAlignments<CSCGeometry>(&(*theCSCGeometry), csc_Alignments, csc_AlignmentErrorsExtended, AlignTransform());
   //aligner.applyAlignments<GEMGeometry>(&(*theGEMGeometry), gem_Alignments, gem_AlignmentErrorsExtended, AlignTransform());
 
   // Write alignments to DB
@@ -138,7 +141,6 @@ void MuonMisalignedProducer::saveToDB(void) {
   poolDbService->writeOne<Alignments>(&(*csc_Alignments), poolDbService->beginOfTime(), theCSCAlignRecordName);
   poolDbService->writeOne<AlignmentErrorsExtended>(
       &(*csc_AlignmentErrorsExtended), poolDbService->beginOfTime(), theCSCErrorRecordName);
-  std::cout << "GEM DB" << std::endl;
   poolDbService->writeOne<Alignments>(&(*gem_Alignments), poolDbService->beginOfTime(), theGEMAlignRecordName);
   poolDbService->writeOne<AlignmentErrorsExtended>(
       &(*gem_AlignmentErrorsExtended), poolDbService->beginOfTime(), theGEMErrorRecordName);
