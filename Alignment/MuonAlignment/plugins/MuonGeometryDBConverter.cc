@@ -224,6 +224,7 @@ void MuonGeometryDBConverter::fillDescriptions(edm::ConfigurationDescriptions &d
   desc.add<std::string>("input", "ideal");
   desc.add<std::string>("dtLabel", "");
   desc.add<std::string>("cscLabel", "");
+  desc.add<std::string>("gemLabel", "");
   desc.add<double>("shiftErr", 1000.0);
   desc.add<double>("angleErr", 6.28);
   desc.add<bool>("getAPEs", true);

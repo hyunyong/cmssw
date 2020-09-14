@@ -77,7 +77,7 @@ process.PoolDBOutputService = cms.Service("PoolDBOutputService",
         ),
         cms.PSet(
             record = cms.string('GEMAlignmentRcd'),
-            tag = cms.string('test')
+            tag = cms.string('GEM')
         ), 
         cms.PSet(
             record = cms.string('GEMAlignmentErrorExtendedRcd'),
