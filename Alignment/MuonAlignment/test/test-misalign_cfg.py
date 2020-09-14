@@ -91,7 +91,8 @@ process.prod = cms.EDAnalyzer("TestMisalign",
     fileName = cms.untracked.string('misaligment.root')
 )
 
-process.p1 = cms.Path(process.MisalignedMuon+process.prod)
+#process.p1 = cms.Path(process.MisalignedMuon+process.prod)
+process.p1 = cms.Path(process.MisalignedMuon)
 process.MessageLogger.cout = cms.untracked.PSet(
     threshold = cms.untracked.string('INFO'),
     default = cms.untracked.PSet(

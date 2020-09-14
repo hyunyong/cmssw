@@ -104,19 +104,21 @@ void MuonMisalignedProducer::analyze(const edm::Event& event, const edm::EventSe
   dt_AlignmentErrorsExtended = theAlignableMuon->dtAlignmentErrorsExtended();
   csc_Alignments = theAlignableMuon->cscAlignments();
   csc_AlignmentErrorsExtended = theAlignableMuon->cscAlignmentErrorsExtended();
-  std::cout << "GEM alignemnt" << std::endl;
   gem_Alignments = theAlignableMuon->gemAlignments();
   gem_AlignmentErrorsExtended = theAlignableMuon->gemAlignmentErrorsExtended();
 
   // Misalign the EventSetup geometry
   GeometryAligner aligner;
+  aligner.applyAlignments<DTGeometry>(&(*theDTGeometry), dt_Alignments, dt_AlignmentErrorsExtended, AlignTransform());
+  aligner.applyAlignments<CSCGeometry>(&(*theCSCGeometry), csc_Alignments, csc_AlignmentErrorsExtended, AlignTransform());
+
   std::sort(gem_Alignments->m_align.begin(), gem_Alignments->m_align.end());
   for (const auto i : gem_Alignments->m_align) { std::cout << i.rawId() << std::endl;}
   //auto  const vc = &(*theGEMGeometry).superChambers();
   //for (auto ch : *vc) {std::cout << ch->id().rawId() << std::endl;} 
-  //aligner.applyAlignments<DTGeometry>(&(*theDTGeometry), dt_Alignments, dt_AlignmentErrorsExtended, AlignTransform());
-  //aligner.applyAlignments<CSCGeometry>(&(*theCSCGeometry), csc_Alignments, csc_AlignmentErrorsExtended, AlignTransform());
-  //aligner.applyAlignments<GEMGeometry>(&(*theGEMGeometry), gem_Alignments, gem_AlignmentErrorsExtended, AlignTransform());
+
+
+  aligner.applyAlignments<GEMGeometry>(&(*theGEMGeometry), gem_Alignments, gem_AlignmentErrorsExtended, AlignTransform());
 
   // Write alignments to DB
   if (theSaveToDB)
