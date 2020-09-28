@@ -48,12 +48,10 @@ void MuonScenarioBuilder::applyScenario(const edm::ParameterSet& scenario) {
   // DT Barrel
   const auto& dtBarrel = theAlignableMuon->DTBarrel();
   this->decodeMovements_(theScenario, dtBarrel, "DTBarrel");
-  // CSC Endcap
+  // Endcap
   const auto& cscEndcaps = theAlignableMuon->CSCEndcaps();
-  std::cout << "start CSC" << std::endl;
   this->decodeMovements_(theScenario, cscEndcaps, "CSCEndcap");
   const auto& gemEndcaps = theAlignableMuon->GEMEndcaps();
-  std::cout << "start GEM" << std::endl;
   this->decodeMovements_(theScenario, gemEndcaps, "GEMEndcap");
 
   this->moveDTSectors(theScenario);
@@ -337,7 +335,6 @@ void MuonScenarioBuilder::moveGEMSectors(const edm::ParameterSet& pSet) {
   double dX_ = param[5];
   double dY_ = param[6];
   double dZ_ = param[7];
-  double dist_ = param[8];
 
   double dx = scale_ * dX_;
   double dy = scale_ * dY_;
@@ -368,18 +365,18 @@ void MuonScenarioBuilder::moveGEMSectors(const edm::ParameterSet& pSet) {
     disp.push_back(disp_[0]);
     disp.push_back(disp_[1]);
     disp.push_back(disp_[2]);
-    rotation.push_back(0.0);
-    rotation.push_back(0.0);
-    rotation.push_back(0.0);
+    const std::vector<float> rotation_ = theMuonModifier.flatRandomVector(phix, phiy, phiz);
+    rotation.push_back(rotation_[0]);
+    rotation.push_back(rotation_[1]);
+    rotation.push_back(rotation_[2]);
     this->moveChamberInSector(iter, disp, rotation, errorDisp, errorRotation);
-    std::cout << iter->id()  << ". "<<  GEMDetId(iter->id()) << std::endl;
   }
 }
 
 void MuonScenarioBuilder::moveMuon(const edm::ParameterSet& pSet) {
   const auto& DTbarrel = theAlignableMuon->DTBarrel();
   const auto& CSCendcaps = theAlignableMuon->CSCEndcaps();
-  //const auto& GEMendcaps = theAlignableMuon->GEMEndcaps();
+  const auto& GEMendcaps = theAlignableMuon->GEMEndcaps();
   //Take Parameters
   align::Scalars param = this->extractParameters(pSet, "Muon");
   double scale_ = param[0];
@@ -444,13 +441,12 @@ void MuonScenarioBuilder::moveMuon(const edm::ParameterSet& pSet) {
     theMuonModifier.addAlignmentPositionError(iter, errorx, errory, errorz);
     theMuonModifier.addAlignmentPositionErrorFromRotation(iter, errorphix, errorphiy, errorphiz);
   }
-  /*for (const auto& iter : GEMendcaps) {
+  for (const auto& iter : GEMendcaps) {
     theMuonModifier.moveAlignable(iter, false, true, disp[0], disp[1], disp[2]);
     theMuonModifier.rotateAlignable(iter, false, true, rotation[0], rotation[1], rotation[2]);
     theMuonModifier.addAlignmentPositionError(iter, errorx, errory, errorz);
     theMuonModifier.addAlignmentPositionErrorFromRotation(iter, errorphix, errorphiy, errorphiz);
-  }*/
-
+  }
 }
 
 //______________________________________________________________________________________________________

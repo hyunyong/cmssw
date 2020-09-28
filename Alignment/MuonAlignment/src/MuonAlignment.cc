@@ -156,7 +156,6 @@ void MuonAlignment::copyAlignmentToSurvey(double shiftErr, double angleErr) {
             gemAlignmentErrorsExtended->m_alignError.end(),
             std::back_inserter(alignmentErrors));
 
-
   for (std::vector<AlignTransformErrorExtended>::const_iterator alignmentError = alignmentErrors.begin();
        alignmentError != alignmentErrors.end();
        ++alignmentError) {

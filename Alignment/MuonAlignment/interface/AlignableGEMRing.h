@@ -15,7 +15,7 @@ public:
 
   PositionType computePosition();
 
-  RotationType computeOrientation(); 
+  RotationType computeOrientation();
 
   AlignableSurface computeSurface();
 

@@ -40,12 +40,13 @@
 MuonAlignmentInputDB::MuonAlignmentInputDB()
     : m_dtLabel(""), m_cscLabel(""), m_gemLabel(""), idealGeometryLabel("idealForInputDB"), m_getAPEs(false) {}
 
-MuonAlignmentInputDB::MuonAlignmentInputDB(std::string dtLabel,
-                                           std::string cscLabel,
-                                           std::string gemLabel,
-                                           std::string idealLabel,
-                                           bool getAPEs)
-    : m_dtLabel(dtLabel), m_cscLabel(cscLabel), m_gemLabel(gemLabel), idealGeometryLabel(idealLabel), m_getAPEs(getAPEs) {}
+MuonAlignmentInputDB::MuonAlignmentInputDB(
+    std::string dtLabel, std::string cscLabel, std::string gemLabel, std::string idealLabel, bool getAPEs)
+    : m_dtLabel(dtLabel),
+      m_cscLabel(cscLabel),
+      m_gemLabel(gemLabel),
+      idealGeometryLabel(idealLabel),
+      m_getAPEs(getAPEs) {}
 
 // MuonAlignmentInputDB::MuonAlignmentInputDB(const MuonAlignmentInputDB& rhs)
 // {

@@ -70,7 +70,6 @@ void GeometryAligner::applyAlignments(const C* geometry,
   const AlignTransform::Rotation inverseGlobalRotation = globalRotation.inverse();
 
   // Parallel loop on alignments, alignment errors and geomdets
-  //std::vector<AlignTransform>::const_iterator iAlign = alignments->m_align.begin();
   std::vector<AlignTransformErrorExtended>::const_iterator iAlignError = alignmentErrors->m_alignError.begin();
   //copy  geometry->theMap to a real map to order it....
   std::map<unsigned int, GeomDet const*> theMap;
@@ -79,12 +78,10 @@ void GeometryAligner::applyAlignments(const C* geometry,
   for (auto iAlign = alignments->m_align.begin(); iAlign != alignments->m_align.end(); ++iAlign, ++iAlignError) {
     // Check DetIds
     if (theMap.find((*iAlign).rawId()) == theMap.end())
-      throw cms::Exception("GeometryMismatch") << "Can't find rawId=" 
-                                               << (*iAlign).rawId();
+      throw cms::Exception("GeometryMismatch") << "Can't find rawId=" << (*iAlign).rawId();
 
     if (theMap.find((*iAlignError).rawId()) == theMap.end())
-      throw cms::Exception("GeometryMismatch") << "Can't find rawId=" 
-                                               << (*iAlignError).rawId();
+      throw cms::Exception("GeometryMismatch") << "Can't find rawId=" << (*iAlignError).rawId();
 
     // Apply global correction
     CLHEP::Hep3Vector positionHep = globalRotation * CLHEP::Hep3Vector((*iAlign).translation()) + globalShift;

@@ -76,7 +76,7 @@ MuonMisalignedProducer::MuonMisalignedProducer(const edm::ParameterSet& p)
       theCSCErrorRecordName("CSCAlignmentErrorExtendedRcd"),
       theGEMAlignRecordName("GEMAlignmentRcd"),
       theGEMErrorRecordName("GEMAlignmentErrorExtendedRcd"),
-      theIdealGeometryLabel("idealForMuonMisalignedProducer"){}
+      theIdealGeometryLabel("idealForMuonMisalignedProducer") {}
 
 //__________________________________________________________________________________________________
 MuonMisalignedProducer::~MuonMisalignedProducer() {}
@@ -110,15 +110,10 @@ void MuonMisalignedProducer::analyze(const edm::Event& event, const edm::EventSe
   // Misalign the EventSetup geometry
   GeometryAligner aligner;
   aligner.applyAlignments<DTGeometry>(&(*theDTGeometry), dt_Alignments, dt_AlignmentErrorsExtended, AlignTransform());
-  aligner.applyAlignments<CSCGeometry>(&(*theCSCGeometry), csc_Alignments, csc_AlignmentErrorsExtended, AlignTransform());
-
-  std::sort(gem_Alignments->m_align.begin(), gem_Alignments->m_align.end());
-  for (const auto i : gem_Alignments->m_align) { std::cout << i.rawId() << std::endl;}
-  //auto  const vc = &(*theGEMGeometry).superChambers();
-  //for (auto ch : *vc) {std::cout << ch->id().rawId() << std::endl;} 
-
-
-  aligner.applyAlignments<GEMGeometry>(&(*theGEMGeometry), gem_Alignments, gem_AlignmentErrorsExtended, AlignTransform());
+  aligner.applyAlignments<CSCGeometry>(
+      &(*theCSCGeometry), csc_Alignments, csc_AlignmentErrorsExtended, AlignTransform());
+  aligner.applyAlignments<GEMGeometry>(
+      &(*theGEMGeometry), gem_Alignments, gem_AlignmentErrorsExtended, AlignTransform());
 
   // Write alignments to DB
   if (theSaveToDB)
@@ -146,7 +141,6 @@ void MuonMisalignedProducer::saveToDB(void) {
   poolDbService->writeOne<Alignments>(&(*gem_Alignments), poolDbService->beginOfTime(), theGEMAlignRecordName);
   poolDbService->writeOne<AlignmentErrorsExtended>(
       &(*gem_AlignmentErrorsExtended), poolDbService->beginOfTime(), theGEMErrorRecordName);
-
 }
 //____________________________________________________________________________________________
 DEFINE_FWK_MODULE(MuonMisalignedProducer);

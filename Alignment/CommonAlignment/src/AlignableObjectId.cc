@@ -312,7 +312,9 @@ AlignableObjectId::Geometry AlignableObjectId ::trackerGeometry(const TrackerGeo
   }
 }
 
-AlignableObjectId::Geometry AlignableObjectId ::muonGeometry(const DTGeometry *, const CSCGeometry *, const GEMGeometry *) {
+AlignableObjectId::Geometry AlignableObjectId ::muonGeometry(const DTGeometry *,
+                                                             const CSCGeometry *,
+                                                             const GEMGeometry *) {
   // muon alignment structure types are identical for all kinds of geometries
   return Geometry::General;
 }

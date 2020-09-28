@@ -29,7 +29,8 @@ AlignableSurface AlignableGEMRing::computeSurface() {
 AlignableGEMRing::PositionType AlignableGEMRing::computePosition() {
   float zz = 0.;
 
-  for (std::vector<AlignableGEMSuperChamber*>::iterator ichamber = theGEMSuperChambers.begin(); ichamber != theGEMSuperChambers.end();
+  for (std::vector<AlignableGEMSuperChamber*>::iterator ichamber = theGEMSuperChambers.begin();
+       ichamber != theGEMSuperChambers.end();
        ichamber++)
     zz += (*ichamber)->globalPosition().z();
 

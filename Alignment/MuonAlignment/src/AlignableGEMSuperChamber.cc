@@ -1,7 +1,7 @@
 #include "Alignment/MuonAlignment/interface/AlignableGEMSuperChamber.h"
 #include "Alignment/MuonAlignment/interface/AlignableGEMChamber.h"
 
-AlignableGEMSuperChamber::AlignableGEMSuperChamber(const GeomDet* geomDet) : AlignableDet(geomDet,false) {
+AlignableGEMSuperChamber::AlignableGEMSuperChamber(const GeomDet* geomDet) : AlignableDet(geomDet, false) {
   theStructureType = align::AlignableGEMSuperChamber;
   const std::vector<const GeomDet*>& geomDets = geomDet->components();
   for (std::vector<const GeomDet*>::const_iterator idet = geomDets.begin(); idet != geomDets.end(); ++idet) {
