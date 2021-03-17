@@ -326,6 +326,7 @@ void MuonScenarioBuilder::moveCSCSectors(const edm::ParameterSet& pSet) {
 void MuonScenarioBuilder::moveGEMSectors(const edm::ParameterSet& pSet) {
   const auto& GEMSuperChambers = theAlignableMuon->GEMSuperChambers();
   //Take Parameters
+  /*
   align::Scalars param = this->extractParameters(pSet, "GEMSectors");
   double scale_ = param[0];
   double scaleError_ = param[1];
@@ -348,27 +349,28 @@ void MuonScenarioBuilder::moveGEMSectors(const edm::ParameterSet& pSet) {
   double errorphix = scaleError_ * phiX_;
   double errorphiy = scaleError_ * phiY_;
   double errorphiz = scaleError_ * phiZ_;
+  */
   align::Scalars errorDisp;
-  errorDisp.push_back(errorx);
-  errorDisp.push_back(errory);
-  errorDisp.push_back(errorz);
+  errorDisp.push_back(0.);
+  errorDisp.push_back(0.);
+  errorDisp.push_back(0.);
   align::Scalars errorRotation;
-  errorRotation.push_back(errorphix);
-  errorRotation.push_back(errorphiy);
-  errorRotation.push_back(errorphiz);
+  errorRotation.push_back(0.);
+  errorRotation.push_back(0.);
+  errorRotation.push_back(0.);
 
   //Create an index for the chambers in the alignable vector
   for (const auto& iter : GEMSuperChambers) {
     align::Scalars disp;
     align::Scalars rotation;
-    const std::vector<float> disp_ = theMuonModifier.gaussianRandomVector(dx, dy, dz);
-    disp.push_back(disp_[0]);
-    disp.push_back(disp_[1]);
-    disp.push_back(disp_[2]);
-    const std::vector<float> rotation_ = theMuonModifier.flatRandomVector(phix, phiy, phiz);
-    rotation.push_back(rotation_[0]);
-    rotation.push_back(rotation_[1]);
-    rotation.push_back(rotation_[2]);
+    //const std::vector<float> disp_ = theMuonModifier.gaussianRandomVector(dx, dy, dz);
+    disp.push_back(0.);
+    disp.push_back(0.);
+    disp.push_back(0.);
+    //const std::vector<float> rotation_ = theMuonModifier.flatRandomVector(phix, phiy, phiz);
+    rotation.push_back(0.);
+    rotation.push_back(0.);
+    rotation.push_back(0.7);
     this->moveChamberInSector(iter, disp, rotation, errorDisp, errorRotation);
   }
 }
@@ -442,8 +444,10 @@ void MuonScenarioBuilder::moveMuon(const edm::ParameterSet& pSet) {
     theMuonModifier.addAlignmentPositionErrorFromRotation(iter, errorphix, errorphiy, errorphiz);
   }
   for (const auto& iter : GEMendcaps) {
-    theMuonModifier.moveAlignable(iter, false, true, disp[0], disp[1], disp[2]);
-    theMuonModifier.rotateAlignable(iter, false, true, rotation[0], rotation[1], rotation[2]);
+    //theMuonModifier.moveAlignable(iter, false, true, disp[0], disp[1], disp[2]);
+    //theMuonModifier.rotateAlignable(iter, false, true, rotation[0], rotation[1], rotation[2]);
+    theMuonModifier.moveAlignable(iter, false, false, 0., 0., 0.);
+    theMuonModifier.rotateAlignable(iter, false, false ,0., 0., 0.);
     theMuonModifier.addAlignmentPositionError(iter, errorx, errory, errorz);
     theMuonModifier.addAlignmentPositionErrorFromRotation(iter, errorphix, errorphiy, errorphiz);
   }
@@ -456,17 +460,19 @@ void MuonScenarioBuilder::moveChamberInSector(Alignable* chamber,
                                               const align::Scalars& dispError,
                                               const align::Scalars& rotationError) {
   align::Scalars disp = _disp;
-  align::RotationType rotx(Basic3DVector<double>(1.0, 0.0, 0.0), rotation[0]);
-  align::RotationType roty(Basic3DVector<double>(0.0, 1.0, 0.0), rotation[1]);
-  align::RotationType rotz(Basic3DVector<double>(0.0, 0.0, 1.0), rotation[2]);
-  align::RotationType rot = rotz * roty * rotx;
-  align::GlobalPoint pos = chamber->globalPosition();
-  align::GlobalPoint dispRot(pos.basicVector() - rot * pos.basicVector());
-  disp[0] += dispRot.x();
-  disp[1] += dispRot.y();
-  disp[2] += dispRot.z();
-  theMuonModifier.moveAlignable(chamber, false, true, disp[0], disp[1], disp[2]);
-  theMuonModifier.rotateAlignable(chamber, false, true, rotation[0], rotation[1], rotation[2]);
+  //align::RotationType rotx(Basic3DVector<double>(1.0, 0.0, 0.0), rotation[0]);
+  //align::RotationType roty(Basic3DVector<double>(0.0, 1.0, 0.0), rotation[1]);
+  //align::RotationType rotz(Basic3DVector<double>(0.0, 0.0, 1.0), rotation[2]);
+  //align::RotationType rot = rotz * roty * rotx;
+  //align::GlobalPoint pos = chamber->globalPosition();
+  //align::GlobalPoint dispRot(pos.basicVector() - rot * pos.basicVector());
+  //disp[0] += dispRot.x();
+  //disp[1] += dispRot.y();
+  //disp[2] += dispRot.z();
+  //theMuonModifier.moveAlignable(chamber, false, true, disp[0], disp[1], disp[2]);
+  //theMuonModifier.rotateAlignable(chamber, false, true, rotation[0], rotation[1], rotation[2]);
+  theMuonModifier.moveAlignableLocal(chamber, false, false, disp[0], disp[1], disp[2]);
+  theMuonModifier.rotateAlignableLocal(chamber, false, false, rotation[0], rotation[1], rotation[2]);
   theMuonModifier.addAlignmentPositionError(chamber, dispError[0], dispError[1], dispError[2]);
   theMuonModifier.addAlignmentPositionErrorFromRotation(chamber, rotationError[0], rotationError[1], rotationError[2]);
 }
