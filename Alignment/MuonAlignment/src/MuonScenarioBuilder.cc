@@ -358,10 +358,16 @@ void MuonScenarioBuilder::moveGEMSectors(const edm::ParameterSet& pSet) {
     alPar[id.rawId()] = tmp;
     std::cout << "detNum:" << detNum << " rawId: " << id.rawId()<<  " xShift:" << xShift << " yShift:" << yShift << " zShift:" << zShift << " rotX:" << rotX << " rotY:" << rotY << " rotZ:" << rotZ << std::endl;
   }
+  
   for (const auto& chamber : GEMSuperChambers) {
     auto gemId = chamber->id();
-    assert(alPar.count(gemId) < 1);
+    //assert();
+    if (alPar.count(gemId) < 1){
+      std::cout << "can't find detId "<< GEMDetId(gemId)<< std::endl;
+      break;
+    }
     auto par = alPar[gemId];
+    
     std::cout << gemId << ": "<< par.at(0) << ", " << par.at(1) << ", " << par.at(2) << ", " << par.at(3) << ", " << par.at(4) << ", " << par.at(5) << std::endl;
     theMuonModifier.moveAlignableLocal(chamber, false, false, par.at(0), par.at(1), par.at(2));
     theMuonModifier.rotateAlignableLocal(chamber, false, false, par.at(3), par.at(4), par.at(5));
