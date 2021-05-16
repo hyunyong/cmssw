@@ -9,7 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
-
+#include <fstream>
 // Framework
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -54,10 +54,10 @@ void MuonScenarioBuilder::applyScenario(const edm::ParameterSet& scenario) {
   const auto& gemEndcaps = theAlignableMuon->GEMEndcaps();
   this->decodeMovements_(theScenario, gemEndcaps, "GEMEndcap");
 
-  this->moveDTSectors(theScenario);
-  this->moveCSCSectors(theScenario);
+  //this->moveDTSectors(theScenario);
+  //this->moveCSCSectors(theScenario);
   this->moveGEMSectors(theScenario);
-  this->moveMuon(theScenario);
+  //this->moveMuon(theScenario);
 
   edm::LogInfo("TrackerScenarioBuilder") << "Applied modifications to " << theModifierCounter << " alignables";
 }
@@ -324,52 +324,45 @@ void MuonScenarioBuilder::moveCSCSectors(const edm::ParameterSet& pSet) {
 
 //______________________________________________________________________________________________________
 void MuonScenarioBuilder::moveGEMSectors(const edm::ParameterSet& pSet) {
+
   const auto& GEMSuperChambers = theAlignableMuon->GEMSuperChambers();
-  //Take Parameters
-  align::Scalars param = this->extractParameters(pSet, "GEMSectors");
-  double scale_ = param[0];
-  double scaleError_ = param[1];
-  double phiX_ = param[2];
-  double phiY_ = param[3];
-  double phiZ_ = param[4];
-  double dX_ = param[5];
-  double dY_ = param[6];
-  double dZ_ = param[7];
 
-  double dx = scale_ * dX_;
-  double dy = scale_ * dY_;
-  double dz = scale_ * dZ_;
-  double phix = scale_ * phiX_;
-  double phiy = scale_ * phiY_;
-  double phiz = scale_ * phiZ_;
-  double errorx = scaleError_ * dX_;
-  double errory = scaleError_ * dY_;
-  double errorz = scaleError_ * dZ_;
-  double errorphix = scaleError_ * phiX_;
-  double errorphiy = scaleError_ * phiY_;
-  double errorphiz = scaleError_ * phiZ_;
-  align::Scalars errorDisp;
-  errorDisp.push_back(errorx);
-  errorDisp.push_back(errory);
-  errorDisp.push_back(errorz);
-  align::Scalars errorRotation;
-  errorRotation.push_back(errorphix);
-  errorRotation.push_back(errorphiy);
-  errorRotation.push_back(errorphiz);
+  int detNum; int endcap;
+  
+  std::string line, cell, DetNum, dx, dy, dz, dphix, dphiy, dphiz;
+  std::ifstream maptype("gemAl.csv");
+  std::map<GEMDetId, std::vector<float>> alPar;
+  while(std::getline(maptype, line)){
+    std::cout << line << std::endl;
+    std::stringstream ssline(line);
 
-  //Create an index for the chambers in the alignable vector
-  for (const auto& iter : GEMSuperChambers) {
-    align::Scalars disp;
-    align::Scalars rotation;
-    const std::vector<float> disp_ = theMuonModifier.gaussianRandomVector(dx, dy, dz);
-    disp.push_back(disp_[0]);
-    disp.push_back(disp_[1]);
-    disp.push_back(disp_[2]);
-    const std::vector<float> rotation_ = theMuonModifier.flatRandomVector(phix, phiy, phiz);
-    rotation.push_back(rotation_[0]);
-    rotation.push_back(rotation_[1]);
-    rotation.push_back(rotation_[2]);
-    this->moveChamberInSector(iter, disp, rotation, errorDisp, errorRotation);
+    getline(ssline, DetNum, ',');
+    getline(ssline, dx, ',');
+    getline(ssline, dy, ',');
+    getline(ssline, dz, ',');
+    getline(ssline, dphix, ',');
+    getline(ssline, dphiy, ',');
+    getline(ssline, dphiz, ',');
+    detNum = (float)atof(DetNum.c_str());
+    float xShift = (float)atof(dx.c_str());
+    float yShift = (float)atof(dy.c_str());
+    float zShift = (float)atof(dz.c_str());
+    float rotX = (float)atof(dphix.c_str());
+    float rotY = (float)atof(dphiy.c_str());
+    float rotZ = (float)atof(dphiz.c_str());
+    std::cout << "detNum:" << detNum << " xShift:" << xShift << " yShift:" << yShift << " zShift:" << zShift << " rotX:" << rotX << " rotY:" << rotY << " rotZ:" << rotZ << std::endl;
+    if (detNum >= 0){endcap = 1;}
+    else {endcap = -1;}
+    std::cout << "endcap is " << endcap << std::endl;
+    GEMDetId id = GEMDetId(endcap, 1, abs(detNum/100), 0, abs(detNum%100), 0);
+    std::vector<float> tmp = {xShift, yShift, zShift, rotX, rotY, rotZ};
+    alPar[id] = tmp;
+  }
+  for (const auto& chamber : GEMSuperChambers) {
+    auto gemId = chamber->id();
+    auto par = alPar[gemId];
+    theMuonModifier.moveAlignableLocal(chamber, false, false, par.at(0), par.at(1), par.at(2));
+    theMuonModifier.rotateAlignableLocal(chamber, false, false, par.at(3), par.at(4), par.at(5));
   }
 }
 
@@ -441,12 +434,12 @@ void MuonScenarioBuilder::moveMuon(const edm::ParameterSet& pSet) {
     theMuonModifier.addAlignmentPositionError(iter, errorx, errory, errorz);
     theMuonModifier.addAlignmentPositionErrorFromRotation(iter, errorphix, errorphiy, errorphiz);
   }
-  for (const auto& iter : GEMendcaps) {
+  /*for (const auto& iter : GEMendcaps) {
     theMuonModifier.moveAlignable(iter, false, true, disp[0], disp[1], disp[2]);
     theMuonModifier.rotateAlignable(iter, false, true, rotation[0], rotation[1], rotation[2]);
     theMuonModifier.addAlignmentPositionError(iter, errorx, errory, errorz);
     theMuonModifier.addAlignmentPositionErrorFromRotation(iter, errorphix, errorphiy, errorphiz);
-  }
+  }*/
 }
 
 //______________________________________________________________________________________________________
