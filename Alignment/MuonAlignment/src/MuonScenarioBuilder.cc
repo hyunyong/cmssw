@@ -350,17 +350,19 @@ void MuonScenarioBuilder::moveGEMSectors(const edm::ParameterSet& pSet) {
     float rotX = (float)atof(dphix.c_str());
     float rotY = (float)atof(dphiy.c_str());
     float rotZ = (float)atof(dphiz.c_str());
-    std::cout << "detNum:" << detNum << " xShift:" << xShift << " yShift:" << yShift << " zShift:" << zShift << " rotX:" << rotX << " rotY:" << rotY << " rotZ:" << rotZ << std::endl;
     if (detNum >= 0){endcap = 1;}
     else {endcap = -1;}
     std::cout << "endcap is " << endcap << std::endl;
     GEMDetId id = GEMDetId(endcap, 1, abs(detNum/100), 0, abs(detNum%100), 0);
     std::vector<float> tmp = {xShift, yShift, zShift, rotX, rotY, rotZ};
-    alPar[id] = tmp;
+    alPar[id.rawId()] = tmp;
+    std::cout << "detNum:" << detNum << " rawId: " << id.rawId()<<  " xShift:" << xShift << " yShift:" << yShift << " zShift:" << zShift << " rotX:" << rotX << " rotY:" << rotY << " rotZ:" << rotZ << std::endl;
   }
   for (const auto& chamber : GEMSuperChambers) {
     auto gemId = chamber->id();
+    assert(alPar.count(gemId) < 1);
     auto par = alPar[gemId];
+    std::cout << gemId << ": "<< par.at(0) << ", " << par.at(1) << ", " << par.at(2) << ", " << par.at(3) << ", " << par.at(4) << ", " << par.at(5) << std::endl;
     theMuonModifier.moveAlignableLocal(chamber, false, false, par.at(0), par.at(1), par.at(2));
     theMuonModifier.rotateAlignableLocal(chamber, false, false, par.at(3), par.at(4), par.at(5));
   }
